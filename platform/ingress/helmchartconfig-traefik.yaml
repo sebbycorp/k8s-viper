@@ -1,0 +1,20 @@
+# Configures the k3s-bundled Traefik chart. Single node: expose web/websecure on the node IP.
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    ports:
+      web:
+        exposedPort: 80
+      websecure:
+        exposedPort: 443
+    logs:
+      general:
+        level: INFO
+    # Dashboard stays internal; use kubectl port-forward if needed.
+    ingressRoute:
+      dashboard:
+        enabled: false

@@ -1,0 +1,63 @@
+# HashiCorp Vault OSS — single-node box (one Raft voter).
+# After deploy: vault operator init / unseal (see docs/vault-eso-setup.md).
+# Never commit unseal keys or root token.
+
+global:
+  enabled: true
+  tlsDisable: true
+
+injector:
+  enabled: false
+
+csi:
+  enabled: false
+
+server:
+  image:
+    repository: hashicorp/vault
+    # Chart pins default; override only when intentionally upgrading.
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 500m
+
+  dataStorage:
+    enabled: true
+    size: 10Gi
+    storageClass: local-path
+
+  auditStorage:
+    enabled: false
+
+  standalone:
+    enabled: false
+
+  ha:
+    enabled: true
+    replicas: 1
+    raft:
+      enabled: true
+      setNodeId: true
+      config: |
+        ui = true
+        cluster_name = "k8s-viper"
+        listener "tcp" {
+          tls_disable = 1
+          address = "[::]:8200"
+          cluster_address = "[::]:8201"
+        }
+        storage "raft" {
+          path = "/vault/data"
+        }
+        disable_mlock = true
+
+  service:
+    enabled: true
+    type: ClusterIP
+
+ui:
+  enabled: true
+  serviceType: ClusterIP

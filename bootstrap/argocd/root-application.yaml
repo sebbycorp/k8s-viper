@@ -1,0 +1,24 @@
+# Applied once by scripts/bootstrap.sh. Argo then reconciles argocd/apps from git.
+# REPO_URL and REPO_REVISION are substituted by bootstrap if overridden.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/sebbycorp/k8s-viper.git
+    targetRevision: main
+    path: argocd/apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
