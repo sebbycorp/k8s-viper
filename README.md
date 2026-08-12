@@ -11,7 +11,7 @@ Single-node **k3s** powerhouse managed with **Argo CD** GitOps from this reposit
 | Dashboard | Headlamp (OSS, in-cluster) |
 | Ingress | Node IP via Traefik (k3s default) — [why not kgateway](docs/why-traefik.md) |
 | Lab UIs | NodePort: Headlamp `:30080`, Argo CD `:30443`, Vault `:30200` |
-| AI gateway | agentgateway `1.4.1` + OpenAI (`gpt-5.5` / `gpt-5.5-mini`) |
+| AI gateway | agentgateway `1.4.1` + OpenAI (`gpt-5.5` / `gpt-5-mini`) |
 | LLM observability | Langfuse + ClickHouse; traces via OTEL ([docs](docs/agentgateway-langfuse.md)) |
 | Public tunnel | Not in v1 (ngrok deferred) |
 

@@ -4,7 +4,7 @@ Lab stack for **AI traffic** on k8s-viper:
 
 - **agentgateway** `1.4.1` — Gateway API data plane for LLMs  
 - **OpenAI** backend using Vault key `secret/platform/openai`  
-- **Models** (client-selected): `gpt-5.5`, `gpt-5.5-mini` (small)  
+- **Models** (client-selected): `gpt-5.5` (full), `gpt-5-mini` (small)  
 - **Langfuse** `1.5.41` (+ Postgres, Redis, **ClickHouse**, MinIO) for LLM observability  
 - **OTel collector** bridges gateway traces → Langfuse OTLP  
 
@@ -42,17 +42,21 @@ curl -sS "$GW/v1/chat/completions" \
   -H 'content-type: application/json' \
   -d '{
     "model": "gpt-5.5",
-    "messages": [{"role":"user","content":"Say hello from k8s-viper"}]
+    "messages": [{"role":"user","content":"Say hello from k8s-viper"}],
+    "max_completion_tokens": 64
   }' | jq .
 
 # Small model
 curl -sS "$GW/v1/chat/completions" \
   -H 'content-type: application/json' \
   -d '{
-    "model": "gpt-5.5-mini",
-    "messages": [{"role":"user","content":"Say hello briefly"}]
+    "model": "gpt-5-mini",
+    "messages": [{"role":"user","content":"Say hello briefly"}],
+    "max_completion_tokens": 64
   }' | jq .
 ```
+
+Verified on this lab: `gpt-5.5` works; use `gpt-5-mini` for the small model (`gpt-5.5-mini` is not a valid OpenAI id for this key).
 
 No OpenAI key in the client request — the gateway injects it from Vault via ExternalSecret.
 
