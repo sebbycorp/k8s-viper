@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: agentgateway-system
+resources:
+  - namespace.yaml
+  - external-secret-openai.yaml
+  - gateway.yaml
+  - backend-openai.yaml
+  - httproute-openai.yaml
+  - otel-collector.yaml
+  - gateway-parameters-tracing.yaml

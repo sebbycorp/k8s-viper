@@ -1,0 +1,15 @@
+# agentgateway control plane — pin chart 1.4.1 in Application
+controller:
+  replicaCount: 1
+  logLevel: info
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+proxy:
+  image:
+    repository: agentgateway

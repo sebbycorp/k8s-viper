@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-agentgateway
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: viper
+  sources:
+    - repoURL: oci://cr.agentgateway.dev/charts
+      chart: agentgateway
+      targetRevision: 1.4.1
+      helm:
+        releaseName: agentgateway
+        valueFiles:
+          - $values/platform/agentgateway/values.yaml
+    - repoURL: https://github.com/sebbycorp/k8s-viper.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: agentgateway-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

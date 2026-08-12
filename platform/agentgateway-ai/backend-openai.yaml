@@ -1,0 +1,21 @@
+# OpenAI LLM backend. Models selected per-request (gpt-5.5, gpt-5.5-mini, …).
+# Auth from ExternalSecret openai-secret (Vault secret/platform/openai).
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayBackend
+metadata:
+  name: openai
+  namespace: agentgateway-system
+spec:
+  ai:
+    provider:
+      openai: {}
+  policies:
+    auth:
+      secretRef:
+        name: openai-secret
+    ai:
+      routes:
+        "/v1/responses": "Responses"
+        "/v1/chat/completions": "Completions"
+        "/v1/models": "Models"
+        "*": "Passthrough"

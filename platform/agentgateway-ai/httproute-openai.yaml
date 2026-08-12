@@ -1,0 +1,33 @@
+# OpenAI-compatible path prefixes for full and small models.
+# Clients call:
+#   POST /v1/chat/completions  { "model": "gpt-5.5", ... }
+#   POST /v1/chat/completions  { "model": "gpt-5.5-mini", ... }
+# Optional convenience prefixes /openai and /openai/small (same backend).
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: openai
+  namespace: agentgateway-system
+spec:
+  parentRefs:
+    - name: agentgateway-proxy
+      namespace: agentgateway-system
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /v1
+      backendRefs:
+        - name: openai
+          namespace: agentgateway-system
+          group: agentgateway.dev
+          kind: AgentgatewayBackend
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /openai
+      backendRefs:
+        - name: openai
+          namespace: agentgateway-system
+          group: agentgateway.dev
+          kind: AgentgatewayBackend

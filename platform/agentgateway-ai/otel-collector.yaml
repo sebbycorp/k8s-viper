@@ -1,0 +1,145 @@
+# Bridges agentgateway OTLP gRPC → Langfuse OTLP HTTP.
+# Auth: Basic base64(public_key:secret_key) from ExternalSecret langfuse-otel-auth.
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: langfuse-otel-auth
+  namespace: agentgateway-system
+spec:
+  refreshInterval: 5m
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: langfuse-otel-auth
+    creationPolicy: Owner
+    template:
+      engineVersion: v2
+      data:
+        # base64(public:secret) for Authorization: Basic …
+        basic_auth: '{{ printf "%s:%s" .public_key .secret_key | b64enc }}'
+        endpoint: '{{ .endpoint }}'
+  data:
+    - secretKey: public_key
+      remoteRef:
+        key: platform/langfuse-otel
+        property: public_key
+    - secretKey: secret_key
+      remoteRef:
+        key: platform/langfuse-otel
+        property: secret_key
+    - secretKey: endpoint
+      remoteRef:
+        key: platform/langfuse-otel
+        property: endpoint
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: langfuse-otel-collector-config
+  namespace: agentgateway-system
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      batch:
+        send_batch_size: 256
+        timeout: 5s
+      memory_limiter:
+        check_interval: 1s
+        limit_mib: 200
+    exporters:
+      otlphttp/langfuse:
+        # Overridden at runtime via env from secret when present
+        endpoint: ${env:LANGFUSE_OTLP_ENDPOINT}
+        headers:
+          Authorization: "Basic ${env:LANGFUSE_BASIC_AUTH}"
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+      logging:
+        loglevel: info
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, batch]
+          exporters: [otlphttp/langfuse, logging]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: langfuse-otel-collector
+  namespace: agentgateway-system
+  labels:
+    app: langfuse-otel-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: langfuse-otel-collector
+  template:
+    metadata:
+      labels:
+        app: langfuse-otel-collector
+    spec:
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector-contrib:0.132.1
+          args: ["--config=/conf/config.yaml"]
+          env:
+            - name: LANGFUSE_BASIC_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-otel-auth
+                  key: basic_auth
+                  optional: true
+            - name: LANGFUSE_OTLP_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-otel-auth
+                  key: endpoint
+                  optional: true
+          ports:
+            - containerPort: 4317
+              name: otlp-grpc
+            - containerPort: 4318
+              name: otlp-http
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+      volumes:
+        - name: config
+          configMap:
+            name: langfuse-otel-collector-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: langfuse-otel-collector
+  namespace: agentgateway-system
+spec:
+  selector:
+    app: langfuse-otel-collector
+  ports:
+    - name: otlp-grpc
+      port: 4317
+      targetPort: 4317
+    - name: otlp-http
+      port: 4318
+      targetPort: 4318

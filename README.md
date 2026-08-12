@@ -11,6 +11,8 @@ Single-node **k3s** powerhouse managed with **Argo CD** GitOps from this reposit
 | Dashboard | Headlamp (OSS, in-cluster) |
 | Ingress | Node IP via Traefik (k3s default) — [why not kgateway](docs/why-traefik.md) |
 | Lab UIs | NodePort: Headlamp `:30080`, Argo CD `:30443`, Vault `:30200` |
+| AI gateway | agentgateway `1.4.1` + OpenAI (`gpt-5.5` / `gpt-5.5-mini`) |
+| LLM observability | Langfuse + ClickHouse; traces via OTEL ([docs](docs/agentgateway-langfuse.md)) |
 | Public tunnel | Not in v1 (ngrok deferred) |
 
 Design: [`docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md`](docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md)
@@ -46,6 +48,10 @@ docs/vault-eso-setup.md       # init / unseal / ESO wiring
 docs/headlamp.md              # dashboard access + token auth
 docs/platform-ui-access.md    # NodePort map for Argo / Headlamp / Vault
 docs/why-traefik.md           # Traefik vs kgateway decision
+docs/agentgateway-langfuse.md # AI gateway + Langfuse + Vault keys
+platform/agentgateway/        # agentgateway Helm values
+platform/agentgateway-ai/     # OpenAI routes + OTEL collector
+platform/langfuse/            # Langfuse Helm + ExternalSecret
 site/                         # Hugo handbook → GitHub Pages
 ```
 

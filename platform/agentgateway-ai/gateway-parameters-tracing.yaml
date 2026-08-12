@@ -1,0 +1,14 @@
+# Optional: if the chart creates GatewayParameters; OTEL also via collector scrape.
+# Traces flow: proxy → OTel Collector (gRPC 4317) → Langfuse OTLP HTTP.
+# Langfuse public/secret keys live in Secret langfuse-otel-auth (filled after UI keys exist).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agentgateway-tracing-note
+  namespace: agentgateway-system
+data:
+  README: |
+    Traces are exported via langfuse-otel-collector.
+    After creating Langfuse project API keys, store them in Vault:
+      vault kv put secret/platform/langfuse-otel public_key=pk-lf-... secret_key=sk-lf-...
+    Then ExternalSecret langfuse-otel-auth will refresh and restart the collector.

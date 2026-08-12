@@ -1,0 +1,39 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: agentgateway-proxy
+  namespace: agentgateway-system
+  labels:
+    app.kubernetes.io/name: agentgateway-proxy
+  annotations:
+    # Lab: expose as NodePort via Service once created; k3s ServiceLB also works
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  gatewayClassName: agentgateway
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+---
+# Stable LAN access for the proxy (Docker k3s publishes host:30100)
+apiVersion: v1
+kind: Service
+metadata:
+  name: agentgateway-proxy-nodeport
+  namespace: agentgateway-system
+  labels:
+    app.kubernetes.io/name: agentgateway-proxy
+spec:
+  type: NodePort
+  selector:
+    # Matches gateway-managed proxy pods (label is set by controller)
+    gateway.networking.k8s.io/gateway-name: agentgateway-proxy
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      nodePort: 30100
+      protocol: TCP

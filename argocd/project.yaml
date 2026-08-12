@@ -12,6 +12,10 @@ spec:
     - https://helm.releases.hashicorp.com
     - https://charts.external-secrets.io
     - https://kubernetes-sigs.github.io/headlamp/
+    - https://langfuse.github.io/langfuse-k8s
+    - https://github.com/kubernetes-sigs/gateway-api
+    - cr.agentgateway.dev/charts
+    - oci://cr.agentgateway.dev/charts
   destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc
@@ -26,6 +30,10 @@ spec:
     - namespace: default
       server: https://kubernetes.default.svc
     - namespace: kube-system
+      server: https://kubernetes.default.svc
+    - namespace: agentgateway-system
+      server: https://kubernetes.default.svc
+    - namespace: langfuse
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: "*"

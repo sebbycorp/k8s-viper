@@ -1,0 +1,140 @@
+# Langfuse v3 + embedded Postgres / Redis / ClickHouse / MinIO — lab sizing.
+# Secrets from ExternalSecret langfuse-credentials (Vault secret/platform/langfuse).
+# Chart pin: Application targetRevision 1.5.41
+
+global:
+  security:
+    allowInsecureImages: true
+
+langfuse:
+  salt:
+    secretKeyRef:
+      name: langfuse-credentials
+      key: salt
+  encryptionKey:
+    secretKeyRef:
+      name: langfuse-credentials
+      key: encryption_key
+  nextauth:
+    url: http://langfuse.viper.local
+    secret:
+      secretKeyRef:
+        name: langfuse-credentials
+        key: nextauth_secret
+  features:
+    signUpDisabled: false
+    telemetryEnabled: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1536Mi
+  web:
+    service:
+      type: NodePort
+      port: 3000
+      nodePort: 30300
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1536Mi
+  worker:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 1536Mi
+  ingress:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: langfuse.viper.local
+        paths:
+          - path: /
+            pathType: Prefix
+
+postgresql:
+  deploy: true
+  auth:
+    username: postgres
+    existingSecret: langfuse-credentials
+    secretKeys:
+      userPasswordKey: postgres_password
+      adminPasswordKey: postgres_password
+    database: postgres_langfuse
+  primary:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    persistence:
+      size: 5Gi
+
+redis:
+  deploy: true
+  auth:
+    username: default
+    existingSecret: langfuse-credentials
+    existingSecretPasswordKey: redis_password
+  primary:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+
+clickhouse:
+  deploy: true
+  auth:
+    username: default
+    existingSecret: langfuse-credentials
+    existingSecretKey: clickhouse_password
+  shards: 1
+  replicaCount: 1
+  resourcesPreset: small
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 2Gi
+  zookeeper:
+    enabled: true
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+      limits:
+        cpu: 250m
+        memory: 512Mi
+
+s3:
+  deploy: true
+  auth:
+    rootUser: minio
+    existingSecret: langfuse-credentials
+    rootUserSecretKey: minio_root_user
+    rootPasswordSecretKey: minio_root_password
+  persistence:
+    size: 5Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
