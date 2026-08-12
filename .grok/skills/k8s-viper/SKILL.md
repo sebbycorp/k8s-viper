@@ -2,11 +2,12 @@
 name: k8s-viper
 description: >
   Work in the k8s-viper repo: single-node k3s GitOps platform (Argo CD app-of-apps,
-  Vault + ESO, Traefik node-IP ingress, Headlamp dashboard). Use when adding platform
-  components or apps, changing Helm values/manifests, bootstrap/validate scripts,
-  secrets wiring, ingress hosts, or day-2 cluster ops. Triggers: k8s-viper, GitOps,
-  Argo CD app, platform/, apps/, Vault, ExternalSecret, Headlamp, k3s bootstrap,
-  "add a platform app", "deploy to viper". Slash: /k8s-viper.
+  Vault + ESO, Traefik node-IP ingress, Headlamp, agentgateway OpenAI proxy, Langfuse).
+  Use when adding platform components or apps, changing Helm values/manifests,
+  bootstrap/validate scripts, secrets wiring, ingress hosts, AI gateway, or day-2
+  cluster ops. Triggers: k8s-viper, GitOps, Argo CD app, platform/, apps/, Vault,
+  ExternalSecret, Headlamp, agentgateway, Langfuse, k3s bootstrap, "add a platform app",
+  "deploy to viper". Slash: /k8s-viper.
 ---
 
 # k8s-viper
@@ -34,7 +35,8 @@ Canonical overview: `README.md`. Design: `docs/superpowers/specs/2026-08-11-k3s-
 | `argocd/apps/` | Child Applications (app-of-apps tree) |
 | `platform/<name>/` | Cluster services (Helm values and/or kustomize) |
 | `apps/<name>/` | User workloads |
-| `docs/` | Operator runbooks (Vault, Headlamp, …) |
+| `docs/` | Operator runbooks (Vault, Headlamp, AI gateway, …) |
+| `site/` | Hugo environment handbook (GitHub Pages) |
 | `.github/workflows/ci.yaml` | PR validation only — no live cluster mutate |
 
 ## Platform inventory
@@ -84,18 +86,21 @@ Lab UI NodePorts (fixed): Headlamp **30080**, Argo CD **30443**, Vault UI **3020
 
 ## Secrets path
 
-- Operator runbook: `docs/vault-eso-setup.md` (init, unseal, ESO store).
+- Operator runbook: `docs/vault-eso-setup.md` (init, unseal, ESO store, **secret inventory**).
 - Example store: `platform/external-secrets/cluster-secret-store-vault.example.yaml` — copy/adapt; do not commit real credentials.
-- Apps reference secret **paths/keys** only.
+- Inventory: `secret/platform/openai`, `secret/platform/langfuse`, `secret/platform/langfuse-otel`.
+- Apps reference secret **paths/keys** only via `ExternalSecret`.
 
-## Dashboard (Headlamp) + platform UIs
+## Dashboard + platform UIs + AI
 
-- App: `platform-headlamp` → values `platform/headlamp/values.yaml` (NodePort **30080** + ingress).
-- Argo UI NodePort: `platform-argocd-access` → `platform/argocd-access/` (**30443**).
-- Vault UI NodePort: `platform/vault/values.yaml` → `ui.serviceNodePort` (**30200**).
-- Access map: `docs/platform-ui-access.md`; Headlamp token login: `docs/headlamp.md`.
-- Do **not** set `config.unsafeUseServiceAccountToken: true` unless behind a real auth proxy.
-- Chart pin lives in Application `targetRevision`.
+- Access map (all ports): `docs/platform-ui-access.md`.
+- Headlamp: `platform-headlamp` → **:30080** — token login `docs/headlamp.md`.
+- Argo UI: `platform-argocd-access` → **:30443**.
+- Vault UI: **:30200** — unseal after restarts.
+- agentgateway OpenAI: **:30100** — models `gpt-5.5` / `gpt-5-mini` — `docs/agentgateway-langfuse.md`.
+- Langfuse: **:30300** — ClickHouse included in chart — same AI runbook.
+- Do **not** set Headlamp `config.unsafeUseServiceAccountToken: true` unless behind a real auth proxy.
+- Chart pins live in Application `targetRevision`; record in `README.md`.
 
 ## Day-2 change loop
 

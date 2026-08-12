@@ -142,9 +142,11 @@ print_next_steps() {
                             ${node_ip:-<node-ip>}  whoami.viper.local
 
  Platform UIs (after Argo syncs NodePorts — see docs/platform-ui-access.md):
-   Headlamp:  http://${node_ip:-<node-ip>}:30080/
-   Argo CD:   https://${node_ip:-<node-ip>}:30443/  (user: admin; self-signed)
-   Vault UI:  http://${node_ip:-<node-ip>}:30200/  (after init+unseal)
+   Headlamp:       http://${node_ip:-<node-ip>}:30080/
+   Argo CD:        https://${node_ip:-<node-ip>}:30443/  (user: admin; self-signed)
+   Vault UI:       http://${node_ip:-<node-ip>}:30200/  (after init+unseal)
+   agentgateway:   http://${node_ip:-<node-ip>}:30100/  (OpenAI proxy)
+   Langfuse:       http://${node_ip:-<node-ip>}:30300/
 
  Initial Argo CD admin password:
    ${admin_pass_cmd}

@@ -46,19 +46,33 @@ That is a **platform** choice. v1 intentionally stays on the k3s default path.
 | Fine for host demos + LAN | Yes | Overkill for v1 |
 | Advanced edge policies | Limited / CRD-heavy | Strong fit |
 
+## Relationship to agentgateway
+
+**agentgateway** is installed for **LLM / AI API traffic** (OpenAI proxy, OTEL to
+Langfuse). It uses Gateway API in the `agentgateway-system` namespace and is
+**not** the default cluster Ingress for `*.viper.local`.
+
+| Role | Component |
+|------|-----------|
+| Cluster Ingress (whoami, Headlamp host, Langfuse host) | **Traefik** (k3s) |
+| AI / LLM data plane | **agentgateway** |
+
+See [agentgateway-langfuse.md](agentgateway-langfuse.md).
+
 ## When to revisit
 
-Consider Gateway API + kgateway (or another impl) if you:
+Consider Gateway API + kgateway (or another impl) **as the cluster edge** if you:
 
-- Standardize on `HTTPRoute` only across apps
+- Standardize on `HTTPRoute` only across all apps
 - Need policies Ingress does not express cleanly
 - Split edge ownership from the k3s Traefik lifecycle
 
-Until then: **Traefik on the node IP** + **NodePorts for control-plane UIs**
-(Headlamp / Argo / Vault) remains the documented access model.
+Until then: **Traefik on the node IP** + **NodePorts for UIs and AI proxy**
+remains the documented access model ([platform-ui-access.md](platform-ui-access.md)).
 
 ## Related
 
 - Ingress defaults: `platform/ingress/`
 - UI ports: [platform-ui-access.md](platform-ui-access.md)
+- AI gateway: [agentgateway-langfuse.md](agentgateway-langfuse.md)
 - Design: [specs/2026-08-11-k3s-gitops-platform-design.md](superpowers/specs/2026-08-11-k3s-gitops-platform-design.md)

@@ -2,21 +2,30 @@
 
 Lab stack for **AI traffic** on k8s-viper:
 
-- **agentgateway** `1.4.1` — Gateway API data plane for LLMs  
-- **OpenAI** backend using Vault key `secret/platform/openai`  
-- **Models** (client-selected): `gpt-5.5` (full), `gpt-5-mini` (small)  
-- **Langfuse** `1.5.41` (+ Postgres, Redis, **ClickHouse**, MinIO) for LLM observability  
-- **OTel collector** bridges gateway traces → Langfuse OTLP  
+| Component | Version / notes |
+|-----------|-----------------|
+| **agentgateway** | Helm/chart **1.4.1** — Gateway API AI data plane |
+| **OpenAI backend** | Vault `secret/platform/openai` → ExternalSecret → gateway auth |
+| **Models** | Client-selected: **`gpt-5.5`** (full), **`gpt-5-mini`** (small) |
+| **Langfuse** | Helm **1.5.41** (app ~3.224) + Postgres, Redis, **ClickHouse**, MinIO |
+| **OTEL collector** | agentgateway traces → Langfuse OTLP HTTP |
+
+Traefik remains the **cluster Ingress** for `*.viper.local`. agentgateway is
+**not** a replacement for Traefik; it fronts LLM/API traffic. See
+[why-traefik.md](why-traefik.md).
 
 ## Access
 
 | Service | URL |
 |---------|-----|
-| agentgateway (OpenAI proxy) | `http://<node-ip>:30100/` |
+| agentgateway (OpenAI-compatible) | `http://<node-ip>:30100/` |
 | Langfuse UI | `http://<node-ip>:30300/` or `http://langfuse.viper.local/` |
 | Vault | `http://<node-ip>:30200/` |
 
-Docker k3s: publish host ports **30100** and **30300** (and keep 80 for Traefik).
+LAN example: `http://172.16.10.135:30100/`.
+
+Docker k3s must publish **30100** and **30300** (plus existing UI ports). Full
+map: [platform-ui-access.md](platform-ui-access.md).
 
 `/etc/hosts`:
 
@@ -29,13 +38,17 @@ Docker k3s: publish host ports **30100** and **30300** (and keep 80 for Traefik)
 | Path | Contents |
 |------|----------|
 | `secret/platform/openai` | `api_key` (OpenAI) |
-| `secret/platform/langfuse` | salt, encryption_key, nextauth_secret, DB passwords |
-| `secret/platform/langfuse-otel` | `public_key`, `secret_key`, `endpoint` (after project keys) |
+| `secret/platform/langfuse` | salt, encryption_key, nextauth_secret, DB/MinIO passwords |
+| `secret/platform/langfuse-otel` | `public_key`, `secret_key`, `endpoint` for OTLP |
+
+Vault + ESO ops: [vault-eso-setup.md](vault-eso-setup.md).
 
 ## Call OpenAI through agentgateway
 
+No OpenAI key in the client — the gateway injects Vault credentials.
+
 ```bash
-export GW=http://172.16.10.135:30100
+export GW=http://172.16.10.135:30100   # or your node-ip
 
 # Full model
 curl -sS "$GW/v1/chat/completions" \
@@ -56,14 +69,25 @@ curl -sS "$GW/v1/chat/completions" \
   }' | jq .
 ```
 
-Verified on this lab: `gpt-5.5` works; use `gpt-5-mini` for the small model (`gpt-5.5-mini` is not a valid OpenAI id for this key).
+| Model id | Role |
+|----------|------|
+| `gpt-5.5` | Full / default quality (verified on this lab) |
+| `gpt-5-mini` | Small / cheaper (verified) |
+| `gpt-5.5-mini` | **Not** a valid id for this account — do not use |
 
-No OpenAI key in the client request — the gateway injects it from Vault via ExternalSecret.
+Also available via the same backend when OpenAI allows them (e.g. `gpt-4o-mini`).
+
+Git paths:
+
+- Backend: `platform/agentgateway-ai/backend-openai.yaml`
+- Route: `platform/agentgateway-ai/httproute-openai.yaml`
+- OpenAI ExternalSecret: `platform/agentgateway-ai/external-secret-openai.yaml`
 
 ## Wire traces to Langfuse
 
-1. Open Langfuse UI → sign up (first user) → **Settings → API Keys** → create keys.  
-2. Store in Vault (after unseal):
+1. Wait for Langfuse pods: `kubectl -n langfuse get pods`
+2. Open Langfuse UI → first-user signup → **Settings → API Keys**
+3. Store keys in Vault (Vault unsealed):
 
 ```bash
 ROOT=$(python3 -c "import json; print(json.load(open('$HOME/.config/k8s-viper/vault-init.json'))['root_token_initial'])")
@@ -76,17 +100,13 @@ vault kv put secret/platform/langfuse-otel \
 "
 ```
 
-3. ExternalSecret `langfuse-otel-auth` refreshes; restart collector if needed:
+4. ExternalSecret `langfuse-otel-auth` refreshes; restart collector if needed:
 
 ```bash
 kubectl -n agentgateway-system rollout restart deploy/langfuse-otel-collector
 ```
 
-4. Send a chat completion through the gateway; open Langfuse **Traces**.
-
-### Proxy → collector
-
-Configure the agentgateway **proxy** pods to export OTEL (env on the data plane). After Gateway is programmed, annotate or patch the proxy Deployment if the controller does not inject OTEL by default:
+5. Ensure proxy exports OTEL (re-apply if controller recreates the Deployment):
 
 ```bash
 kubectl -n agentgateway-system set env deploy/agentgateway-proxy \
@@ -95,22 +115,23 @@ kubectl -n agentgateway-system set env deploy/agentgateway-proxy \
   OTEL_SERVICE_NAME=agentgateway-proxy
 ```
 
-(Re-apply after controller recreates the proxy Deployment.)
+6. Send a chat completion through the gateway; open Langfuse **Traces**.
 
-## Argo apps
+## Argo CD applications
 
-| Application | Role |
-|-------------|------|
-| `platform-gateway-api` | Gateway API CRDs |
-| `platform-agentgateway-crds` | agentgateway CRDs Helm |
-| `platform-agentgateway` | control plane Helm |
-| `platform-agentgateway-ai` | Gateway, OpenAI backend, routes, OTEL |
-| `platform-langfuse-secrets` | NS + ExternalSecret |
-| `platform-langfuse` | Langfuse Helm (+ ClickHouse, etc.) |
+| Application | Role | Namespace |
+|-------------|------|-----------|
+| `platform-gateway-api` | Gateway API CRDs | cluster |
+| `platform-agentgateway-crds` | agentgateway CRDs (OCI Helm 1.4.1) | `agentgateway-system` |
+| `platform-agentgateway` | control plane (OCI Helm 1.4.1) | `agentgateway-system` |
+| `platform-agentgateway-ai` | Gateway, OpenAI backend, routes, OTEL | `agentgateway-system` |
+| `platform-langfuse-secrets` | NS + ExternalSecret | `langfuse` |
+| `platform-langfuse` | Langfuse Helm 1.5.41 | `langfuse` |
 
 ## Ops notes
 
-- Unseal Vault after every restart: `~/.config/k8s-viper/vault-unseal.sh`  
-- Single-node lab: ClickHouse **1 replica**, small resources — not production HA.  
-- If a model name is rejected by OpenAI, change the `model` field in the curl body (API truth > docs).  
-- Never commit API keys or Langfuse secrets.
+- Unseal Vault after every restart: `~/.config/k8s-viper/vault-unseal.sh`
+- Single-node lab: ClickHouse **1 replica**, small resources — not production HA
+- Image pulls (Bitnami legacy / Langfuse) need working egress DNS from the cluster
+- Never commit API keys or Langfuse secrets
+- Day-2: edit git → `./scripts/validate.sh` → merge → Argo sync

@@ -17,6 +17,8 @@
     <span class="pill">External Secrets</span>
     <span class="pill">Headlamp</span>
     <span class="pill">Traefik</span>
+    <span class="pill ok">agentgateway</span>
+    <span class="pill">Langfuse</span>
     <span class="pill ok">Hugo</span>
   </div>
 
@@ -80,11 +82,12 @@
                       ↓
               argocd/apps/*  (GitOps, auto-sync)
                       ↓
-   platform/ingress | vault | external-secrets | headlamp | argocd-access
+   ingress | vault | ESO | headlamp | argocd-access
+   gateway-api | agentgateway | langfuse
                       ↓
-   Traefik :80/:443  +  NodePorts 30080 / 30443 / 30200
+   Traefik :80/:443  +  NodePorts 30080 / 30443 / 30200 / 30100 / 30300
                       ↓
-   apps/*  (your workloads later)</code></pre>
+   agentgateway → OpenAI (Vault) → traces → Langfuse</code></pre>
   </div>
   <div class="callout ok">
     <div>
@@ -244,9 +247,36 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml</code></pre>
   </div>
 </section>
 
-{{/* 09 Bootstrap */}}
+{{/* 09 AI stack */}}
+<section id="ai-stack">
+  <div class="section-head"><span class="section-num">09</span><h2>AI stack</h2></div>
+  <p class="lead">
+    <strong>agentgateway</strong> fronts OpenAI with credentials from Vault.
+    Models (per request): <code>gpt-5.5</code>, <code>gpt-5-mini</code>.
+    <strong>Langfuse</strong> (+ ClickHouse) receives OTEL traces.
+    Full runbook:
+    <a href="{{ .Site.Params.github }}/blob/main/docs/agentgateway-langfuse.md">docs/agentgateway-langfuse.md</a>.
+  </p>
+  <pre><code>export GW=http://&lt;node-ip&gt;:30100
+
+curl -sS "$GW/v1/chat/completions" -H 'content-type: application/json' \
+  -d '{"model":"gpt-5.5","messages":[{"role":"user","content":"hi"}],"max_completion_tokens":64}'
+
+# small model
+curl -sS "$GW/v1/chat/completions" -H 'content-type: application/json' \
+  -d '{"model":"gpt-5-mini","messages":[{"role":"user","content":"hi"}],"max_completion_tokens":64}'</code></pre>
+  <div class="callout ok">
+    <div>
+      <strong>No client OpenAI key</strong> — gateway injects
+      <code>secret/platform/openai</code> from Vault via ExternalSecret.
+      Prefer LAN IP <code>172.16.10.135</code> for devices on the subnet.
+    </div>
+  </div>
+</section>
+
+{{/* 10 Bootstrap */}}
 <section id="bootstrap">
-  <div class="section-head"><span class="section-num">09</span><h2>Bootstrap</h2></div>
+  <div class="section-head"><span class="section-num">10</span><h2>Bootstrap</h2></div>
   <p class="lead">Run on the target Linux node with outbound HTTPS.</p>
   <pre><code>git clone https://github.com/sebbycorp/k8s-viper.git
 cd k8s-viper
@@ -275,9 +305,9 @@ sudo ./scripts/bootstrap.sh</code></pre>
 sudo INSTALL_K3S_SKIP=1 ./scripts/bootstrap.sh</code></pre>
 </section>
 
-{{/* 10 Day-2 */}}
+{{/* 11 Day-2 */}}
 <section id="day2">
-  <div class="section-head"><span class="section-num">10</span><h2>Day-2 GitOps</h2></div>
+  <div class="section-head"><span class="section-num">11</span><h2>Day-2 GitOps</h2></div>
   <ol class="clean">
     <li>Edit manifests or Helm values on a branch.</li>
     <li>Open a PR — CI runs <code>scripts/validate.sh</code> (no cluster credentials).</li>
@@ -291,22 +321,31 @@ kubectl -n argocd get applications
 cd site && hugo --minify</code></pre>
 </section>
 
-{{/* 11 Secrets */}}
+{{/* 12 Secrets */}}
 <section id="secrets">
-  <div class="section-head"><span class="section-num">11</span><h2>Secrets (Vault + ESO)</h2></div>
+  <div class="section-head"><span class="section-num">12</span><h2>Secrets (Vault + ESO)</h2></div>
   <p class="lead">
     After Argo syncs Vault and External Secrets, init and unseal once, then wire
     Kubernetes auth for ESO.
     Full runbook:
     <a href="{{ .Site.Params.github }}/blob/main/docs/vault-eso-setup.md">docs/vault-eso-setup.md</a>.
   </p>
-  <pre><code>kubectl -n vault get pods
-
-# Init once — store unseal keys + root token offline
-kubectl -n vault exec -it vault-0 -- vault operator init -key-shares=5 -key-threshold=3
-
-# Unseal (3 of 5) after every pod restart until automated
-kubectl -n vault exec -it vault-0 -- vault operator unseal
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Vault path</th><th>Fields</th><th>Used by</th></tr></thead>
+      <tbody>
+        {{ range $c.vault_paths }}
+        <tr>
+          <td class="mono">{{ .path }}</td>
+          <td>{{ .fields }}</td>
+          <td>{{ .used_by }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+  <pre><code># Unseal (lab helper)
+~/.config/k8s-viper/vault-unseal.sh
 
 # UI after unseal → http://&lt;node-ip&gt;:30200/</code></pre>
   <div class="callout danger">
@@ -318,9 +357,9 @@ kubectl -n vault exec -it vault-0 -- vault operator unseal
   </div>
 </section>
 
-{{/* 12 Versions */}}
+{{/* 13 Versions */}}
 <section id="versions">
-  <div class="section-head"><span class="section-num">12</span><h2>Versions</h2></div>
+  <div class="section-head"><span class="section-num">13</span><h2>Versions</h2></div>
   <div class="card table-wrap">
     <table>
       <thead><tr><th>Component</th><th>Pin</th><th>Where</th></tr></thead>
@@ -337,9 +376,9 @@ kubectl -n vault exec -it vault-0 -- vault operator unseal
   </div>
 </section>
 
-{{/* 13 Repo layout */}}
+{{/* 14 Repo layout */}}
 <section id="repo-layout">
-  <div class="section-head"><span class="section-num">13</span><h2>Repo layout</h2></div>
+  <div class="section-head"><span class="section-num">14</span><h2>Repo layout</h2></div>
   <div class="card table-wrap">
     <table>
       <thead><tr><th>Path</th><th>Role</th></tr></thead>
@@ -352,9 +391,9 @@ kubectl -n vault exec -it vault-0 -- vault operator unseal
   </div>
 </section>
 
-{{/* 14 Security */}}
+{{/* 15 Security */}}
 <section id="security">
-  <div class="section-head"><span class="section-num">14</span><h2>Security notes</h2></div>
+  <div class="section-head"><span class="section-num">15</span><h2>Security notes</h2></div>
   <ul class="clean">
     <li>v1 lab assumes <strong>private LAN</strong> access to NodePorts and Traefik.</li>
     <li>Headlamp binds <code>cluster-admin</code> for full lab visibility — tighten for multi-user.</li>
@@ -365,9 +404,9 @@ kubectl -n vault exec -it vault-0 -- vault operator unseal
   </ul>
 </section>
 
-{{/* 15 Out of scope */}}
+{{/* 16 Out of scope */}}
 <section id="out-of-scope">
-  <div class="section-head"><span class="section-num">15</span><h2>Out of scope (v1)</h2></div>
+  <div class="section-head"><span class="section-num">16</span><h2>Out of scope (v1)</h2></div>
   <div class="card table-wrap">
     <table>
       <thead><tr><th>Deferred</th><th>Why later</th></tr></thead>
@@ -380,9 +419,9 @@ kubectl -n vault exec -it vault-0 -- vault operator unseal
   </div>
 </section>
 
-{{/* 16 Troubleshooting */}}
+{{/* 17 Troubleshooting */}}
 <section id="troubleshooting">
-  <div class="section-head"><span class="section-num">16</span><h2>Troubleshooting</h2></div>
+  <div class="section-head"><span class="section-num">17</span><h2>Troubleshooting</h2></div>
   <div class="card table-wrap">
     <table>
       <thead><tr><th>Symptom</th><th>Check</th></tr></thead>
@@ -395,9 +434,9 @@ kubectl -n vault exec -it vault-0 -- vault operator unseal
   </div>
 </section>
 
-{{/* 17 Docs */}}
+{{/* 18 Docs */}}
 <section id="docs">
-  <div class="section-head"><span class="section-num">17</span><h2>Docs &amp; links</h2></div>
+  <div class="section-head"><span class="section-num">18</span><h2>Docs &amp; links</h2></div>
   <div class="card table-wrap">
     <table>
       <thead><tr><th>Resource</th><th>Link</th></tr></thead>

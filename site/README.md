@@ -23,11 +23,19 @@ hugo --minify
 
 | Path | Role |
 |------|------|
-| `hugo.toml` | Site config / baseURL |
-| `data/cluster.yaml` | Tables: UIs, apps, ports, versions… |
-| `layouts/` | Templates (design) |
+| `hugo.toml` | Site config / baseURL / default Node IP |
+| `data/cluster.yaml` | Tables: UIs, apps, ports, Vault paths, versions… |
+| `layouts/` | Templates (design + handbook sections) |
 | `assets/css/main.css` | Styles |
 | `assets/js/app.js` | Node IP rewriting + TOC |
 | `content/_index.md` | Home page entry |
 
 Edit `data/cluster.yaml` for inventory changes, then rebuild.
+
+Canonical markdown runbooks live under `../docs/` (not only this site):
+
+- `platform-ui-access.md` — all ports
+- `vault-eso-setup.md` — Vault + secret inventory
+- `agentgateway-langfuse.md` — AI gateway + Langfuse
+- `why-traefik.md` — Traefik vs kgateway
+- `headlamp.md` — dashboard tokens

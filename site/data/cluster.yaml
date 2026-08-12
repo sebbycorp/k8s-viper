@@ -12,9 +12,13 @@ overview:
   - concern: Dashboard
     choice: Headlamp (in-cluster OSS)
   - concern: Ingress
-    choice: "Node IP via Traefik (k3s default; not kgateway in v1)"
+    choice: "Node IP via Traefik (k3s default; not kgateway for cluster edge)"
   - concern: Lab UIs
-    choice: "NodePort: Headlamp `:30080`, Argo `:30443`, Vault `:30200`"
+    choice: "NodePorts 30080 / 30443 / 30200 / **30100** / **30300**"
+  - concern: AI gateway
+    choice: "agentgateway 1.4.1 → OpenAI (`gpt-5.5`, `gpt-5-mini`) via Vault"
+  - concern: LLM observability
+    choice: "Langfuse + ClickHouse; OTEL from agentgateway"
   - concern: Git source
     choice: "github.com/sebbycorp/k8s-viper @ `main`"
   - concern: Public tunnel
@@ -23,18 +27,18 @@ overview:
 facts:
   - key: Node name
     value: k3s-viper
-  - key: Typical InternalIP
-    value: "172.17.0.2"
+  - key: LAN IP (clients)
+    value: "172.16.10.135"
+  - key: k3s InternalIP
+    value: "172.17.0.2 (Docker bridge)"
   - key: k3s / API
     value: v1.32.5+k3s1
-  - key: Container runtime
-    value: containerd
   - key: GitOps project
     value: viper
-  - key: Default storage
-    value: local-path
   - key: Ingress class
     value: traefik
+  - key: AI models
+    value: "gpt-5.5 · gpt-5-mini"
   - key: App of apps
     value: argocd/apps
 
@@ -54,6 +58,16 @@ quick_cards:
     icon: "◇"
     scheme: http
     port: "30200"
+  - name: agentgateway
+    class: headlamp
+    icon: "⚡"
+    scheme: http
+    port: "30100"
+  - name: Langfuse
+    class: argocd
+    icon: "◈"
+    scheme: http
+    port: "30300"
 
 uis:
   - name: Headlamp
@@ -77,6 +91,20 @@ uis:
     path: ":30200/"
     auth: root / app token after init
     git: platform/vault/values.yaml
+  - name: agentgateway
+    type: ui
+    typeLabel: NodePort
+    scheme: http
+    path: ":30100/"
+    auth: "OpenAI via Vault (no client key)"
+    git: platform/agentgateway-ai/
+  - name: Langfuse
+    type: ui
+    typeLabel: NodePort
+    scheme: http
+    path: ":30300/"
+    auth: first-user signup
+    git: platform/langfuse/
   - name: Argo CD (HTTP)
     type: ui
     typeLabel: NodePort
@@ -98,6 +126,13 @@ uis:
     host: headlamp.viper.local
     auth: SA token
     git: platform/headlamp/values.yaml
+  - name: Langfuse (host)
+    type: ingress
+    typeLabel: Ingress
+    scheme: http
+    host: langfuse.viper.local
+    auth: first-user signup
+    git: platform/langfuse/values.yaml
 
 platform:
   - app: root
@@ -142,6 +177,42 @@ platform:
     ns: argocd
     source: platform/argocd-access/
     notes: "Argo UI NodePort :30443 / :30081"
+  - app: platform-gateway-api
+    kind: core
+    kindLabel: crds
+    ns: cluster
+    source: platform/gateway-api/
+    notes: Gateway API CRDs v1.6.0
+  - app: platform-agentgateway-crds
+    kind: core
+    kindLabel: crds
+    ns: agentgateway-system
+    source: oci agentgateway-crds 1.4.1
+    notes: agentgateway CRDs
+  - app: platform-agentgateway
+    kind: ui
+    kindLabel: ai
+    ns: agentgateway-system
+    source: platform/agentgateway/values.yaml
+    notes: control plane Helm 1.4.1
+  - app: platform-agentgateway-ai
+    kind: ui
+    kindLabel: ai
+    ns: agentgateway-system
+    source: platform/agentgateway-ai/
+    notes: "OpenAI routes · OTEL · :30100"
+  - app: platform-langfuse-secrets
+    kind: secret
+    kindLabel: secrets
+    ns: langfuse
+    source: platform/langfuse/
+    notes: ExternalSecret from Vault
+  - app: platform-langfuse
+    kind: ui
+    kindLabel: ai
+    ns: langfuse
+    source: platform/langfuse/values.yaml
+    notes: "Langfuse 1.5.41 + ClickHouse · :30300"
 
 namespaces:
   - ns: argocd
@@ -152,6 +223,10 @@ namespaces:
     purpose: External Secrets Operator
   - ns: headlamp
     purpose: Kubernetes dashboard UI
+  - ns: agentgateway-system
+    purpose: agentgateway control plane + OpenAI proxy + OTEL collector
+  - ns: langfuse
+    purpose: Langfuse + Postgres/Redis/ClickHouse/MinIO
   - ns: apps
     purpose: Demo / user workloads (whoami)
   - ns: kube-system
@@ -167,6 +242,10 @@ ingress:
   - host: headlamp.viper.local
     target: headlamp Service
     ns: headlamp
+    class: traefik
+  - host: langfuse.viper.local
+    target: langfuse web
+    ns: langfuse
     class: traefik
 
 ports:
@@ -185,9 +264,26 @@ ports:
   - port: "30200"
     service: Vault UI / API
     how: "NodePort (`vault-ui`)"
+  - port: "30100"
+    service: agentgateway OpenAI proxy
+    how: "NodePort (`agentgateway-proxy-nodeport`)"
+  - port: "30300"
+    service: Langfuse UI
+    how: "NodePort (langfuse web service)"
   - port: "6443"
     service: Kubernetes API
     how: k3s on node (kubeconfig)
+
+vault_paths:
+  - path: secret/platform/openai
+    fields: api_key
+    used_by: agentgateway ExternalSecret
+  - path: secret/platform/langfuse
+    fields: salt, encryption_key, nextauth_secret, DB passwords
+    used_by: Langfuse ExternalSecret
+  - path: secret/platform/langfuse-otel
+    fields: public_key, secret_key, endpoint
+    used_by: OTEL collector → Langfuse
 
 bootstrap_env:
   - name: REPO_URL
@@ -219,6 +315,15 @@ versions:
   - name: Headlamp Helm chart
     pin: "0.44.0"
     where: argocd/apps/platform-headlamp.yaml
+  - name: agentgateway / CRDs
+    pin: "1.4.1"
+    where: argocd/apps/platform-agentgateway*.yaml
+  - name: Langfuse Helm chart
+    pin: "1.5.41"
+    where: argocd/apps/platform-langfuse.yaml
+  - name: Gateway API CRDs
+    pin: v1.6.0
+    where: platform/gateway-api/
   - name: whoami image
     pin: traefik/whoami:v1.10.2
     where: platform/ingress/whoami.yaml
@@ -244,6 +349,14 @@ layout:
     role: Headlamp Helm values
   - path: platform/argocd-access/
     role: Argo CD UI NodePort Service
+  - path: platform/gateway-api/
+    role: Gateway API CRDs
+  - path: platform/agentgateway/
+    role: agentgateway control plane values
+  - path: platform/agentgateway-ai/
+    role: OpenAI Gateway, routes, OTEL
+  - path: platform/langfuse/
+    role: Langfuse Helm + ExternalSecret
   - path: apps/
     role: User workloads
   - path: docs/
@@ -264,26 +377,30 @@ out_of_scope:
     why: GitOps pull via Argo only
   - item: Cloud KMS auto-unseal
     why: Manual unseal for v1
-  - item: kgateway / Gateway API as primary edge
-    why: Traefik is k3s default; see docs/why-traefik.md
+  - item: kgateway as primary cluster Ingress
+    why: Traefik is k3s default; agentgateway is AI data plane only
 
 troubleshooting:
   - symptom: Applications stuck Unknown
-    check: Repo URL reachable from cluster; argocd-repo-server logs
+    check: Repo URL / OCI chart reachable; argocd-repo-server logs
   - symptom: Project errors
-    check: kubectl -n argocd get appproject viper
+    check: appproject viper sourceRepos + destinations
   - symptom: whoami 404
     check: Host header / /etc/hosts; kubectl -n apps get ingress,pods
   - symptom: Headlamp 404 / no UI
-    check: "http://<node-ip>:30080/; kubectl -n headlamp get pods,svc,ingress"
+    check: "http://<node-ip>:30080/; Docker published ports"
   - symptom: Headlamp token rejected
     check: Create a fresh SA token — docs/headlamp.md
   - symptom: Argo UI unreachable
     check: svc argocd-server-nodeport; app platform-argocd-access
-  - symptom: Vault UI unreachable
-    check: svc vault-ui; init + unseal first
-  - symptom: Vault not ready
-    check: Normal until init+unseal — vault-eso-setup.md
+  - symptom: Vault sealed / UI down
+    check: unseal helper; docs/vault-eso-setup.md
+  - symptom: ClusterSecretStore not Ready
+    check: Vault unsealed + k8s auth role external-secrets
+  - symptom: agentgateway OpenAI 401/404 model
+    check: Vault openai key; use gpt-5.5 or gpt-5-mini
+  - symptom: Langfuse ImagePullBackOff
+    check: Cluster egress/DNS to Docker Hub
   - symptom: Re-run bootstrap
     check: "Safe: skips k3s if healthy; re-applies Argo + root app"
 
@@ -292,15 +409,17 @@ docs:
     url: https://github.com/sebbycorp/k8s-viper
   - name: README
     url: https://github.com/sebbycorp/k8s-viper/blob/main/README.md
-  - name: UI access runbook
+  - name: UI access (all ports)
     url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/platform-ui-access.md
   - name: Headlamp
     url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/headlamp.md
   - name: Vault + ESO
     url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/vault-eso-setup.md
+  - name: agentgateway + Langfuse
+    url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/agentgateway-langfuse.md
+  - name: Why Traefik (not kgateway)
+    url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/why-traefik.md
   - name: Design spec
     url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md
   - name: Hugo site source
     url: https://github.com/sebbycorp/k8s-viper/tree/main/site
-  - name: Why Traefik (not kgateway)
-    url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/why-traefik.md

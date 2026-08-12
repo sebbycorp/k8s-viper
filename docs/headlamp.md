@@ -37,7 +37,8 @@ kubectl -n headlamp get sa
 kubectl -n headlamp create token <sa-name> --duration=12h
 ```
 
-Port map for all platform UIs: [docs/platform-ui-access.md](platform-ui-access.md).
+Port map for all platform UIs (including agentgateway and Langfuse):
+[platform-ui-access.md](platform-ui-access.md).
 
 ## Security notes
 

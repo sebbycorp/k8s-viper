@@ -262,7 +262,7 @@ main { padding: 2.25rem 2.25rem 5rem; max-width: 900px; }
 
 .quick-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 0.85rem;
   margin: 1.75rem 0 0;
 }
