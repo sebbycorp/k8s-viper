@@ -4,305 +4,476 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>k8s-viper · environment handbook</title>
-  <meta name="description" content="Full handbook for the k8s-viper single-node k3s GitOps lab — TOC, architecture, UIs, apps, secrets, versions, day-2 ops." />
+  <meta name="description" content="Beautiful handbook for the k8s-viper single-node k3s GitOps lab." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #0b0f14;
-      --bg-elev: #121820;
-      --bg-soft: #0e141c;
-      --border: #1e2a38;
-      --border-strong: #2a3b4f;
-      --text: #e6edf5;
-      --muted: #8b9bb0;
-      --dim: #5c6b7e;
-      --accent: #3dd68c;
-      --accent-dim: rgba(61, 214, 140, 0.12);
-      --warn: #f0b429;
-      --link: #6cb6ff;
-      --purple: #c3a6ff;
-      --radius: 12px;
-      --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
-      --font: "IBM Plex Sans", system-ui, sans-serif;
-      --mono: "IBM Plex Mono", ui-monospace, monospace;
-      --toc-w: 240px;
+      --bg: #070a0e;
+      --bg-2: #0c1118;
+      --surface: rgba(18, 24, 33, 0.72);
+      --surface-solid: #121820;
+      --surface-hover: rgba(28, 38, 52, 0.55);
+      --border: rgba(148, 163, 184, 0.1);
+      --border-strong: rgba(148, 163, 184, 0.18);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --dim: #64748b;
+      --green: #34d399;
+      --green-soft: rgba(52, 211, 153, 0.12);
+      --green-glow: rgba(52, 211, 153, 0.35);
+      --blue: #60a5fa;
+      --blue-soft: rgba(96, 165, 250, 0.12);
+      --amber: #fbbf24;
+      --amber-soft: rgba(251, 191, 36, 0.12);
+      --violet: #a78bfa;
+      --violet-soft: rgba(167, 139, 250, 0.12);
+      --rose: #fb7185;
+      --rose-soft: rgba(251, 113, 133, 0.1);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --font: "DM Sans", system-ui, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, monospace;
+      --toc: 260px;
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--border);
+      --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.4);
     }
 
     * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; scroll-padding-top: 1.25rem; }
+    html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
     body {
       margin: 0;
       min-height: 100vh;
       font-family: var(--font);
       color: var(--text);
-      background:
-        radial-gradient(1200px 600px at 10% -10%, rgba(61, 214, 140, 0.07), transparent 55%),
-        radial-gradient(900px 500px at 100% 0%, rgba(108, 182, 255, 0.06), transparent 50%),
-        var(--bg);
-      line-height: 1.55;
+      background: var(--bg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
 
-    a { color: var(--link); text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    /* ambient background */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(52, 211, 153, 0.14), transparent 50%),
+        radial-gradient(ellipse 60% 40% at 90% 10%, rgba(96, 165, 250, 0.1), transparent 45%),
+        radial-gradient(ellipse 50% 30% at 50% 100%, rgba(167, 139, 250, 0.06), transparent 50%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+      pointer-events: none;
+    }
+
+    a { color: var(--blue); text-decoration: none; transition: color 0.15s; }
+    a:hover { color: #93c5fd; }
 
     .shell {
       display: grid;
-      grid-template-columns: var(--toc-w) minmax(0, 1fr);
-      gap: 0;
-      width: min(1280px, 100%);
+      grid-template-columns: var(--toc) minmax(0, 1fr);
+      width: min(1320px, 100%);
       margin: 0 auto;
       min-height: 100vh;
     }
 
-    /* —— TOC —— */
+    /* ─── TOC ─── */
     .toc-panel {
       position: sticky;
       top: 0;
-      align-self: start;
       height: 100vh;
       overflow-y: auto;
       padding: 1.5rem 1rem 2rem 1.25rem;
       border-right: 1px solid var(--border);
-      background: rgba(11, 15, 20, 0.92);
-      backdrop-filter: blur(8px);
+      background: rgba(7, 10, 14, 0.75);
+      backdrop-filter: blur(16px);
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-strong) transparent;
     }
 
     .toc-brand {
       display: flex;
       align-items: center;
-      gap: 0.65rem;
-      margin-bottom: 1.25rem;
-      padding-bottom: 1rem;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding: 0.25rem 0.25rem 1.25rem;
       border-bottom: 1px solid var(--border);
     }
 
     .logo {
-      width: 36px;
-      height: 36px;
-      border-radius: 9px;
-      background: linear-gradient(145deg, #1a2e24, #0f1a14);
-      border: 1px solid rgba(61, 214, 140, 0.35);
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #0f2920, #0a1612);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      box-shadow: 0 0 20px rgba(52, 211, 153, 0.15), inset 0 1px 0 rgba(255,255,255,0.05);
       display: grid;
       place-items: center;
       font-family: var(--mono);
       font-weight: 600;
-      color: var(--accent);
-      font-size: 0.78rem;
+      color: var(--green);
+      font-size: 0.8rem;
       flex-shrink: 0;
     }
 
     .toc-brand h1 {
       margin: 0;
-      font-size: 0.95rem;
-      letter-spacing: -0.02em;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
     }
 
     .toc-brand p {
-      margin: 0.1rem 0 0;
-      font-size: 0.7rem;
+      margin: 0.15rem 0 0;
+      font-size: 0.72rem;
       color: var(--dim);
+      letter-spacing: 0.02em;
     }
 
     .toc-label {
-      font-size: 0.68rem;
+      font-size: 0.65rem;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
       color: var(--dim);
-      margin: 0 0 0.5rem;
+      margin: 0 0 0.65rem 0.35rem;
     }
 
-    .toc {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: grid;
-      gap: 0.15rem;
-    }
+    .toc { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
 
     .toc a {
-      display: block;
-      padding: 0.35rem 0.55rem;
-      border-radius: 6px;
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      padding: 0.42rem 0.65rem;
+      border-radius: 8px;
       color: var(--muted);
-      font-size: 0.82rem;
+      font-size: 0.84rem;
+      font-weight: 500;
       text-decoration: none;
-      border-left: 2px solid transparent;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .toc a .num {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--dim);
+      min-width: 1.2rem;
     }
 
     .toc a:hover {
       color: var(--text);
-      background: rgba(255, 255, 255, 0.03);
-      text-decoration: none;
+      background: var(--surface-hover);
     }
 
     .toc a.active {
-      color: var(--accent);
-      background: var(--accent-dim);
-      border-left-color: var(--accent);
-      font-weight: 500;
+      color: var(--green);
+      background: var(--green-soft);
     }
 
+    .toc a.active .num { color: var(--green); }
+
     .toc .sub a {
-      padding-left: 1.1rem;
+      padding-left: 1.85rem;
       font-size: 0.78rem;
+      font-weight: 400;
       color: var(--dim);
     }
 
     .toc-foot {
-      margin-top: 1.5rem;
-      padding-top: 1rem;
+      margin-top: 1.75rem;
+      padding: 1rem 0.5rem 0;
       border-top: 1px solid var(--border);
-      font-size: 0.72rem;
+      font-size: 0.75rem;
       color: var(--dim);
       display: grid;
-      gap: 0.4rem;
+      gap: 0.5rem;
     }
 
-    /* —— Main —— */
-    main {
-      padding: 2rem 1.75rem 4rem;
-      max-width: 920px;
+    .toc-foot a { color: var(--muted); }
+    .toc-foot a:hover { color: var(--green); }
+
+    /* ─── Main ─── */
+    main { padding: 2.25rem 2.25rem 5rem; max-width: 900px; }
+
+    .hero {
+      position: relative;
+      margin-bottom: 0.5rem;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--green);
+      background: var(--green-soft);
+      border: 1px solid rgba(52, 211, 153, 0.25);
+      border-radius: 999px;
+      padding: 0.3rem 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green-glow);
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
     }
 
     .hero h2 {
       margin: 0;
-      font-size: clamp(1.65rem, 3vw, 2.15rem);
-      letter-spacing: -0.03em;
+      font-size: clamp(2rem, 4vw, 2.65rem);
       font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
 
     .hero .lede {
-      margin: 0.6rem 0 0;
+      margin: 0.9rem 0 0;
       color: var(--muted);
-      font-size: 1.02rem;
-      max-width: 58ch;
+      font-size: 1.08rem;
+      max-width: 48ch;
+      line-height: 1.65;
     }
 
     .pills {
       display: flex;
       flex-wrap: wrap;
       gap: 0.45rem;
-      margin-top: 1rem;
+      margin-top: 1.25rem;
     }
 
     .pill {
       font-family: var(--mono);
       font-size: 0.7rem;
       font-weight: 500;
-      padding: 0.28rem 0.6rem;
+      padding: 0.32rem 0.7rem;
       border-radius: 999px;
       border: 1px solid var(--border-strong);
-      background: var(--bg-elev);
+      background: var(--surface);
       color: var(--muted);
+      backdrop-filter: blur(8px);
     }
 
     .pill.ok {
-      color: var(--accent);
-      border-color: rgba(61, 214, 140, 0.35);
-      background: var(--accent-dim);
+      color: var(--green);
+      border-color: rgba(52, 211, 153, 0.3);
+      background: var(--green-soft);
     }
 
+    /* quick access cards */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.85rem;
+      margin: 1.75rem 0 0;
+    }
+
+    .quick-card {
+      display: block;
+      padding: 1.1rem 1.15rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      text-decoration: none;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+      color: inherit;
+    }
+
+    .quick-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-strong);
+      box-shadow: var(--shadow-lg);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .quick-card .qc-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .quick-card.headlamp .qc-icon { background: var(--green-soft); }
+    .quick-card.argocd .qc-icon { background: var(--blue-soft); }
+    .quick-card.vault .qc-icon { background: var(--violet-soft); }
+
+    .quick-card .qc-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.2rem;
+    }
+
+    .quick-card .qc-url {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--dim);
+      word-break: break-all;
+    }
+
+    .quick-card .qc-port {
+      display: inline-block;
+      margin-top: 0.55rem;
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--muted);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      padding: 0.15rem 0.45rem;
+      border-radius: 6px;
+    }
+
+    /* node IP bar */
     .controls {
       display: flex;
       flex-wrap: wrap;
       gap: 0.75rem;
       align-items: end;
       margin-top: 1.25rem;
-      padding: 1rem 1.1rem;
-      background: var(--bg-elev);
+      padding: 1rem 1.15rem;
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
+      backdrop-filter: blur(12px);
       box-shadow: var(--shadow);
     }
 
     label {
       display: grid;
-      gap: 0.3rem;
-      font-size: 0.75rem;
+      gap: 0.35rem;
+      font-size: 0.72rem;
       color: var(--muted);
-      font-weight: 500;
+      font-weight: 600;
+      letter-spacing: 0.02em;
     }
 
     input[type="text"] {
       font-family: var(--mono);
       font-size: 0.88rem;
       color: var(--text);
-      background: var(--bg);
+      background: rgba(0, 0, 0, 0.35);
       border: 1px solid var(--border-strong);
       border-radius: 8px;
-      padding: 0.5rem 0.7rem;
-      min-width: min(260px, 65vw);
+      padding: 0.55rem 0.75rem;
+      min-width: min(260px, 60vw);
       outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
     input[type="text"]:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px var(--accent-dim);
+      border-color: rgba(52, 211, 153, 0.5);
+      box-shadow: 0 0 0 3px var(--green-soft);
     }
 
     .btn {
       font-family: var(--font);
       font-weight: 600;
-      font-size: 0.82rem;
-      border: 1px solid rgba(61, 214, 140, 0.4);
-      background: var(--accent-dim);
-      color: var(--accent);
+      font-size: 0.84rem;
+      border: none;
+      background: linear-gradient(135deg, #34d399, #10b981);
+      color: #042f1e;
       border-radius: 8px;
-      padding: 0.5rem 0.85rem;
+      padding: 0.55rem 1rem;
       cursor: pointer;
+      transition: filter 0.15s, transform 0.1s;
     }
 
-    .btn:hover { filter: brightness(1.1); }
+    .btn:hover { filter: brightness(1.08); }
+    .btn:active { transform: scale(0.98); }
+
     .btn.ghost {
       background: transparent;
-      border-color: var(--border-strong);
+      border: 1px solid var(--border-strong);
       color: var(--muted);
     }
+
+    .btn.ghost:hover { color: var(--text); background: var(--surface-hover); }
 
     .hint {
       font-size: 0.76rem;
       color: var(--dim);
-      flex: 1 1 180px;
+      flex: 1 1 160px;
       margin: 0;
+      line-height: 1.45;
     }
 
+    /* sections */
     section {
-      margin-top: 2.5rem;
-      scroll-margin-top: 1.25rem;
+      margin-top: 3rem;
+      scroll-margin-top: 1.5rem;
     }
 
-    section > h2 {
-      margin: 0 0 0.35rem;
-      font-size: 1.25rem;
-      letter-spacing: -0.02em;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--border);
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.65rem;
     }
 
-    section > h3 {
-      margin: 1.4rem 0 0.5rem;
-      font-size: 1rem;
-      color: var(--text);
+    .section-num {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--green);
+      background: var(--green-soft);
+      border: 1px solid rgba(52, 211, 153, 0.2);
+      border-radius: 8px;
+      padding: 0.25rem 0.5rem;
+      letter-spacing: 0.02em;
+    }
+
+    section > h2, .section-head h2 {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
     }
 
     .lead {
-      margin: 0.5rem 0 1rem;
+      margin: 0 0 1.15rem;
       color: var(--muted);
-      font-size: 0.92rem;
+      font-size: 0.95rem;
+      max-width: 62ch;
     }
 
-    p, li { color: var(--text); }
-    .muted { color: var(--muted); }
-    .dim { color: var(--dim); }
+    section h3 {
+      margin: 1.6rem 0 0.6rem;
+      font-size: 1.02rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
 
+    /* cards & tables */
     .card {
-      background: var(--bg-elev);
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
+      backdrop-filter: blur(12px);
       box-shadow: var(--shadow);
     }
 
@@ -311,12 +482,12 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.88rem;
+      font-size: 0.875rem;
     }
 
     th, td {
       text-align: left;
-      padding: 0.7rem 0.95rem;
+      padding: 0.8rem 1.05rem;
       border-bottom: 1px solid var(--border);
       vertical-align: top;
     }
@@ -324,35 +495,37 @@
     th {
       font-size: 0.68rem;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.07em;
       color: var(--dim);
       font-weight: 600;
-      background: rgba(0, 0, 0, 0.22);
+      background: rgba(0, 0, 0, 0.25);
       white-space: nowrap;
     }
 
     tr:last-child td { border-bottom: none; }
+    tbody tr { transition: background 0.12s; }
     tbody tr:hover td { background: rgba(255, 255, 255, 0.02); }
 
-    .mono, code, pre, .url { font-family: var(--mono); }
+    .mono, code, pre { font-family: var(--mono); }
     code {
-      font-size: 0.84em;
-      background: rgba(255, 255, 255, 0.04);
+      font-size: 0.82em;
+      background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
-      padding: 0.08rem 0.32rem;
-      border-radius: 4px;
+      padding: 0.1rem 0.35rem;
+      border-radius: 5px;
+      color: #e2e8f0;
     }
 
     pre {
-      margin: 0.75rem 0;
-      padding: 0.9rem 1rem;
-      background: var(--bg-soft);
+      margin: 0.85rem 0;
+      padding: 1.05rem 1.15rem;
+      background: rgba(0, 0, 0, 0.4);
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       overflow-x: auto;
-      font-size: 0.8rem;
-      line-height: 1.5;
-      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.65;
+      color: #94a3b8;
     }
 
     pre code {
@@ -363,90 +536,128 @@
       color: inherit;
     }
 
-    .url a { word-break: break-all; }
+    .url a { word-break: break-all; font-size: 0.84em; }
 
     .badge {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
       font-family: var(--mono);
-      font-size: 0.68rem;
-      font-weight: 500;
-      padding: 0.12rem 0.42rem;
+      font-size: 0.66rem;
+      font-weight: 600;
+      padding: 0.18rem 0.5rem;
       border-radius: 999px;
-      border: 1px solid var(--border-strong);
-      color: var(--muted);
+      letter-spacing: 0.02em;
       white-space: nowrap;
     }
 
-    .badge.ui { color: var(--accent); border-color: rgba(61, 214, 140, 0.35); background: var(--accent-dim); }
-    .badge.ingress { color: var(--link); border-color: rgba(108, 182, 255, 0.3); background: rgba(108, 182, 255, 0.1); }
-    .badge.core { color: var(--warn); border-color: rgba(240, 180, 41, 0.35); background: rgba(240, 180, 41, 0.1); }
-    .badge.secret { color: var(--purple); border-color: rgba(195, 166, 255, 0.3); background: rgba(195, 166, 255, 0.1); }
-    .badge.demo { color: #7dd3fc; border-color: rgba(125, 211, 252, 0.3); background: rgba(125, 211, 252, 0.08); }
+    .badge.ui { color: var(--green); background: var(--green-soft); border: 1px solid rgba(52, 211, 153, 0.25); }
+    .badge.ingress { color: var(--blue); background: var(--blue-soft); border: 1px solid rgba(96, 165, 250, 0.25); }
+    .badge.core { color: var(--amber); background: var(--amber-soft); border: 1px solid rgba(251, 191, 36, 0.25); }
+    .badge.secret { color: var(--violet); background: var(--violet-soft); border: 1px solid rgba(167, 139, 250, 0.25); }
+    .badge.demo { color: #7dd3fc; background: rgba(125, 211, 252, 0.1); border: 1px solid rgba(125, 211, 252, 0.25); }
 
     .grid-2 {
       display: grid;
-      gap: 0.85rem;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     }
 
     .stat {
-      padding: 0.9rem 1rem;
-      background: var(--bg-elev);
+      padding: 1rem 1.1rem;
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--radius-sm);
+      backdrop-filter: blur(8px);
+      transition: border-color 0.15s;
     }
 
+    .stat:hover { border-color: var(--border-strong); }
+
     .stat .k {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       color: var(--dim);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       font-weight: 600;
     }
 
     .stat .v {
-      margin-top: 0.2rem;
+      margin-top: 0.3rem;
       font-family: var(--mono);
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: 500;
+      letter-spacing: -0.01em;
     }
 
     .callout {
       margin: 1rem 0;
-      padding: 0.85rem 1rem;
-      border-radius: 10px;
-      border: 1px solid rgba(240, 180, 41, 0.3);
-      background: rgba(240, 180, 41, 0.08);
+      padding: 0.95rem 1.1rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(251, 191, 36, 0.25);
+      background: var(--amber-soft);
       color: var(--muted);
-      font-size: 0.88rem;
+      font-size: 0.9rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
     }
 
-    .callout strong { color: var(--warn); }
-
-    .callout.danger {
-      border-color: rgba(240, 113, 120, 0.35);
-      background: rgba(240, 113, 120, 0.08);
+    .callout::before {
+      content: "✦";
+      color: var(--amber);
+      flex-shrink: 0;
+      margin-top: 0.1rem;
     }
 
-    .callout.danger strong { color: #f07178; }
+    .callout strong { color: var(--amber); font-weight: 600; }
 
     .callout.ok {
-      border-color: rgba(61, 214, 140, 0.3);
-      background: var(--accent-dim);
+      border-color: rgba(52, 211, 153, 0.25);
+      background: var(--green-soft);
+    }
+    .callout.ok::before { content: "✓"; color: var(--green); }
+    .callout.ok strong { color: var(--green); }
+
+    .callout.danger {
+      border-color: rgba(251, 113, 133, 0.3);
+      background: var(--rose-soft);
+    }
+    .callout.danger::before { content: "!"; color: var(--rose); font-weight: 700; }
+    .callout.danger strong { color: var(--rose); }
+
+    ul.clean, ol.clean {
+      margin: 0.5rem 0 0.9rem;
+      padding-left: 1.25rem;
     }
 
-    .callout.ok strong { color: var(--accent); }
-
-    ul.clean {
-      margin: 0.4rem 0 0.8rem;
-      padding-left: 1.2rem;
+    ul.clean li, ol.clean li {
+      margin: 0.4rem 0;
+      color: var(--muted);
     }
 
-    ul.clean li { margin: 0.3rem 0; }
+    ul.clean li strong, ol.clean li strong { color: var(--text); }
+
+    .arch-box {
+      padding: 1.15rem 1.25rem;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow-x: auto;
+    }
+
+    .arch-box pre {
+      margin: 0;
+      padding: 0;
+      background: none;
+      border: none;
+      color: #86efac;
+      font-size: 0.8rem;
+      line-height: 1.7;
+    }
 
     footer {
-      margin-top: 3rem;
-      padding-top: 1.25rem;
+      margin-top: 3.5rem;
+      padding-top: 1.5rem;
       border-top: 1px solid var(--border);
       color: var(--dim);
       font-size: 0.8rem;
@@ -454,51 +665,62 @@
       flex-wrap: wrap;
       gap: 0.75rem 1.5rem;
       justify-content: space-between;
+      align-items: center;
     }
+
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--green); }
 
     .toc-toggle {
       display: none;
       position: fixed;
-      bottom: 1rem;
-      right: 1rem;
+      bottom: 1.25rem;
+      right: 1.25rem;
       z-index: 50;
+      font-family: var(--font);
       font-weight: 600;
-      font-size: 0.85rem;
-      padding: 0.65rem 1rem;
+      font-size: 0.88rem;
+      padding: 0.75rem 1.15rem;
       border-radius: 999px;
-      border: 1px solid rgba(61, 214, 140, 0.4);
-      background: #0f1a14;
-      color: var(--accent);
-      box-shadow: var(--shadow);
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      background: #0a1612;
+      color: var(--green);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 20px rgba(52, 211, 153, 0.1);
       cursor: pointer;
     }
 
-    @media (max-width: 900px) {
+    @media (max-width: 960px) {
       .shell { grid-template-columns: 1fr; }
       .toc-panel {
         position: fixed;
         inset: 0 auto 0 0;
-        width: min(280px, 86vw);
+        width: min(300px, 88vw);
         z-index: 40;
         transform: translateX(-105%);
-        transition: transform 0.2s ease;
-        box-shadow: var(--shadow);
+        transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+        box-shadow: var(--shadow-lg);
       }
       body.toc-open .toc-panel { transform: translateX(0); }
       body.toc-open::after {
         content: "";
         position: fixed;
         inset: 0;
-        background: rgba(0, 0, 0, 0.45);
+        background: rgba(0, 0, 0, 0.55);
         z-index: 30;
+        backdrop-filter: blur(2px);
       }
       .toc-toggle { display: block; }
-      main { padding: 1.25rem 1rem 5rem; }
+      main { padding: 1.5rem 1.15rem 5.5rem; }
+      .quick-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 520px) {
+      .hero h2 { font-size: 1.75rem; }
     }
   </style>
 </head>
 <body>
-  <button type="button" class="toc-toggle" id="toc-toggle" aria-expanded="false">Contents</button>
+  <button type="button" class="toc-toggle" id="toc-toggle" aria-expanded="false">☰ Contents</button>
 
   <div class="shell">
     <aside class="toc-panel" id="toc-panel" aria-label="Table of contents">
@@ -509,43 +731,44 @@
           <p>environment handbook</p>
         </div>
       </div>
-      <p class="toc-label">Table of contents</p>
+      <p class="toc-label">Contents</p>
       <nav>
         <ul class="toc" id="toc-list">
-          <li><a href="#overview">1. Overview</a></li>
-          <li><a href="#architecture">2. Architecture</a></li>
-          <li><a href="#quick-facts">3. Quick facts</a></li>
-          <li><a href="#ui-access">4. UI access</a></li>
-          <li class="sub"><a href="#auth-commands">4.1 Auth commands</a></li>
-          <li><a href="#platform-apps">5. Platform apps</a></li>
-          <li><a href="#namespaces">6. Namespaces</a></li>
-          <li><a href="#ingress">7. Ingress hosts</a></li>
-          <li><a href="#network">8. Network &amp; ports</a></li>
-          <li><a href="#bootstrap">9. Bootstrap</a></li>
-          <li><a href="#day2">10. Day-2 GitOps</a></li>
-          <li><a href="#secrets">11. Secrets (Vault + ESO)</a></li>
-          <li><a href="#versions">12. Versions</a></li>
-          <li><a href="#repo-layout">13. Repo layout</a></li>
-          <li><a href="#security">14. Security notes</a></li>
-          <li><a href="#out-of-scope">15. Out of scope (v1)</a></li>
-          <li><a href="#troubleshooting">16. Troubleshooting</a></li>
-          <li><a href="#docs">17. Docs &amp; links</a></li>
+          <li><a href="#overview"><span class="num">01</span> Overview</a></li>
+          <li><a href="#architecture"><span class="num">02</span> Architecture</a></li>
+          <li><a href="#quick-facts"><span class="num">03</span> Quick facts</a></li>
+          <li><a href="#ui-access"><span class="num">04</span> UI access</a></li>
+          <li class="sub"><a href="#auth-commands"><span class="num"></span> Auth commands</a></li>
+          <li><a href="#platform-apps"><span class="num">05</span> Platform apps</a></li>
+          <li><a href="#namespaces"><span class="num">06</span> Namespaces</a></li>
+          <li><a href="#ingress"><span class="num">07</span> Ingress hosts</a></li>
+          <li><a href="#network"><span class="num">08</span> Network &amp; ports</a></li>
+          <li><a href="#bootstrap"><span class="num">09</span> Bootstrap</a></li>
+          <li><a href="#day2"><span class="num">10</span> Day-2 GitOps</a></li>
+          <li><a href="#secrets"><span class="num">11</span> Secrets</a></li>
+          <li><a href="#versions"><span class="num">12</span> Versions</a></li>
+          <li><a href="#repo-layout"><span class="num">13</span> Repo layout</a></li>
+          <li><a href="#security"><span class="num">14</span> Security</a></li>
+          <li><a href="#out-of-scope"><span class="num">15</span> Out of scope</a></li>
+          <li><a href="#troubleshooting"><span class="num">16</span> Troubleshooting</a></li>
+          <li><a href="#docs"><span class="num">17</span> Docs &amp; links</a></li>
         </ul>
       </nav>
       <div class="toc-foot">
-        <a href="https://github.com/sebbycorp/k8s-viper">GitHub repo</a>
-        <a href="https://github.com/sebbycorp/k8s-viper/blob/main/README.md">README</a>
-        <span>Static page · not live cluster status</span>
+        <a href="https://github.com/sebbycorp/k8s-viper">→ GitHub repository</a>
+        <a href="https://github.com/sebbycorp/k8s-viper/blob/main/README.md">→ README</a>
+        <span>Static handbook · not live status</span>
       </div>
     </aside>
 
     <main>
       <header class="hero" id="top">
+        <div class="eyebrow">Single-node GitOps lab</div>
         <h2>k8s-viper environment</h2>
         <p class="lede">
-          Single-node <strong>k3s</strong> lab managed with <strong>Argo CD</strong> GitOps.
-          This page is the full map of the environment: how it’s built, what’s deployed,
-          how you reach every UI, and how day-2 changes flow.
+          A single-node <strong style="color:var(--text)">k3s</strong> powerhouse managed with
+          <strong style="color:var(--text)">Argo CD</strong>. Everything after bootstrap lives in git —
+          this page is the full map of the lab.
         </p>
         <div class="pills">
           <span class="pill ok">k3s v1.32</span>
@@ -556,32 +779,34 @@
           <span class="pill">Traefik</span>
         </div>
 
+        <div class="quick-grid" id="quick-grid"></div>
+
         <div class="controls">
           <label>
-            Node IP (rewrites UI links below)
+            Node IP
             <input id="node-ip" type="text" spellcheck="false" placeholder="e.g. 172.17.0.2" autocomplete="off" />
           </label>
           <button type="button" class="btn" id="save-ip">Save</button>
           <button type="button" class="btn ghost" id="reset-ip">Reset</button>
           <p class="hint">
-            Stored in this browser only.
+            Rewrites UI links below. Stored only in this browser.<br />
             <code>kubectl get nodes -o wide</code>
           </p>
         </div>
       </header>
 
-      <!-- 1 -->
       <section id="overview">
-        <h2>1. Overview</h2>
+        <div class="section-head">
+          <span class="section-num">01</span>
+          <h2>Overview</h2>
+        </div>
         <p class="lead">
-          <strong>k8s-viper</strong> is a powerhouse-style single-node Kubernetes box.
+          <strong style="color:var(--text)">k8s-viper</strong> is a lab-grade single-node Kubernetes box.
           Bootstrap once; everything after that is git → Argo CD.
         </p>
         <div class="card table-wrap">
           <table>
-            <thead>
-              <tr><th>Concern</th><th>Choice</th></tr>
-            </thead>
+            <thead><tr><th>Concern</th><th>Choice</th></tr></thead>
             <tbody>
               <tr><td>Cluster</td><td>k3s, one node (control-plane + worker)</td></tr>
               <tr><td>Bootstrap</td><td><code>scripts/bootstrap.sh</code> (once / idempotent)</td></tr>
@@ -597,11 +822,14 @@
         </div>
       </section>
 
-      <!-- 2 -->
       <section id="architecture">
-        <h2>2. Architecture</h2>
+        <div class="section-head">
+          <span class="section-num">02</span>
+          <h2>Architecture</h2>
+        </div>
         <p class="lead">Imperative install only for k3s + Argo + root app. Platform services are GitOps.</p>
-        <pre><code>bootstrap.sh  →  k3s + Argo CD + root Application
+        <div class="arch-box">
+          <pre><code>bootstrap.sh  →  k3s + Argo CD + root Application
                       ↓
               argocd/apps/*  (GitOps, auto-sync)
                       ↓
@@ -610,26 +838,33 @@
    Traefik :80/:443  +  NodePorts 30080 / 30443 / 30200
                       ↓
    apps/*  (your workloads later)</code></pre>
+        </div>
         <div class="callout ok">
-          <strong>Hard rule:</strong> never commit secrets. Values live in Vault; git holds
-          <code>ExternalSecret</code> paths only. Prefer PR → validate → merge over
-          <code>kubectl apply</code> for platform desired state.
+          <div>
+            <strong>Hard rule:</strong> never commit secrets. Values live in Vault; git holds
+            <code>ExternalSecret</code> paths only. Prefer PR → validate → merge over
+            <code>kubectl apply</code> for platform desired state.
+          </div>
         </div>
       </section>
 
-      <!-- 3 -->
       <section id="quick-facts">
-        <h2>3. Quick facts</h2>
-        <p class="lead">Typical lab node values. Your InternalIP may differ — set it above.</p>
+        <div class="section-head">
+          <span class="section-num">03</span>
+          <h2>Quick facts</h2>
+        </div>
+        <p class="lead">Typical lab node values. Set your InternalIP above if different.</p>
         <div class="grid-2" id="facts-grid"></div>
       </section>
 
-      <!-- 4 -->
       <section id="ui-access">
-        <h2>4. UI access</h2>
+        <div class="section-head">
+          <span class="section-num">04</span>
+          <h2>UI access</h2>
+        </div>
         <p class="lead">
           Fixed NodePorts for LAN access without port-forward.
-          Do <strong>not</strong> publish these to the public internet without TLS + real identity.
+          Keep these private — no public exposure without TLS and real identity.
         </p>
         <div class="card table-wrap">
           <table>
@@ -646,7 +881,7 @@
           </table>
         </div>
 
-        <h3 id="auth-commands">4.1 Auth commands</h3>
+        <h3 id="auth-commands">Auth commands</h3>
         <pre><code># Node IP
 kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}{"\n"}'
 
@@ -659,15 +894,17 @@ kubectl -n headlamp create token headlamp --duration=12h
 
 # Kubeconfig on the node
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml</code></pre>
-        <p class="muted">
+        <p class="lead" style="margin-top:0.5rem">
           Argo UI uses a self-signed cert — accept the browser warning.
-          Vault UI needs init + unseal first (see Secrets).
+          Vault UI needs init + unseal first.
         </p>
       </section>
 
-      <!-- 5 -->
       <section id="platform-apps">
-        <h2>5. Platform apps</h2>
+        <div class="section-head">
+          <span class="section-num">05</span>
+          <h2>Platform apps</h2>
+        </div>
         <p class="lead">Argo CD Applications. Watch with <code>kubectl -n argocd get applications</code>.</p>
         <div class="card table-wrap">
           <table>
@@ -685,23 +922,25 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml</code></pre>
         </div>
       </section>
 
-      <!-- 6 -->
       <section id="namespaces">
-        <h2>6. Namespaces</h2>
+        <div class="section-head">
+          <span class="section-num">06</span>
+          <h2>Namespaces</h2>
+        </div>
         <div class="card table-wrap">
           <table>
-            <thead>
-              <tr><th>Namespace</th><th>Purpose</th></tr>
-            </thead>
+            <thead><tr><th>Namespace</th><th>Purpose</th></tr></thead>
             <tbody id="ns-rows"></tbody>
           </table>
         </div>
       </section>
 
-      <!-- 7 -->
       <section id="ingress">
-        <h2>7. Ingress hosts</h2>
-        <p class="lead">Add hosts to laptop <code>/etc/hosts</code> pointing at the node IP, then use Traefik on :80.</p>
+        <div class="section-head">
+          <span class="section-num">07</span>
+          <h2>Ingress hosts</h2>
+        </div>
+        <p class="lead">Map hosts to the node IP in <code>/etc/hosts</code>, then hit Traefik on :80.</p>
         <pre><code>&lt;node-ip&gt;  whoami.viper.local headlamp.viper.local</code></pre>
         <div class="card table-wrap">
           <table>
@@ -714,14 +953,14 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml</code></pre>
         <pre><code>curl -H 'Host: whoami.viper.local' http://&lt;node-ip&gt;/</code></pre>
       </section>
 
-      <!-- 8 -->
       <section id="network">
-        <h2>8. Network &amp; ports</h2>
+        <div class="section-head">
+          <span class="section-num">08</span>
+          <h2>Network &amp; ports</h2>
+        </div>
         <div class="card table-wrap">
           <table>
-            <thead>
-              <tr><th>Port</th><th>Service</th><th>How</th></tr>
-            </thead>
+            <thead><tr><th>Port</th><th>Service</th><th>How</th></tr></thead>
             <tbody>
               <tr><td class="mono">80 / 443</td><td>Traefik ingress</td><td>LoadBalancer on node IP (k3s ServiceLB)</td></tr>
               <tr><td class="mono">30080</td><td>Headlamp</td><td>NodePort</td></tr>
@@ -732,28 +971,21 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml</code></pre>
             </tbody>
           </table>
         </div>
-        <p class="muted">
-          Change NodePorts in git:
-          Headlamp <code>platform/headlamp/values.yaml</code>,
-          Vault <code>platform/vault/values.yaml</code>,
-          Argo <code>platform/argocd-access/argocd-server-nodeport.yaml</code>
-          (range 30000–32767).
-        </p>
       </section>
 
-      <!-- 9 -->
       <section id="bootstrap">
-        <h2>9. Bootstrap</h2>
+        <div class="section-head">
+          <span class="section-num">09</span>
+          <h2>Bootstrap</h2>
+        </div>
         <p class="lead">Run on the target Linux node with outbound HTTPS.</p>
         <pre><code>git clone https://github.com/sebbycorp/k8s-viper.git
 cd k8s-viper
 sudo ./scripts/bootstrap.sh</code></pre>
-        <h3>Optional env</h3>
+        <h3>Optional environment</h3>
         <div class="card table-wrap">
           <table>
-            <thead>
-              <tr><th>Variable</th><th>Default</th><th>Meaning</th></tr>
-            </thead>
+            <thead><tr><th>Variable</th><th>Default</th><th>Meaning</th></tr></thead>
             <tbody>
               <tr><td class="mono">REPO_URL</td><td>this GitHub repo</td><td>GitOps source for Argo</td></tr>
               <tr><td class="mono">REPO_REVISION</td><td>main</td><td>Branch / tag / SHA</td></tr>
@@ -769,12 +1001,13 @@ sudo ./scripts/bootstrap.sh</code></pre>
 
 # Existing cluster:
 sudo INSTALL_K3S_SKIP=1 ./scripts/bootstrap.sh</code></pre>
-        <p class="muted">Bootstrap installs k3s, Argo CD, AppProject seed, and the root Application. Re-runs are safe.</p>
       </section>
 
-      <!-- 10 -->
       <section id="day2">
-        <h2>10. Day-2 GitOps</h2>
+        <div class="section-head">
+          <span class="section-num">10</span>
+          <h2>Day-2 GitOps</h2>
+        </div>
         <ol class="clean">
           <li>Edit manifests or Helm values on a branch.</li>
           <li>Open a PR — CI runs <code>scripts/validate.sh</code> (no cluster credentials).</li>
@@ -785,17 +1018,18 @@ sudo INSTALL_K3S_SKIP=1 ./scripts/bootstrap.sh</code></pre>
 kubectl -n argocd get applications</code></pre>
       </section>
 
-      <!-- 11 -->
       <section id="secrets">
-        <h2>11. Secrets (Vault + ESO)</h2>
+        <div class="section-head">
+          <span class="section-num">11</span>
+          <h2>Secrets (Vault + ESO)</h2>
+        </div>
         <p class="lead">
-          After Argo syncs <code>platform-vault</code> and <code>platform-external-secrets</code>,
-          init and unseal Vault once, then wire Kubernetes auth for ESO.
+          After Argo syncs Vault and External Secrets, init and unseal once, then wire
+          Kubernetes auth for ESO.
           Full runbook:
           <a href="https://github.com/sebbycorp/k8s-viper/blob/main/docs/vault-eso-setup.md">docs/vault-eso-setup.md</a>.
         </p>
-        <pre><code># Wait for pod
-kubectl -n vault get pods
+        <pre><code>kubectl -n vault get pods
 
 # Init once — store unseal keys + root token offline
 kubectl -n vault exec -it vault-0 -- vault operator init -key-shares=5 -key-threshold=3
@@ -803,46 +1037,50 @@ kubectl -n vault exec -it vault-0 -- vault operator init -key-shares=5 -key-thre
 # Unseal (3 of 5) after every pod restart until automated
 kubectl -n vault exec -it vault-0 -- vault operator unseal
 
-# UI (after unseal)
-# http://&lt;node-ip&gt;:30200/</code></pre>
+# UI after unseal → http://&lt;node-ip&gt;:30200/</code></pre>
         <div class="callout danger">
-          <strong>Never commit</strong> unseal keys, root tokens, or raw secret values.
-          Example store only: <code>platform/external-secrets/cluster-secret-store-vault.example.yaml</code>.
+          <div>
+            <strong>Never commit</strong> unseal keys, root tokens, or raw secret values.
+            Example store only:
+            <code>platform/external-secrets/cluster-secret-store-vault.example.yaml</code>.
+          </div>
         </div>
       </section>
 
-      <!-- 12 -->
       <section id="versions">
-        <h2>12. Versions (pinned)</h2>
+        <div class="section-head">
+          <span class="section-num">12</span>
+          <h2>Versions</h2>
+        </div>
         <div class="card table-wrap">
           <table>
-            <thead>
-              <tr><th>Component</th><th>Pin</th><th>Where</th></tr>
-            </thead>
+            <thead><tr><th>Component</th><th>Pin</th><th>Where</th></tr></thead>
             <tbody id="version-rows"></tbody>
           </table>
         </div>
       </section>
 
-      <!-- 13 -->
       <section id="repo-layout">
-        <h2>13. Repo layout</h2>
+        <div class="section-head">
+          <span class="section-num">13</span>
+          <h2>Repo layout</h2>
+        </div>
         <div class="card table-wrap">
           <table>
-            <thead>
-              <tr><th>Path</th><th>Role</th></tr>
-            </thead>
+            <thead><tr><th>Path</th><th>Role</th></tr></thead>
             <tbody id="layout-rows"></tbody>
           </table>
         </div>
       </section>
 
-      <!-- 14 -->
       <section id="security">
-        <h2>14. Security notes</h2>
+        <div class="section-head">
+          <span class="section-num">14</span>
+          <h2>Security notes</h2>
+        </div>
         <ul class="clean">
           <li>v1 lab assumes <strong>private LAN</strong> access to NodePorts and Traefik.</li>
-          <li>Headlamp chart binds <code>cluster-admin</code> for full lab visibility — tighten for multi-user.</li>
+          <li>Headlamp binds <code>cluster-admin</code> for full lab visibility — tighten for multi-user.</li>
           <li>Leave <code>config.unsafeUseServiceAccountToken</code> off unless behind a real auth proxy.</li>
           <li>Argo CD serves a self-signed TLS cert on the NodePort.</li>
           <li>Vault <code>tlsDisable: true</code> in chart values — fine for lab, not production.</li>
@@ -850,14 +1088,14 @@ kubectl -n vault exec -it vault-0 -- vault operator unseal
         </ul>
       </section>
 
-      <!-- 15 -->
       <section id="out-of-scope">
-        <h2>15. Out of scope (v1)</h2>
+        <div class="section-head">
+          <span class="section-num">15</span>
+          <h2>Out of scope (v1)</h2>
+        </div>
         <div class="card table-wrap">
           <table>
-            <thead>
-              <tr><th>Deferred</th><th>Why later</th></tr>
-            </thead>
+            <thead><tr><th>Deferred</th><th>Why later</th></tr></thead>
             <tbody>
               <tr><td>ngrok / public tunnels</td><td>Keep lab private first</td></tr>
               <tr><td>Multi-node / HA control plane</td><td>Single-node powerhouse focus</td></tr>
@@ -869,27 +1107,27 @@ kubectl -n vault exec -it vault-0 -- vault operator unseal
         </div>
       </section>
 
-      <!-- 16 -->
       <section id="troubleshooting">
-        <h2>16. Troubleshooting</h2>
+        <div class="section-head">
+          <span class="section-num">16</span>
+          <h2>Troubleshooting</h2>
+        </div>
         <div class="card table-wrap">
           <table>
-            <thead>
-              <tr><th>Symptom</th><th>Check</th></tr>
-            </thead>
+            <thead><tr><th>Symptom</th><th>Check</th></tr></thead>
             <tbody id="trouble-rows"></tbody>
           </table>
         </div>
       </section>
 
-      <!-- 17 -->
       <section id="docs">
-        <h2>17. Docs &amp; links</h2>
+        <div class="section-head">
+          <span class="section-num">17</span>
+          <h2>Docs &amp; links</h2>
+        </div>
         <div class="card table-wrap">
           <table>
-            <thead>
-              <tr><th>Resource</th><th>Link</th></tr>
-            </thead>
+            <thead><tr><th>Resource</th><th>Link</th></tr></thead>
             <tbody>
               <tr>
                 <td>Repository</td>
@@ -916,7 +1154,7 @@ kubectl -n vault exec -it vault-0 -- vault operator unseal
                 <td><a href="https://github.com/sebbycorp/k8s-viper/blob/main/docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md">design doc</a></td>
               </tr>
               <tr>
-                <td>This Pages site source</td>
+                <td>This site source</td>
                 <td><a href="https://github.com/sebbycorp/k8s-viper/blob/main/site/index.html">site/index.html</a></td>
               </tr>
             </tbody>
@@ -925,8 +1163,8 @@ kubectl -n vault exec -it vault-0 -- vault operator unseal
       </section>
 
       <footer>
-        <span>k8s-viper environment handbook · GitHub Pages</span>
-        <span><a href="#top">Back to top</a></span>
+        <span>k8s-viper · environment handbook</span>
+        <a href="#top">↑ Back to top</a>
       </footer>
     </main>
   </div>
@@ -943,7 +1181,7 @@ kubectl -n vault exec -it vault-0 -- vault operator unseal
       { k: "GitOps project", v: "viper" },
       { k: "Default storage", v: "local-path" },
       { k: "Ingress class", v: "traefik" },
-      { k: "App of apps path", v: "argocd/apps" },
+      { k: "App of apps", v: "argocd/apps" },
     ];
 
     const uis = [
@@ -1047,6 +1285,29 @@ kubectl -n vault exec -it vault-0 -- vault operator unseal
       return `<span class="badge ${esc(kind)}">${esc(label)}</span>`;
     }
 
+    function renderQuick(ip) {
+      const cards = [
+        { cls: "headlamp", icon: "◉", name: "Headlamp", path: ":30080/", scheme: "http", port: "30080" },
+        { cls: "argocd", icon: "◎", name: "Argo CD", path: ":30443/", scheme: "https", port: "30443" },
+        { cls: "vault", icon: "◇", name: "Vault UI", path: ":30200/", scheme: "http", port: "30200" },
+      ];
+      document.getElementById("quick-grid").innerHTML = cards
+        .map((c) => {
+          const url = `${c.scheme}://${ip}${c.path}`;
+          const linkable = ip !== DEFAULT_IP;
+          const inner = `
+            <div class="qc-icon">${c.icon}</div>
+            <div class="qc-name">${esc(c.name)}</div>
+            <div class="qc-url">${esc(url)}</div>
+            <span class="qc-port">:${esc(c.port)}</span>`;
+          if (linkable) {
+            return `<a class="quick-card ${c.cls}" href="${esc(url)}" target="_blank" rel="noopener">${inner}</a>`;
+          }
+          return `<div class="quick-card ${c.cls}">${inner}</div>`;
+        })
+        .join("");
+    }
+
     function render() {
       const ip = getIp();
       const input = document.getElementById("node-ip");
@@ -1054,6 +1315,8 @@ kubectl -n vault exec -it vault-0 -- vault operator unseal
         input.value = ip === DEFAULT_IP ? "" : ip;
         input.placeholder = DEFAULT_IP;
       }
+
+      renderQuick(ip);
 
       document.getElementById("facts-grid").innerHTML = facts
         .map((f) => `<div class="stat"><div class="k">${esc(f.k)}</div><div class="v">${esc(f.v)}</div></div>`)
@@ -1124,7 +1387,6 @@ kubectl -n vault exec -it vault-0 -- vault operator unseal
       if (e.key === "Enter") setIp(e.target.value);
     });
 
-    /* TOC active section + mobile drawer */
     const tocLinks = [...document.querySelectorAll("#toc-list a")];
     const sections = tocLinks
       .map((a) => document.querySelector(a.getAttribute("href")))
