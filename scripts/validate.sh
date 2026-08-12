@@ -41,6 +41,7 @@ require_file platform/argocd-access/argocd-server-nodeport.yaml
 require_file docs/vault-eso-setup.md
 require_file docs/headlamp.md
 require_file docs/platform-ui-access.md
+require_file docs/why-traefik.md
 require_file site/hugo.toml
 require_file site/data/cluster.yaml
 require_file site/layouts/index.html

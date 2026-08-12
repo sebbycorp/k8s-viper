@@ -9,7 +9,7 @@ Single-node **k3s** powerhouse managed with **Argo CD** GitOps from this reposit
 | CD | Argo CD app-of-apps |
 | Secrets | HashiCorp Vault OSS + External Secrets Operator |
 | Dashboard | Headlamp (OSS, in-cluster) |
-| Ingress | Node IP via Traefik (k3s default) |
+| Ingress | Node IP via Traefik (k3s default) — [why not kgateway](docs/why-traefik.md) |
 | Lab UIs | NodePort: Headlamp `:30080`, Argo CD `:30443`, Vault `:30200` |
 | Public tunnel | Not in v1 (ngrok deferred) |
 
@@ -45,6 +45,7 @@ apps/                         # your workloads later
 docs/vault-eso-setup.md       # init / unseal / ESO wiring
 docs/headlamp.md              # dashboard access + token auth
 docs/platform-ui-access.md    # NodePort map for Argo / Headlamp / Vault
+docs/why-traefik.md           # Traefik vs kgateway decision
 site/                         # Hugo handbook → GitHub Pages
 ```
 
@@ -143,6 +144,7 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 - Multi-node / HA control plane
 - MetalLB
 - Push-based deploy from CI
+- kgateway / Gateway API as primary edge (Traefik is intentional — [docs/why-traefik.md](docs/why-traefik.md))
 
 ## Troubleshooting
 

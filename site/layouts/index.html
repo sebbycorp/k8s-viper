@@ -214,11 +214,20 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml</code></pre>
     </table>
   </div>
   <pre><code>curl -H 'Host: whoami.viper.local' http://&lt;node-ip&gt;/</code></pre>
+  <div class="callout ok">
+    <div>
+      <strong>Why Traefik, not kgateway?</strong>
+      k3s ships Traefik; v1 only needs simple host Ingress on the node IP.
+      kgateway / Gateway API is deferred as a later platform choice —
+      <a href="https://github.com/sebbycorp/k8s-viper/blob/main/docs/why-traefik.md">docs/why-traefik.md</a>.
+    </div>
+  </div>
 </section>
 
 {{/* 08 Network */}}
 <section id="network">
   <div class="section-head"><span class="section-num">08</span><h2>Network &amp; ports</h2></div>
+
   <div class="card table-wrap">
     <table>
       <thead><tr><th>Port</th><th>Service</th><th>How</th></tr></thead>

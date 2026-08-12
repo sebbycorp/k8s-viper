@@ -71,3 +71,8 @@ Traefik’s dynamic LB node ports if you care about collisions).
 - Token / password auth only; no SSO in v1.
 - Headlamp chart uses `cluster-admin` for a full lab view.
 - Prefer LAN-only access; close NodePorts if the node has a public IP.
+
+## Ingress controller
+
+HTTP hosts on `:80` use **k3s Traefik**, not kgateway. Decision and when to
+revisit: [why-traefik.md](why-traefik.md).

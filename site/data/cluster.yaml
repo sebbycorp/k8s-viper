@@ -12,7 +12,7 @@ overview:
   - concern: Dashboard
     choice: Headlamp (in-cluster OSS)
   - concern: Ingress
-    choice: Node IP via Traefik (k3s default)
+    choice: "Node IP via Traefik (k3s default; not kgateway in v1)"
   - concern: Lab UIs
     choice: "NodePort: Headlamp `:30080`, Argo `:30443`, Vault `:30200`"
   - concern: Git source
@@ -264,6 +264,8 @@ out_of_scope:
     why: GitOps pull via Argo only
   - item: Cloud KMS auto-unseal
     why: Manual unseal for v1
+  - item: kgateway / Gateway API as primary edge
+    why: Traefik is k3s default; see docs/why-traefik.md
 
 troubleshooting:
   - symptom: Applications stuck Unknown
@@ -300,3 +302,5 @@ docs:
     url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md
   - name: Hugo site source
     url: https://github.com/sebbycorp/k8s-viper/tree/main/site
+  - name: Why Traefik (not kgateway)
+    url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/why-traefik.md
