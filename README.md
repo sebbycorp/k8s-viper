@@ -15,7 +15,7 @@ Single-node **k3s** powerhouse managed with **Argo CD** GitOps from this reposit
 
 Design: [`docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md`](docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md)
 
-**Cluster map (GitHub Pages):** [sebbycorp.github.io/k8s-viper](https://sebbycorp.github.io/k8s-viper/) — UI ports, platform apps, and ingress hosts in one table. Source: [`site/`](site/).
+**Environment handbook (GitHub Pages):** [sebbycorp.github.io/k8s-viper](https://sebbycorp.github.io/k8s-viper/) — table of contents plus full lab docs (architecture, UIs, apps, secrets, versions, day-2, troubleshooting). Source: [`site/`](site/).
 
 ## Architecture
 
