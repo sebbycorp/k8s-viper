@@ -1,0 +1,39 @@
+# Headlamp — OSS Kubernetes dashboard (in-cluster).
+# Access (preferred lab): http://<node-ip>:30080/
+# Also: http://headlamp.viper.local/ (map node IP in /etc/hosts).
+# Auth: paste a ServiceAccount token (see docs/headlamp.md). Do not enable
+# config.unsafeUseServiceAccountToken unless behind a real auth proxy.
+
+replicaCount: 1
+
+config:
+  inCluster: true
+  inClusterContextName: main
+
+clusterRoleBinding:
+  create: true
+  # Lab powerhouse: full cluster view. Tighten for multi-user later.
+  clusterRoleName: cluster-admin
+
+service:
+  type: NodePort
+  port: 80
+  # Fixed lab port — see docs/platform-ui-access.md
+  nodePort: 30080
+
+ingress:
+  enabled: true
+  ingressClassName: traefik
+  hosts:
+    - host: headlamp.viper.local
+      paths:
+        - path: /
+          type: Prefix
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

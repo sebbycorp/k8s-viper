@@ -141,12 +141,17 @@ print_next_steps() {
  Demo host (after sync):    whoami.viper.local  -> add to /etc/hosts:
                             ${node_ip:-<node-ip>}  whoami.viper.local
 
- Argo CD UI (port-forward):
+ Platform UIs (after Argo syncs NodePorts — see docs/platform-ui-access.md):
+   Headlamp:  http://${node_ip:-<node-ip>}:30080/
+   Argo CD:   https://${node_ip:-<node-ip>}:30443/  (user: admin; self-signed)
+   Vault UI:  http://${node_ip:-<node-ip>}:30200/  (after init+unseal)
+
+ Initial Argo CD admin password:
+   ${admin_pass_cmd}
+
+ Fallback Argo CD (port-forward):
    kubectl -n ${ARGOCD_NAMESPACE} port-forward svc/argocd-server 8080:443
    open https://localhost:8080  (user: admin)
-
- Initial admin password:
-   ${admin_pass_cmd}
 
  GitOps source:
    ${REPO_URL} @ ${REPO_REVISION}

@@ -1,0 +1,28 @@
+# Extra Service for Argo CD UI. Bootstrap installs argocd-server as ClusterIP;
+# this NodePort is GitOps-managed so day-2 access does not require port-forward.
+# Browser: https://<node-ip>:30443/  (self-signed cert — accept warning)
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-server-nodeport
+  namespace: argocd
+  labels:
+    app.kubernetes.io/component: server
+    app.kubernetes.io/name: argocd-server
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/managed-by: k8s-viper
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: argocd-server
+  ports:
+    - name: https
+      port: 443
+      targetPort: 8080
+      protocol: TCP
+      nodePort: 30443
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+      nodePort: 30081

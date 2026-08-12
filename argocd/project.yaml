@@ -11,12 +11,15 @@ spec:
     - https://github.com/sebbycorp/k8s-viper.git
     - https://helm.releases.hashicorp.com
     - https://charts.external-secrets.io
+    - https://kubernetes-sigs.github.io/headlamp/
   destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc
     - namespace: vault
       server: https://kubernetes.default.svc
     - namespace: external-secrets
+      server: https://kubernetes.default.svc
+    - namespace: headlamp
       server: https://kubernetes.default.svc
     - namespace: apps
       server: https://kubernetes.default.svc

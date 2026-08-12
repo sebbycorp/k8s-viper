@@ -27,13 +27,20 @@ require_file argocd/apps/argocd-project.yaml
 require_file argocd/apps/platform-ingress.yaml
 require_file argocd/apps/platform-vault.yaml
 require_file argocd/apps/platform-external-secrets.yaml
+require_file argocd/apps/platform-headlamp.yaml
+require_file argocd/apps/platform-argocd-access.yaml
 require_file platform/ingress/kustomization.yaml
 require_file platform/ingress/helmchartconfig-traefik.yaml
 require_file platform/ingress/whoami.yaml
 require_file platform/vault/values.yaml
 require_file platform/external-secrets/values.yaml
 require_file platform/external-secrets/cluster-secret-store-vault.example.yaml
+require_file platform/headlamp/values.yaml
+require_file platform/argocd-access/kustomization.yaml
+require_file platform/argocd-access/argocd-server-nodeport.yaml
 require_file docs/vault-eso-setup.md
+require_file docs/headlamp.md
+require_file docs/platform-ui-access.md
 require_file .github/workflows/ci.yaml
 
 log "YAML parse check (Python)..."
@@ -89,12 +96,24 @@ if command -v kustomize >/dev/null 2>&1; then
   else
     fail "kustomize build platform/ingress"
   fi
+  log "kustomize build platform/argocd-access..."
+  if kustomize build platform/argocd-access >/dev/null; then
+    ok "kustomize build platform/argocd-access"
+  else
+    fail "kustomize build platform/argocd-access"
+  fi
 elif command -v kubectl >/dev/null 2>&1; then
   log "kubectl kustomize platform/ingress..."
   if kubectl kustomize platform/ingress >/dev/null; then
     ok "kubectl kustomize platform/ingress"
   else
     fail "kubectl kustomize platform/ingress"
+  fi
+  log "kubectl kustomize platform/argocd-access..."
+  if kubectl kustomize platform/argocd-access >/dev/null; then
+    ok "kubectl kustomize platform/argocd-access"
+  else
+    fail "kubectl kustomize platform/argocd-access"
   fi
 else
   log "kustomize/kubectl not found — skipping kustomize build"
@@ -109,6 +128,9 @@ if command -v kubeconform >/dev/null 2>&1; then
     argocd/apps/platform-ingress.yaml
     argocd/apps/platform-vault.yaml
     argocd/apps/platform-external-secrets.yaml
+    argocd/apps/platform-headlamp.yaml
+    argocd/apps/platform-argocd-access.yaml
+    platform/argocd-access/argocd-server-nodeport.yaml
     platform/ingress/namespace-apps.yaml
     platform/ingress/whoami.yaml
   )

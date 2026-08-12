@@ -8,7 +8,9 @@ Single-node **k3s** powerhouse managed with **Argo CD** GitOps from this reposit
 | Bootstrap | `scripts/bootstrap.sh` (once) |
 | CD | Argo CD app-of-apps |
 | Secrets | HashiCorp Vault OSS + External Secrets Operator |
+| Dashboard | Headlamp (OSS, in-cluster) |
 | Ingress | Node IP via Traefik (k3s default) |
+| Lab UIs | NodePort: Headlamp `:30080`, Argo CD `:30443`, Vault `:30200` |
 | Public tunnel | Not in v1 (ngrok deferred) |
 
 Design: [`docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md`](docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md)
@@ -20,9 +22,9 @@ bootstrap.sh  →  k3s + Argo CD + root Application
                       ↓
               argocd/apps/* (GitOps)
                       ↓
-         platform/ingress | vault | external-secrets
+   platform/ingress | vault | external-secrets | headlamp | argocd-access
                       ↓
-              <node-ip>:80 / :443
+   <node-ip>:80/:443 (Traefik) + NodePorts 30080 / 30443 / 30200
 ```
 
 ## Repo layout
@@ -35,8 +37,12 @@ argocd/apps/                  # child Applications
 platform/ingress/             # Traefik HelmChartConfig + whoami demo
 platform/vault/values.yaml    # Vault Helm values (Raft, 1 replica)
 platform/external-secrets/    # ESO Helm values + Vault store example
+platform/headlamp/values.yaml # Headlamp dashboard Helm values
+platform/argocd-access/       # Argo CD UI NodePort Service
 apps/                         # your workloads later
 docs/vault-eso-setup.md       # init / unseal / ESO wiring
+docs/headlamp.md              # dashboard access + token auth
+docs/platform-ui-access.md    # NodePort map for Argo / Headlamp / Vault
 ```
 
 ## Prerequisites
@@ -75,18 +81,28 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 kubectl -n argocd get applications
 ```
 
-**Argo CD UI** (admin password printed by bootstrap):
+**Platform UIs (NodePort)** — [docs/platform-ui-access.md](docs/platform-ui-access.md):
+
+| UI | URL |
+|----|-----|
+| Headlamp | `http://<node-ip>:30080/` |
+| Argo CD | `https://<node-ip>:30443/` (admin; self-signed cert) |
+| Vault | `http://<node-ip>:30200/` (after init+unseal) |
 
 ```bash
-kubectl -n argocd port-forward svc/argocd-server 8080:443
-# https://localhost:8080  user: admin
+# Argo CD admin password
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath='{.data.password}' | base64 -d; echo
+
+# Headlamp SA token
+kubectl -n headlamp create token headlamp --duration=12h
 ```
 
 **Demo ingress** — get node IP, then:
 
 ```bash
 # /etc/hosts on your laptop
-<node-ip>  whoami.viper.local
+<node-ip>  whoami.viper.local headlamp.viper.local
 
 curl -H 'Host: whoami.viper.local' http://<node-ip>/
 ```
@@ -115,6 +131,7 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 | Argo CD | `v3.5.0` (bootstrap) |
 | Vault Helm chart | `0.30.0` |
 | External Secrets chart | `0.14.4` |
+| Headlamp Helm chart | `0.44.0` |
 | whoami image | `traefik/whoami:v1.10.2` |
 
 ## Out of scope (v1)
@@ -131,5 +148,9 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 | Applications stuck `Unknown` | Repo URL reachable from cluster; `kubectl -n argocd logs -l app.kubernetes.io/name=argocd-repo-server` |
 | Project errors | `kubectl -n argocd get appproject viper` |
 | whoami 404 | Host header / `/etc/hosts`; `kubectl -n apps get ingress,pods` |
+| Headlamp 404 / no UI | Try `http://<node-ip>:30080/`; `kubectl -n headlamp get pods,svc,ingress` |
+| Headlamp token rejected | Create a fresh SA token — see [docs/headlamp.md](docs/headlamp.md) |
+| Argo UI unreachable | `kubectl -n argocd get svc argocd-server-nodeport`; app `platform-argocd-access` |
+| Vault UI unreachable | `kubectl -n vault get svc vault-ui`; init+unseal first |
 | Vault not ready | Normal until init+unseal — see vault docs |
 | Re-run bootstrap | Safe: skips k3s if healthy; re-applies Argo + root app |

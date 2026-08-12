@@ -60,4 +60,7 @@ server:
 
 ui:
   enabled: true
-  serviceType: ClusterIP
+  # Fixed lab port — http://<node-ip>:30200/ (see docs/platform-ui-access.md)
+  serviceType: NodePort
+  serviceNodePort: 30200
+  externalPort: 8200

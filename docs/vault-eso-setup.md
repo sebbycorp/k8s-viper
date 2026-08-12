@@ -7,6 +7,17 @@ This guide runs **after** `scripts/bootstrap.sh` and after Argo has synced:
 
 **Never commit** unseal keys, root tokens, or raw secret values to git.
 
+## UI
+
+After init + unseal, open the Vault UI on the node NodePort:
+
+```text
+http://<node-ip>:30200/
+```
+
+See [docs/platform-ui-access.md](platform-ui-access.md) for the full port map
+(Argo CD / Headlamp / Vault).
+
 ## 1. Wait for Vault pod
 
 ```bash
