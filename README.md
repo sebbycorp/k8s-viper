@@ -15,6 +15,8 @@ Single-node **k3s** powerhouse managed with **Argo CD** GitOps from this reposit
 
 Design: [`docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md`](docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md)
 
+**Cluster map (GitHub Pages):** [sebbycorp.github.io/k8s-viper](https://sebbycorp.github.io/k8s-viper/) — UI ports, platform apps, and ingress hosts in one table. Source: [`site/`](site/).
+
 ## Architecture
 
 ```text
@@ -43,6 +45,7 @@ apps/                         # your workloads later
 docs/vault-eso-setup.md       # init / unseal / ESO wiring
 docs/headlamp.md              # dashboard access + token auth
 docs/platform-ui-access.md    # NodePort map for Argo / Headlamp / Vault
+site/                         # GitHub Pages cluster map (tables)
 ```
 
 ## Prerequisites

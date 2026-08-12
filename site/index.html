@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>k8s-viper · cluster map</title>
+  <meta name="description" content="Single-node k3s GitOps platform inventory — UIs, ports, and Argo apps." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --bg-elev: #121820;
+      --bg-row: #0e141c;
+      --border: #1e2a38;
+      --border-strong: #2a3b4f;
+      --text: #e6edf5;
+      --muted: #8b9bb0;
+      --dim: #5c6b7e;
+      --accent: #3dd68c;
+      --accent-dim: rgba(61, 214, 140, 0.12);
+      --warn: #f0b429;
+      --link: #6cb6ff;
+      --danger: #f07178;
+      --radius: 12px;
+      --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      --font: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(61, 214, 140, 0.08), transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, rgba(108, 182, 255, 0.07), transparent 50%),
+        var(--bg);
+      line-height: 1.5;
+    }
+
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .wrap {
+      width: min(1100px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2.5rem 0 4rem;
+    }
+
+    header {
+      display: grid;
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .brand {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem 1rem;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #1a2e24, #0f1a14);
+      border: 1px solid rgba(61, 214, 140, 0.35);
+      display: grid;
+      place-items: center;
+      font-family: var(--mono);
+      font-weight: 600;
+      color: var(--accent);
+      font-size: 0.85rem;
+      letter-spacing: -0.02em;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 3vw, 2rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      margin: 0.25rem 0 0;
+      color: var(--muted);
+      max-width: 52ch;
+    }
+
+    .pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .pill {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      background: var(--bg-elev);
+      color: var(--muted);
+    }
+
+    .pill.ok {
+      color: var(--accent);
+      border-color: rgba(61, 214, 140, 0.35);
+      background: var(--accent-dim);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: end;
+      padding: 1rem 1.1rem;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    label {
+      display: grid;
+      gap: 0.35rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    input[type="text"] {
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      padding: 0.55rem 0.75rem;
+      min-width: min(280px, 70vw);
+      outline: none;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: var(--dim);
+      flex: 1 1 200px;
+    }
+
+    .btn {
+      font-family: var(--font);
+      font-weight: 600;
+      font-size: 0.85rem;
+      border: 1px solid rgba(61, 214, 140, 0.4);
+      background: var(--accent-dim);
+      color: var(--accent);
+      border-radius: 8px;
+      padding: 0.55rem 0.9rem;
+      cursor: pointer;
+    }
+
+    .btn:hover { filter: brightness(1.1); }
+    .btn.ghost {
+      background: transparent;
+      border-color: var(--border-strong);
+      color: var(--muted);
+    }
+
+    nav.toc {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      margin: 1.5rem 0 0.5rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+
+    nav.toc a { color: var(--muted); }
+    nav.toc a:hover { color: var(--text); }
+
+    section {
+      margin-top: 2rem;
+    }
+
+    h2 {
+      margin: 0 0 0.35rem;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+
+    .section-lead {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    th {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--dim);
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.2);
+      white-space: nowrap;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+    .mono, code, .url {
+      font-family: var(--mono);
+      font-size: 0.84em;
+    }
+
+    code {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+    }
+
+    .url a { word-break: break-all; }
+
+    .badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 0.15rem 0.45rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .badge.ui { color: var(--accent); border-color: rgba(61, 214, 140, 0.35); background: var(--accent-dim); }
+    .badge.ingress { color: var(--link); border-color: rgba(108, 182, 255, 0.3); background: rgba(108, 182, 255, 0.1); }
+    .badge.core { color: var(--warn); border-color: rgba(240, 180, 41, 0.35); background: rgba(240, 180, 41, 0.1); }
+    .badge.secret { color: #c3a6ff; border-color: rgba(195, 166, 255, 0.3); background: rgba(195, 166, 255, 0.1); }
+
+    .grid-2 {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    .stat {
+      padding: 1rem 1.1rem;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .stat .k {
+      font-size: 0.75rem;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    .stat .v {
+      margin-top: 0.25rem;
+      font-family: var(--mono);
+      font-size: 1.05rem;
+      font-weight: 500;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+      color: var(--dim);
+      font-size: 0.82rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.5rem;
+      justify-content: space-between;
+    }
+
+    .note {
+      margin-top: 0.75rem;
+      font-size: 0.8rem;
+      color: var(--dim);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">kv</div>
+        <div>
+          <h1>k8s-viper</h1>
+          <p class="subtitle">
+            Single-node <strong>k3s</strong> GitOps platform map — what’s on the cluster,
+            how to reach it, and where it lives in git.
+          </p>
+        </div>
+      </div>
+      <div class="pills">
+        <span class="pill ok">k3s</span>
+        <span class="pill ok">Argo CD</span>
+        <span class="pill">Vault + ESO</span>
+        <span class="pill">Headlamp</span>
+        <span class="pill">Traefik</span>
+      </div>
+
+      <div class="controls">
+        <label>
+          Node IP (rewrites UI links)
+          <input id="node-ip" type="text" spellcheck="false" placeholder="e.g. 172.17.0.2" autocomplete="off" />
+        </label>
+        <button type="button" class="btn" id="save-ip">Save</button>
+        <button type="button" class="btn ghost" id="reset-ip">Reset</button>
+        <p class="hint">
+          Stored in this browser only. Default placeholder is <code>&lt;node-ip&gt;</code>.
+          Get it with <code>kubectl get nodes -o wide</code>.
+        </p>
+      </div>
+
+      <nav class="toc" aria-label="On this page">
+        <a href="#overview">Overview</a>
+        <a href="#uis">UI access</a>
+        <a href="#platform">Platform apps</a>
+        <a href="#ingress">Ingress hosts</a>
+        <a href="#layout">Repo layout</a>
+      </nav>
+    </header>
+
+    <section id="overview">
+      <h2>Cluster overview</h2>
+      <p class="section-lead">Design target for the lab box. Runtime status is live on the node, not on this static page.</p>
+      <div class="grid-2">
+        <div class="stat"><div class="k">Cluster</div><div class="v">k3s · single node</div></div>
+        <div class="stat"><div class="k">GitOps</div><div class="v">Argo CD app-of-apps</div></div>
+        <div class="stat"><div class="k">Front door</div><div class="v">node :80 / :443 (Traefik)</div></div>
+        <div class="stat"><div class="k">Secrets</div><div class="v">Vault OSS + ESO</div></div>
+      </div>
+    </section>
+
+    <section id="uis">
+      <h2>UI access table</h2>
+      <p class="section-lead">Fixed NodePorts for lab access without port-forward. LAN only — do not expose publicly without real auth.</p>
+      <div class="card table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>UI</th>
+              <th>Type</th>
+              <th>URL</th>
+              <th>Auth</th>
+              <th>Git source</th>
+            </tr>
+          </thead>
+          <tbody id="ui-rows"></tbody>
+        </table>
+      </div>
+      <p class="note">
+        Argo admin password:
+        <code>kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d; echo</code>
+        · Headlamp token:
+        <code>kubectl -n headlamp create token headlamp --duration=12h</code>
+      </p>
+    </section>
+
+    <section id="platform">
+      <h2>Platform inventory</h2>
+      <p class="section-lead">Argo CD Applications under <code>argocd/apps/</code>. Bootstrap installs k3s + Argo CD; everything else is GitOps.</p>
+      <div class="card table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Application</th>
+              <th>Kind</th>
+              <th>Namespace</th>
+              <th>Source</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="platform-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="ingress">
+      <h2>Ingress hosts</h2>
+      <p class="section-lead">Map hosts to the node IP in <code>/etc/hosts</code>, then hit Traefik on :80.</p>
+      <div class="card table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Host</th>
+              <th>Target</th>
+              <th>Namespace</th>
+            </tr>
+          </thead>
+          <tbody id="ingress-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="layout">
+      <h2>Repo layout</h2>
+      <p class="section-lead">Where to change things day-2.</p>
+      <div class="card table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Path</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody id="layout-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <span>Source: <a href="https://github.com/sebbycorp/k8s-viper">sebbycorp/k8s-viper</a></span>
+      <span>
+        Docs:
+        <a href="https://github.com/sebbycorp/k8s-viper/blob/main/docs/platform-ui-access.md">UI access</a> ·
+        <a href="https://github.com/sebbycorp/k8s-viper/blob/main/docs/headlamp.md">Headlamp</a> ·
+        <a href="https://github.com/sebbycorp/k8s-viper/blob/main/docs/vault-eso-setup.md">Vault + ESO</a>
+      </span>
+    </footer>
+  </div>
+
+  <script>
+    const DEFAULT_IP = "<node-ip>";
+    const STORAGE_KEY = "k8s-viper-node-ip";
+
+    const uis = [
+      {
+        name: "Headlamp",
+        type: "ui",
+        typeLabel: "NodePort",
+        path: ":30080/",
+        scheme: "http",
+        auth: "SA token",
+        git: "platform/headlamp/",
+      },
+      {
+        name: "Argo CD",
+        type: "ui",
+        typeLabel: "NodePort",
+        path: ":30443/",
+        scheme: "https",
+        auth: "admin + initial secret",
+        git: "platform/argocd-access/",
+      },
+      {
+        name: "Vault UI",
+        type: "ui",
+        typeLabel: "NodePort",
+        path: ":30200/",
+        scheme: "http",
+        auth: "root / app token (after init)",
+        git: "platform/vault/values.yaml",
+      },
+      {
+        name: "Argo CD (HTTP)",
+        type: "ui",
+        typeLabel: "NodePort",
+        path: ":30081/",
+        scheme: "http",
+        auth: "same as Argo CD",
+        git: "platform/argocd-access/",
+      },
+      {
+        name: "whoami demo",
+        type: "ingress",
+        typeLabel: "Ingress",
+        host: "whoami.viper.local",
+        scheme: "http",
+        auth: "none",
+        git: "platform/ingress/whoami.yaml",
+      },
+      {
+        name: "Headlamp (host)",
+        type: "ingress",
+        typeLabel: "Ingress",
+        host: "headlamp.viper.local",
+        scheme: "http",
+        auth: "SA token",
+        git: "platform/headlamp/values.yaml",
+      },
+    ];
+
+    const platform = [
+      {
+        app: "root",
+        kind: "core",
+        kindLabel: "bootstrap",
+        ns: "argocd",
+        source: "bootstrap/argocd/root-application.yaml",
+        notes: "App-of-apps; watches argocd/apps",
+      },
+      {
+        app: "argocd-project",
+        kind: "core",
+        kindLabel: "core",
+        ns: "argocd",
+        source: "argocd/project.yaml",
+        notes: "AppProject viper",
+      },
+      {
+        app: "platform-ingress",
+        kind: "ingress",
+        kindLabel: "ingress",
+        ns: "kube-system / apps",
+        source: "platform/ingress/",
+        notes: "Traefik config + whoami",
+      },
+      {
+        app: "platform-vault",
+        kind: "secret",
+        kindLabel: "secrets",
+        ns: "vault",
+        source: "platform/vault/values.yaml",
+        notes: "Vault Helm 0.30.0 · Raft ×1",
+      },
+      {
+        app: "platform-external-secrets",
+        kind: "secret",
+        kindLabel: "secrets",
+        ns: "external-secrets",
+        source: "platform/external-secrets/",
+        notes: "ESO Helm 0.14.4",
+      },
+      {
+        app: "platform-headlamp",
+        kind: "ui",
+        kindLabel: "dashboard",
+        ns: "headlamp",
+        source: "platform/headlamp/values.yaml",
+        notes: "Headlamp Helm 0.44.0 · :30080",
+      },
+      {
+        app: "platform-argocd-access",
+        kind: "ui",
+        kindLabel: "access",
+        ns: "argocd",
+        source: "platform/argocd-access/",
+        notes: "Argo UI NodePort :30443",
+      },
+    ];
+
+    const ingress = [
+      { host: "whoami.viper.local", target: "whoami Service", ns: "apps" },
+      { host: "headlamp.viper.local", target: "headlamp Service", ns: "headlamp" },
+    ];
+
+    const layout = [
+      { path: "scripts/bootstrap.sh", role: "One-time k3s + Argo CD + root app" },
+      { path: "argocd/apps/", role: "Child Application CRs (GitOps tree)" },
+      { path: "platform/*/", role: "Cluster services (Helm values / kustomize)" },
+      { path: "apps/", role: "User workloads" },
+      { path: "docs/", role: "Operator runbooks" },
+      { path: "site/", role: "This GitHub Pages cluster map" },
+    ];
+
+    function esc(s) {
+      return String(s)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function getIp() {
+      const v = (localStorage.getItem(STORAGE_KEY) || "").trim();
+      return v || DEFAULT_IP;
+    }
+
+    function setIp(ip) {
+      const cleaned = (ip || "").trim();
+      if (!cleaned || cleaned === DEFAULT_IP) {
+        localStorage.removeItem(STORAGE_KEY);
+      } else {
+        localStorage.setItem(STORAGE_KEY, cleaned);
+      }
+      render();
+    }
+
+    function uiUrl(row, ip) {
+      if (row.host) {
+        return `${row.scheme}://${row.host}/`;
+      }
+      return `${row.scheme}://${ip}${row.path}`;
+    }
+
+    function badge(kind, label) {
+      return `<span class="badge ${esc(kind)}">${esc(label)}</span>`;
+    }
+
+    function renderUis(ip) {
+      const tbody = document.getElementById("ui-rows");
+      tbody.innerHTML = uis
+        .map((row) => {
+          const url = uiUrl(row, ip);
+          const linkable = ip !== DEFAULT_IP && !row.host;
+          const urlHtml = linkable
+            ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>`
+            : esc(url);
+          return `<tr>
+            <td><strong>${esc(row.name)}</strong></td>
+            <td>${badge(row.type, row.typeLabel)}</td>
+            <td class="url">${urlHtml}</td>
+            <td>${esc(row.auth)}</td>
+            <td class="mono">${esc(row.git)}</td>
+          </tr>`;
+        })
+        .join("");
+    }
+
+    function renderPlatform() {
+      document.getElementById("platform-rows").innerHTML = platform
+        .map(
+          (r) => `<tr>
+            <td class="mono"><strong>${esc(r.app)}</strong></td>
+            <td>${badge(r.kind, r.kindLabel)}</td>
+            <td class="mono">${esc(r.ns)}</td>
+            <td class="mono">${esc(r.source)}</td>
+            <td>${esc(r.notes)}</td>
+          </tr>`
+        )
+        .join("");
+    }
+
+    function renderIngress() {
+      document.getElementById("ingress-rows").innerHTML = ingress
+        .map(
+          (r) => `<tr>
+            <td class="mono">${esc(r.host)}</td>
+            <td>${esc(r.target)}</td>
+            <td class="mono">${esc(r.ns)}</td>
+          </tr>`
+        )
+        .join("");
+    }
+
+    function renderLayout() {
+      document.getElementById("layout-rows").innerHTML = layout
+        .map(
+          (r) => `<tr>
+            <td class="mono">${esc(r.path)}</td>
+            <td>${esc(r.role)}</td>
+          </tr>`
+        )
+        .join("");
+    }
+
+    function render() {
+      const ip = getIp();
+      const input = document.getElementById("node-ip");
+      if (document.activeElement !== input) {
+        input.value = ip === DEFAULT_IP ? "" : ip;
+        input.placeholder = DEFAULT_IP;
+      }
+      renderUis(ip);
+      renderPlatform();
+      renderIngress();
+      renderLayout();
+    }
+
+    document.getElementById("save-ip").addEventListener("click", () => {
+      setIp(document.getElementById("node-ip").value);
+    });
+    document.getElementById("reset-ip").addEventListener("click", () => setIp(""));
+    document.getElementById("node-ip").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") setIp(e.target.value);
+    });
+
+    render();
+  </script>
+</body>
+</html>

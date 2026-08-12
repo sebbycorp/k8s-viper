@@ -41,7 +41,9 @@ require_file platform/argocd-access/argocd-server-nodeport.yaml
 require_file docs/vault-eso-setup.md
 require_file docs/headlamp.md
 require_file docs/platform-ui-access.md
+require_file site/index.html
 require_file .github/workflows/ci.yaml
+require_file .github/workflows/pages.yml
 
 log "YAML parse check (Python)..."
 mapfile -t yaml_files < <(find argocd bootstrap platform -type f \( -name '*.yaml' -o -name '*.yml' \) | sort)
