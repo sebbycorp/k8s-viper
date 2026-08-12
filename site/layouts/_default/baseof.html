@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.Language.Lang | default "en" }}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ if .IsHome }}{{ .Site.Title }} · environment handbook{{ else }}{{ .Title }} · {{ .Site.Title }}{{ end }}</title>
+  <meta name="description" content="{{ .Site.Params.description }}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  {{ $css := resources.Get "css/main.css" | minify | fingerprint }}
+  <link rel="stylesheet" href="{{ $css.RelPermalink }}" integrity="{{ $css.Data.Integrity }}" />
+</head>
+<body>
+  <button type="button" class="toc-toggle" id="toc-toggle" aria-expanded="false">☰ Contents</button>
+  <div class="shell">
+    {{ partial "toc.html" . }}
+    <main>
+      {{ block "main" . }}{{ end }}
+      <footer class="site-footer">
+        <span>k8s-viper · Hugo handbook</span>
+        <a href="#top">↑ Back to top</a>
+      </footer>
+    </main>
+  </div>
+  {{ $js := resources.Get "js/app.js" | minify | fingerprint }}
+  <script src="{{ $js.RelPermalink }}" integrity="{{ $js.Data.Integrity }}" defer></script>
+</body>
+</html>

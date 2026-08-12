@@ -1,0 +1,24 @@
+baseURL = "https://sebbycorp.github.io/k8s-viper/"
+languageCode = "en-us"
+title = "k8s-viper"
+enableRobotsTXT = true
+disableKinds = ["taxonomy", "term", "RSS", "sitemap"]
+relativeURLs = false
+canonifyURLs = false
+
+[params]
+  description = "Single-node k3s GitOps lab handbook — architecture, UIs, apps, secrets, day-2 ops."
+  github = "https://github.com/sebbycorp/k8s-viper"
+  defaultNodeIP = "172.17.0.2"
+
+[markup]
+  [markup.goldmark]
+    [markup.goldmark.renderer]
+      unsafe = true
+  [markup.tableOfContents]
+    startLevel = 2
+    endLevel = 3
+    ordered = false
+
+[outputs]
+  home = ["HTML"]

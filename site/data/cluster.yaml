@@ -1,0 +1,302 @@
+# Environment inventory — rendered by Hugo layouts (edit here, rebuild).
+
+overview:
+  - concern: Cluster
+    choice: "k3s, one node (control-plane + worker)"
+  - concern: Bootstrap
+    choice: "`scripts/bootstrap.sh` (once / idempotent)"
+  - concern: CD
+    choice: "Argo CD app-of-apps (`argocd/apps/*`)"
+  - concern: Secrets
+    choice: HashiCorp Vault OSS + External Secrets Operator
+  - concern: Dashboard
+    choice: Headlamp (in-cluster OSS)
+  - concern: Ingress
+    choice: Node IP via Traefik (k3s default)
+  - concern: Lab UIs
+    choice: "NodePort: Headlamp `:30080`, Argo `:30443`, Vault `:30200`"
+  - concern: Git source
+    choice: "github.com/sebbycorp/k8s-viper @ `main`"
+  - concern: Public tunnel
+    choice: Not in v1
+
+facts:
+  - key: Node name
+    value: k3s-viper
+  - key: Typical InternalIP
+    value: "172.17.0.2"
+  - key: k3s / API
+    value: v1.32.5+k3s1
+  - key: Container runtime
+    value: containerd
+  - key: GitOps project
+    value: viper
+  - key: Default storage
+    value: local-path
+  - key: Ingress class
+    value: traefik
+  - key: App of apps
+    value: argocd/apps
+
+quick_cards:
+  - name: Headlamp
+    class: headlamp
+    icon: "◉"
+    scheme: http
+    port: "30080"
+  - name: Argo CD
+    class: argocd
+    icon: "◎"
+    scheme: https
+    port: "30443"
+  - name: Vault UI
+    class: vault
+    icon: "◇"
+    scheme: http
+    port: "30200"
+
+uis:
+  - name: Headlamp
+    type: ui
+    typeLabel: NodePort
+    scheme: http
+    path: ":30080/"
+    auth: SA token
+    git: platform/headlamp/
+  - name: Argo CD
+    type: ui
+    typeLabel: NodePort
+    scheme: https
+    path: ":30443/"
+    auth: admin + initial secret
+    git: platform/argocd-access/
+  - name: Vault UI
+    type: ui
+    typeLabel: NodePort
+    scheme: http
+    path: ":30200/"
+    auth: root / app token after init
+    git: platform/vault/values.yaml
+  - name: Argo CD (HTTP)
+    type: ui
+    typeLabel: NodePort
+    scheme: http
+    path: ":30081/"
+    auth: same as Argo CD
+    git: platform/argocd-access/
+  - name: whoami demo
+    type: ingress
+    typeLabel: Ingress
+    scheme: http
+    host: whoami.viper.local
+    auth: none
+    git: platform/ingress/whoami.yaml
+  - name: Headlamp (host)
+    type: ingress
+    typeLabel: Ingress
+    scheme: http
+    host: headlamp.viper.local
+    auth: SA token
+    git: platform/headlamp/values.yaml
+
+platform:
+  - app: root
+    kind: core
+    kindLabel: bootstrap
+    ns: argocd
+    source: bootstrap/argocd/root-application.yaml
+    notes: App-of-apps; watches argocd/apps
+  - app: argocd-project
+    kind: core
+    kindLabel: core
+    ns: argocd
+    source: argocd/project.yaml
+    notes: AppProject viper allow-list
+  - app: platform-ingress
+    kind: ingress
+    kindLabel: ingress
+    ns: kube-system / apps
+    source: platform/ingress/
+    notes: Traefik HelmChartConfig + whoami
+  - app: platform-vault
+    kind: secret
+    kindLabel: secrets
+    ns: vault
+    source: platform/vault/values.yaml
+    notes: "Vault Helm · Raft ×1 · UI :30200"
+  - app: platform-external-secrets
+    kind: secret
+    kindLabel: secrets
+    ns: external-secrets
+    source: platform/external-secrets/
+    notes: ESO operator
+  - app: platform-headlamp
+    kind: ui
+    kindLabel: dashboard
+    ns: headlamp
+    source: platform/headlamp/values.yaml
+    notes: "Headlamp · NodePort :30080"
+  - app: platform-argocd-access
+    kind: ui
+    kindLabel: access
+    ns: argocd
+    source: platform/argocd-access/
+    notes: "Argo UI NodePort :30443 / :30081"
+
+namespaces:
+  - ns: argocd
+    purpose: Argo CD control plane + root app-of-apps
+  - ns: vault
+    purpose: HashiCorp Vault server (Raft single voter)
+  - ns: external-secrets
+    purpose: External Secrets Operator
+  - ns: headlamp
+    purpose: Kubernetes dashboard UI
+  - ns: apps
+    purpose: Demo / user workloads (whoami)
+  - ns: kube-system
+    purpose: "k3s system: Traefik, CoreDNS, metrics, local-path"
+  - ns: default
+    purpose: Kubernetes default (mostly unused by platform)
+
+ingress:
+  - host: whoami.viper.local
+    target: whoami Service
+    ns: apps
+    class: traefik
+  - host: headlamp.viper.local
+    target: headlamp Service
+    ns: headlamp
+    class: traefik
+
+ports:
+  - port: "80 / 443"
+    service: Traefik ingress
+    how: LoadBalancer on node IP (k3s ServiceLB)
+  - port: "30080"
+    service: Headlamp
+    how: NodePort
+  - port: "30443"
+    service: Argo CD HTTPS
+    how: "NodePort (`argocd-server-nodeport`)"
+  - port: "30081"
+    service: Argo CD HTTP
+    how: NodePort (often redirects)
+  - port: "30200"
+    service: Vault UI / API
+    how: "NodePort (`vault-ui`)"
+  - port: "6443"
+    service: Kubernetes API
+    how: k3s on node (kubeconfig)
+
+bootstrap_env:
+  - name: REPO_URL
+    default: this GitHub repo
+    meaning: GitOps source for Argo
+  - name: REPO_REVISION
+    default: main
+    meaning: Branch / tag / SHA
+  - name: ARGOCD_VERSION
+    default: v3.5.0
+    meaning: Upstream install manifest pin
+  - name: INSTALL_K3S_SKIP
+    default: "0"
+    meaning: "Set `1` if k3s already installed"
+
+versions:
+  - name: Argo CD
+    pin: v3.5.0
+    where: scripts/bootstrap.sh
+  - name: k3s (lab observed)
+    pin: v1.32.5+k3s1
+    where: node install
+  - name: Vault Helm chart
+    pin: "0.30.0"
+    where: argocd/apps/platform-vault.yaml
+  - name: External Secrets chart
+    pin: "0.14.4"
+    where: argocd/apps/platform-external-secrets.yaml
+  - name: Headlamp Helm chart
+    pin: "0.44.0"
+    where: argocd/apps/platform-headlamp.yaml
+  - name: whoami image
+    pin: traefik/whoami:v1.10.2
+    where: platform/ingress/whoami.yaml
+
+layout:
+  - path: scripts/bootstrap.sh
+    role: Only imperative install path (k3s + Argo + root)
+  - path: scripts/validate.sh
+    role: Local/CI checks — no cluster credentials
+  - path: bootstrap/argocd/
+    role: Root Application seed
+  - path: argocd/project.yaml
+    role: AppProject viper
+  - path: argocd/apps/
+    role: Child Application CRs (GitOps tree)
+  - path: platform/ingress/
+    role: Traefik config + whoami demo
+  - path: platform/vault/
+    role: Vault Helm values
+  - path: platform/external-secrets/
+    role: ESO Helm values + store example
+  - path: platform/headlamp/
+    role: Headlamp Helm values
+  - path: platform/argocd-access/
+    role: Argo CD UI NodePort Service
+  - path: apps/
+    role: User workloads
+  - path: docs/
+    role: Operator runbooks
+  - path: site/
+    role: Hugo handbook (this site)
+  - path: .github/workflows/
+    role: CI validate + Pages deploy
+
+out_of_scope:
+  - item: ngrok / public tunnels
+    why: Keep lab private first
+  - item: Multi-node / HA control plane
+    why: Single-node powerhouse focus
+  - item: MetalLB
+    why: k3s ServiceLB + node IP is enough
+  - item: Push-based deploy from CI
+    why: GitOps pull via Argo only
+  - item: Cloud KMS auto-unseal
+    why: Manual unseal for v1
+
+troubleshooting:
+  - symptom: Applications stuck Unknown
+    check: Repo URL reachable from cluster; argocd-repo-server logs
+  - symptom: Project errors
+    check: kubectl -n argocd get appproject viper
+  - symptom: whoami 404
+    check: Host header / /etc/hosts; kubectl -n apps get ingress,pods
+  - symptom: Headlamp 404 / no UI
+    check: "http://<node-ip>:30080/; kubectl -n headlamp get pods,svc,ingress"
+  - symptom: Headlamp token rejected
+    check: Create a fresh SA token — docs/headlamp.md
+  - symptom: Argo UI unreachable
+    check: svc argocd-server-nodeport; app platform-argocd-access
+  - symptom: Vault UI unreachable
+    check: svc vault-ui; init + unseal first
+  - symptom: Vault not ready
+    check: Normal until init+unseal — vault-eso-setup.md
+  - symptom: Re-run bootstrap
+    check: "Safe: skips k3s if healthy; re-applies Argo + root app"
+
+docs:
+  - name: Repository
+    url: https://github.com/sebbycorp/k8s-viper
+  - name: README
+    url: https://github.com/sebbycorp/k8s-viper/blob/main/README.md
+  - name: UI access runbook
+    url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/platform-ui-access.md
+  - name: Headlamp
+    url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/headlamp.md
+  - name: Vault + ESO
+    url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/vault-eso-setup.md
+  - name: Design spec
+    url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md
+  - name: Hugo site source
+    url: https://github.com/sebbycorp/k8s-viper/tree/main/site

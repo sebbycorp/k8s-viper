@@ -41,7 +41,10 @@ require_file platform/argocd-access/argocd-server-nodeport.yaml
 require_file docs/vault-eso-setup.md
 require_file docs/headlamp.md
 require_file docs/platform-ui-access.md
-require_file site/index.html
+require_file site/hugo.toml
+require_file site/data/cluster.yaml
+require_file site/layouts/index.html
+require_file site/assets/css/main.css
 require_file .github/workflows/ci.yaml
 require_file .github/workflows/pages.yml
 
@@ -149,6 +152,17 @@ if [[ ! -x scripts/bootstrap.sh ]]; then
   fail "scripts/bootstrap.sh is not executable"
 else
   ok "bootstrap.sh executable"
+fi
+
+if command -v hugo >/dev/null 2>&1; then
+  log "Hugo build (site/)..."
+  if (cd site && hugo --minify --gc --quiet); then
+    ok "hugo build"
+  else
+    fail "hugo build failed"
+  fi
+else
+  log "hugo not installed — skipping site build (CI builds with Hugo)"
 fi
 
 # bash syntax check

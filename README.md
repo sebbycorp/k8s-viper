@@ -15,7 +15,7 @@ Single-node **k3s** powerhouse managed with **Argo CD** GitOps from this reposit
 
 Design: [`docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md`](docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md)
 
-**Environment handbook (GitHub Pages):** [sebbycorp.github.io/k8s-viper](https://sebbycorp.github.io/k8s-viper/) — table of contents plus full lab docs (architecture, UIs, apps, secrets, versions, day-2, troubleshooting). Source: [`site/`](site/).
+**Environment handbook (GitHub Pages):** [sebbycorp.github.io/k8s-viper](https://sebbycorp.github.io/k8s-viper/) — Hugo-built TOC + full lab docs (architecture, UIs, apps, secrets, versions, day-2, troubleshooting). Source: [`site/`](site/) (`cd site && hugo server`).
 
 ## Architecture
 
@@ -45,7 +45,7 @@ apps/                         # your workloads later
 docs/vault-eso-setup.md       # init / unseal / ESO wiring
 docs/headlamp.md              # dashboard access + token auth
 docs/platform-ui-access.md    # NodePort map for Argo / Headlamp / Vault
-site/                         # GitHub Pages cluster map (tables)
+site/                         # Hugo handbook → GitHub Pages
 ```
 
 ## Prerequisites
