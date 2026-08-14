@@ -48,9 +48,10 @@ That is a **platform** choice. v1 intentionally stays on the k3s default path.
 
 ## Relationship to agentgateway
 
-**agentgateway** is installed for **LLM / AI API traffic** (OpenAI proxy, OTEL to
-Langfuse). It uses Gateway API in the `agentgateway-system` namespace and is
-**not** the default cluster Ingress for `*.viper.local`.
+**agentgateway** is installed for **LLM / AI API traffic** (one Gateway on
+`:30100` → OpenAI `/v1` + DGX Spark `/spark`, OTEL to Langfuse). It uses
+Gateway API in the `agentgateway-system` namespace and is **not** the default
+cluster Ingress for `*.viper.local`.
 
 | Role | Component |
 |------|-----------|
