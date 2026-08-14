@@ -1,8 +1,12 @@
 # Headlamp (Kubernetes dashboard)
 
 [Headlamp](https://headlamp.dev/) is the in-cluster OSS dashboard for k8s-viper.
-Argo CD deploys it from `argocd/apps/platform-headlamp.yaml` using
-`platform/headlamp/values.yaml`.
+Argo CD deploys it from `argocd/apps/platform-headlamp.yaml` pointing at
+`platform/headlamp` (kustomize `helmCharts` + `values.yaml`). A JSON6902
+patch drops `spec.template.spec.hostUsers` from the chart so desired matches
+live: k3s drops `hostUsers: true` (the API default), which otherwise leaves
+the app permanently OutOfSync. Do not set `hostUsers: false` (that enables
+user namespaces).
 
 ## Access
 
@@ -53,4 +57,14 @@ Port map for all platform UIs (including agentgateway and Langfuse):
 
 Edit `platform/headlamp/values.yaml` (NodePort, ingress host, resources, OIDC
 later), PR, merge to `main`. Argo auto-syncs. Pin chart bumps in
-`argocd/apps/platform-headlamp.yaml` `targetRevision`.
+`platform/headlamp/kustomization.yaml` (`helmCharts[].version`).
+
+Repo-server must run `kustomize build --enable-helm` (`argocd-cm`
+`kustomize.buildOptions`, GitOps in `platform/argocd-access/`, also set by
+`scripts/bootstrap.sh`). On a cluster bootstrapped before that key existed:
+
+```bash
+kubectl -n argocd patch configmap argocd-cm --type merge \
+  -p '{"data":{"kustomize.buildOptions":"--enable-helm"}}'
+kubectl -n argocd rollout restart deployment/argocd-repo-server
+```

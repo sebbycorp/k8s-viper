@@ -1,0 +1,16 @@
+# Argo CD is installed from upstream manifests (scripts/bootstrap.sh), not a
+# Helm chart. helmCharts in platform/headlamp requires repo-server to run
+# `kustomize build --enable-helm`. Official argocd-cm has no data keys, so
+# this single key stays Synced. Prune=false: never delete the install ConfigMap.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+data:
+  kustomize.buildOptions: --enable-helm

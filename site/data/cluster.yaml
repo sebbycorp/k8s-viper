@@ -169,7 +169,7 @@ platform:
     kind: ui
     kindLabel: dashboard
     ns: headlamp
-    source: platform/headlamp/values.yaml
+    source: platform/headlamp/
     notes: "Headlamp · NodePort :30080"
   - app: platform-argocd-access
     kind: ui
@@ -314,7 +314,7 @@ versions:
     where: argocd/apps/platform-external-secrets.yaml
   - name: Headlamp Helm chart
     pin: "0.44.0"
-    where: argocd/apps/platform-headlamp.yaml
+    where: platform/headlamp/kustomization.yaml
   - name: agentgateway / CRDs
     pin: "1.4.1"
     where: argocd/apps/platform-agentgateway*.yaml
@@ -346,9 +346,9 @@ layout:
   - path: platform/external-secrets/
     role: ESO Helm values + store example
   - path: platform/headlamp/
-    role: Headlamp Helm values
+    role: Headlamp helmCharts + values (JSON6902 drops hostUsers)
   - path: platform/argocd-access/
-    role: Argo CD UI NodePort Service
+    role: Argo CD UI NodePort + argocd-cm --enable-helm
   - path: platform/gateway-api/
     role: Gateway API CRDs
   - path: platform/agentgateway/
@@ -391,6 +391,8 @@ troubleshooting:
     check: "http://<node-ip>:30080/; Docker published ports"
   - symptom: Headlamp token rejected
     check: Create a fresh SA token — docs/headlamp.md
+  - symptom: platform-headlamp ComparisonError / helmCharts
+    check: "argocd-cm kustomize.buildOptions=--enable-helm; restart repo-server"
   - symptom: Argo UI unreachable
     check: svc argocd-server-nodeport; app platform-argocd-access
   - symptom: Vault sealed / UI down

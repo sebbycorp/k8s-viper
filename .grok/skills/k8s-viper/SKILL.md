@@ -47,8 +47,8 @@ Canonical overview: `README.md`. Design: `docs/superpowers/specs/2026-08-11-k3s-
 | `platform-ingress` | git `platform/ingress` | `kube-system` (+ `apps` for whoami) |
 | `platform-vault` | Helm HashiCorp + values ref | `vault` |
 | `platform-external-secrets` | Helm ESO + values ref | `external-secrets` |
-| `platform-headlamp` | Helm Headlamp + values ref | `headlamp` |
-| `platform-argocd-access` | kustomize NodePort for Argo UI | `argocd` |
+| `platform-headlamp` | kustomize helmCharts + values (`platform/headlamp`) | `headlamp` |
+| `platform-argocd-access` | kustomize NodePort + argocd-cm `--enable-helm` | `argocd` |
 | `platform-gateway-api` | Gateway API CRDs | cluster |
 | `platform-agentgateway-crds` | agentgateway CRDs Helm | `agentgateway-system` |
 | `platform-agentgateway` | agentgateway control plane | `agentgateway-system` |
@@ -67,7 +67,8 @@ Lab UI NodePorts (fixed): Headlamp **30080**, Argo CD **30443**, Vault UI **3020
    - `project: viper`
    - automated sync + prune + selfHeal
    - `CreateNamespace=true`, prefer `ServerSideApply=true`
-   - Helm multi-source pattern (match Vault/ESO/Headlamp): chart source + git `ref: values` for `$values/platform/<name>/values.yaml`
+   - Helm multi-source pattern (match Vault/ESO): chart source + git `ref: values` for `$values/platform/<name>/values.yaml`
+   - Kustomize + helmCharts (match Headlamp): single `source.path` and `kustomize.buildOptions: --enable-helm` on argocd-cm
    - Plain manifests: single `source.path` like `platform-ingress`
 3. Update `argocd/project.yaml`:
    - `sourceRepos` for any new Helm repo URL

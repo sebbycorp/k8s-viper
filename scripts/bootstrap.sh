@@ -93,6 +93,12 @@ install_argocd() {
   # controller + repo-server are also required for sync
   wait_for_deployment "${ARGOCD_NAMESPACE}" argocd-repo-server 300
   wait_for_deployment "${ARGOCD_NAMESPACE}" argocd-applicationset-controller 300 || true
+
+  # platform/headlamp uses kustomize helmCharts; repo-server needs --enable-helm.
+  # Same key is GitOps-managed in platform/argocd-access/argocd-cm-kustomize.yaml.
+  log "Enabling kustomize.buildOptions=--enable-helm on argocd-cm..."
+  kubectl -n "${ARGOCD_NAMESPACE}" patch configmap argocd-cm --type merge \
+    -p '{"data":{"kustomize.buildOptions":"--enable-helm"}}'
 }
 
 apply_project_and_root_app() {
