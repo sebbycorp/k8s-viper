@@ -87,7 +87,7 @@
                       ↓
    Traefik :80/:443  +  NodePorts 30080 / 30443 / 30200 / 30100 / 30300
                       ↓
-   agentgateway → OpenAI (Vault) → traces → Langfuse</code></pre>
+   agentgateway → OpenAI (Vault) + Spark Qwen → traces → Langfuse</code></pre>
   </div>
   <div class="callout ok">
     <div>
@@ -251,8 +251,11 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml</code></pre>
 <section id="ai-stack">
   <div class="section-head"><span class="section-num">09</span><h2>AI stack</h2></div>
   <p class="lead">
-    <strong>agentgateway</strong> fronts OpenAI with credentials from Vault.
-    Models (per request): <code>gpt-5.5</code>, <code>gpt-5-mini</code>.
+    <strong>agentgateway</strong> fronts OpenAI (<code>/v1</code>, <code>/openai</code>)
+    with credentials from Vault, and DGX Spark Qwen (<code>/spark</code>) at
+    <code>172.16.10.173:8000</code> with no auth.
+    Models: <code>gpt-5.5</code>, <code>gpt-5-mini</code>,
+    <code>Qwen/Qwen3.6-35B-A3B-FP8</code>.
     <strong>Langfuse</strong> (+ ClickHouse) receives OTEL traces.
     Full runbook:
     <a href="{{ .Site.Params.github }}/blob/main/docs/agentgateway-langfuse.md">docs/agentgateway-langfuse.md</a>.
@@ -264,7 +267,11 @@ curl -sS "$GW/v1/chat/completions" -H 'content-type: application/json' \
 
 # small model
 curl -sS "$GW/v1/chat/completions" -H 'content-type: application/json' \
-  -d '{"model":"gpt-5-mini","messages":[{"role":"user","content":"hi"}],"max_completion_tokens":64}'</code></pre>
+  -d '{"model":"gpt-5-mini","messages":[{"role":"user","content":"hi"}],"max_completion_tokens":64}'
+
+# DGX Spark (vLLM)
+curl -sS "$GW/spark/v1/chat/completions" -H 'content-type: application/json' \
+  -d '{"model":"Qwen/Qwen3.6-35B-A3B-FP8","messages":[{"role":"user","content":"hi"}],"max_tokens":64}'</code></pre>
   <div class="callout ok">
     <div>
       <strong>No client OpenAI key</strong> — gateway injects

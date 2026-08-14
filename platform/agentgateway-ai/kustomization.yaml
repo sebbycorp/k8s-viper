@@ -7,5 +7,7 @@ resources:
   - gateway.yaml
   - backend-openai.yaml
   - httproute-openai.yaml
+  - backend-dgx-spark.yaml
+  - httproute-dgx-spark.yaml
   - otel-collector.yaml
   - gateway-parameters-tracing.yaml

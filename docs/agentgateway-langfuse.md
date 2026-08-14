@@ -1,4 +1,4 @@
-# agentgateway + OpenAI + Langfuse
+# agentgateway + OpenAI + DGX Spark + Langfuse
 
 Lab stack for **AI traffic** on k8s-viper:
 
@@ -6,7 +6,8 @@ Lab stack for **AI traffic** on k8s-viper:
 |-----------|-----------------|
 | **agentgateway** | Helm/chart **1.4.1** — Gateway API AI data plane |
 | **OpenAI backend** | Vault `secret/platform/openai` → ExternalSecret → gateway auth |
-| **Models** | Client-selected: **`gpt-5.5`** (full), **`gpt-5-mini`** (small) |
+| **OpenAI models** | Client-selected: **`gpt-5.5`** (full), **`gpt-5-mini`** (small) on `/v1` and `/openai` |
+| **DGX Spark** | vLLM at `172.16.10.173:8000` — **`Qwen/Qwen3.6-35B-A3B-FP8`** on `/spark` (no auth) |
 | **Langfuse** | Helm **1.5.41** (app ~3.224) + Postgres, Redis, **ClickHouse**, MinIO |
 | **OTEL collector** | agentgateway traces → Langfuse OTLP HTTP |
 
@@ -18,7 +19,7 @@ Traefik remains the **cluster Ingress** for `*.viper.local`. agentgateway is
 
 | Service | URL |
 |---------|-----|
-| agentgateway (OpenAI-compatible) | `http://<node-ip>:30100/` |
+| agentgateway (OpenAI `/v1` · `/openai`; Spark `/spark`) | `http://<node-ip>:30100/` |
 | Langfuse UI | `http://<node-ip>:30300/` or `http://langfuse.viper.local/` |
 | Vault | `http://<node-ip>:30200/` |
 
@@ -83,6 +84,33 @@ Git paths:
 - Route: `platform/agentgateway-ai/httproute-openai.yaml`
 - OpenAI ExternalSecret: `platform/agentgateway-ai/external-secret-openai.yaml`
 
+## Call DGX Spark through agentgateway
+
+Same Gateway (`agentgateway-proxy` :30100). Path prefix `/spark` — no client key.
+vLLM host/model from [k8s-goose](https://github.com/sebbycorp/k8s-goose) `config/backends/dgx-spark-llm.yaml`.
+
+```bash
+export GW=http://172.16.10.135:30100   # or your node-ip
+
+curl -sS "$GW/spark/v1/chat/completions" \
+  -H 'content-type: application/json' \
+  -d '{
+    "model": "Qwen/Qwen3.6-35B-A3B-FP8",
+    "messages": [{"role":"user","content":"Say hello from k8s-viper Spark"}],
+    "max_tokens": 64
+  }' | jq .
+```
+
+| Path | Backend | Model |
+|------|---------|-------|
+| `/v1`, `/openai` | OpenAI (`api.openai.com`) | `gpt-5.5`, `gpt-5-mini` |
+| `/spark` | DGX Spark `172.16.10.173:8000` | `Qwen/Qwen3.6-35B-A3B-FP8` |
+
+Git paths:
+
+- Backend: `platform/agentgateway-ai/backend-dgx-spark.yaml`
+- Route: `platform/agentgateway-ai/httproute-dgx-spark.yaml`
+
 ## Wire traces to Langfuse
 
 1. Wait for Langfuse pods: `kubectl -n langfuse get pods`
@@ -124,7 +152,7 @@ kubectl -n agentgateway-system set env deploy/agentgateway-proxy \
 | `platform-gateway-api` | Gateway API CRDs | cluster |
 | `platform-agentgateway-crds` | agentgateway CRDs (OCI Helm 1.4.1) | `agentgateway-system` |
 | `platform-agentgateway` | control plane (OCI Helm 1.4.1) | `agentgateway-system` |
-| `platform-agentgateway-ai` | Gateway, OpenAI backend, routes, OTEL | `agentgateway-system` |
+| `platform-agentgateway-ai` | Gateway, OpenAI + Spark backends, routes, OTEL | `agentgateway-system` |
 | `platform-langfuse-secrets` | NS + ExternalSecret | `langfuse` |
 | `platform-langfuse` | Langfuse Helm 1.5.41 | `langfuse` |
 

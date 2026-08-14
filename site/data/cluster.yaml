@@ -16,7 +16,7 @@ overview:
   - concern: Lab UIs
     choice: "NodePorts 30080 / 30443 / 30200 / **30100** / **30300**"
   - concern: AI gateway
-    choice: "agentgateway 1.4.1 → OpenAI (`gpt-5.5`, `gpt-5-mini`) via Vault"
+    choice: "agentgateway 1.4.1 → OpenAI (`gpt-5.5`, `gpt-5-mini`) on `/v1` · Spark Qwen on `/spark`"
   - concern: LLM observability
     choice: "Langfuse + ClickHouse; OTEL from agentgateway"
   - concern: Git source
@@ -38,7 +38,7 @@ facts:
   - key: Ingress class
     value: traefik
   - key: AI models
-    value: "gpt-5.5 · gpt-5-mini"
+    value: "gpt-5.5 · gpt-5-mini · Qwen/Qwen3.6-35B-A3B-FP8 (Spark)"
   - key: App of apps
     value: argocd/apps
 
@@ -200,7 +200,7 @@ platform:
     kindLabel: ai
     ns: agentgateway-system
     source: platform/agentgateway-ai/
-    notes: "OpenAI routes · OTEL · :30100"
+    notes: "OpenAI + Spark routes · OTEL · :30100"
   - app: platform-langfuse-secrets
     kind: secret
     kindLabel: secrets
@@ -224,7 +224,7 @@ namespaces:
   - ns: headlamp
     purpose: Kubernetes dashboard UI
   - ns: agentgateway-system
-    purpose: agentgateway control plane + OpenAI proxy + OTEL collector
+    purpose: agentgateway control plane + OpenAI/Spark proxy + OTEL collector
   - ns: langfuse
     purpose: Langfuse + Postgres/Redis/ClickHouse/MinIO
   - ns: apps
@@ -265,7 +265,7 @@ ports:
     service: Vault UI / API
     how: "NodePort (`vault-ui`)"
   - port: "30100"
-    service: agentgateway OpenAI proxy
+    service: agentgateway OpenAI + Spark proxy
     how: "NodePort (`agentgateway-proxy-nodeport`)"
   - port: "30300"
     service: Langfuse UI
@@ -354,7 +354,7 @@ layout:
   - path: platform/agentgateway/
     role: agentgateway control plane values
   - path: platform/agentgateway-ai/
-    role: OpenAI Gateway, routes, OTEL
+    role: OpenAI + Spark Gateway, routes, OTEL
   - path: platform/langfuse/
     role: Langfuse Helm + ExternalSecret
   - path: apps/
