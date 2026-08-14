@@ -33,6 +33,9 @@ require_file platform/ingress/kustomization.yaml
 require_file platform/ingress/helmchartconfig-traefik.yaml
 require_file platform/ingress/whoami.yaml
 require_file platform/vault/values.yaml
+require_file platform/vault/kustomization.yaml
+require_file platform/vault/sts-vct-defaults.yaml
+require_file platform/argocd-access/enable-kustomize-helm.yaml
 require_file platform/external-secrets/values.yaml
 require_file platform/external-secrets/cluster-secret-store-vault.example.yaml
 require_file platform/headlamp/values.yaml
@@ -122,6 +125,12 @@ if command -v kustomize >/dev/null 2>&1; then
   else
     fail "kustomize build platform/argocd-access"
   fi
+  log "kustomize build --enable-helm platform/vault..."
+  if kustomize build --enable-helm platform/vault >/dev/null; then
+    ok "kustomize build --enable-helm platform/vault"
+  else
+    fail "kustomize build --enable-helm platform/vault"
+  fi
 elif command -v kubectl >/dev/null 2>&1; then
   log "kubectl kustomize platform/ingress..."
   if kubectl kustomize platform/ingress >/dev/null; then
@@ -134,6 +143,12 @@ elif command -v kubectl >/dev/null 2>&1; then
     ok "kubectl kustomize platform/argocd-access"
   else
     fail "kubectl kustomize platform/argocd-access"
+  fi
+  log "kubectl kustomize --enable-helm platform/vault..."
+  if kubectl kustomize --enable-helm platform/vault >/dev/null; then
+    ok "kubectl kustomize --enable-helm platform/vault"
+  else
+    fail "kubectl kustomize --enable-helm platform/vault"
   fi
 else
   log "kustomize/kubectl not found — skipping kustomize build"

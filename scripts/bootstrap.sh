@@ -93,6 +93,13 @@ install_argocd() {
   # controller + repo-server are also required for sync
   wait_for_deployment "${ARGOCD_NAMESPACE}" argocd-repo-server 300
   wait_for_deployment "${ARGOCD_NAMESPACE}" argocd-applicationset-controller 300 || true
+
+  # platform-vault uses kustomize helmCharts + patches (VCT apiVersion/kind/volumeMode).
+  log "Enabling kustomize --enable-helm on argocd-cm..."
+  kubectl -n "${ARGOCD_NAMESPACE}" patch configmap argocd-cm --type merge \
+    -p '{"data":{"kustomize.buildOptions":"--enable-helm"}}'
+  kubectl -n "${ARGOCD_NAMESPACE}" rollout restart deployment/argocd-repo-server
+  wait_for_deployment "${ARGOCD_NAMESPACE}" argocd-repo-server 180
 }
 
 apply_project_and_root_app() {

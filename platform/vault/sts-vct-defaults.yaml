@@ -1,0 +1,21 @@
+# k3s v1.32.5 defaults these on volumeClaimTemplates; the Vault 0.30.0
+# chart cannot emit them. Strategic-merge onto the Helm-rendered STS.
+# accessModes/size/class match server.dataStorage (do not change storage).
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vault
+spec:
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 10Gi
+        storageClassName: local-path
+        volumeMode: Filesystem

@@ -29,6 +29,11 @@ server:
     size: 10Gi
     storageClass: local-path
 
+  # k8s 1.32 defaults these on the live STS; emit them so Argo desired matches.
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+
   auditStorage:
     enabled: false
 
