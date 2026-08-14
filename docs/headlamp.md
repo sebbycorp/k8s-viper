@@ -59,12 +59,7 @@ Edit `platform/headlamp/values.yaml` (NodePort, ingress host, resources, OIDC
 later), PR, merge to `main`. Argo auto-syncs. Pin chart bumps in
 `platform/headlamp/kustomization.yaml` (`helmCharts[].version`).
 
-Repo-server must run `kustomize build --enable-helm` (`argocd-cm`
-`kustomize.buildOptions`, GitOps in `platform/argocd-access/`, also set by
-`scripts/bootstrap.sh`). On a cluster bootstrapped before that key existed:
-
-```bash
-kubectl -n argocd patch configmap argocd-cm --type merge \
-  -p '{"data":{"kustomize.buildOptions":"--enable-helm"}}'
-kubectl -n argocd rollout restart deployment/argocd-repo-server
-```
+Repo-server must run `kustomize build --enable-helm`. `platform-argocd-access`
+SSA-merges `kustomize.buildOptions: --enable-helm` onto `argocd-cm` (bootstrap
+also sets the key on new clusters). After that key is live, restart
+`argocd-repo-server` so it picks up the option.
