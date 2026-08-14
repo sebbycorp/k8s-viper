@@ -65,14 +65,14 @@ data:
           initial_interval: 5s
           max_interval: 30s
           max_elapsed_time: 300s
-      logging:
-        loglevel: info
+      debug:
+        verbosity: basic
     service:
       pipelines:
         traces:
           receivers: [otlp]
           processors: [memory_limiter, batch]
-          exporters: [otlphttp/langfuse, logging]
+          exporters: [otlphttp/langfuse, debug]
 ---
 apiVersion: apps/v1
 kind: Deployment
