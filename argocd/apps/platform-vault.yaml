@@ -23,6 +23,14 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: vault
+  ignoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      jqPathExpressions:
+        - .spec.template.metadata.annotations."checksum/config"
+        - .spec.template.metadata.annotations."vault.hashicorp.com/config-checksum"
+        - .metadata.annotations."checksum/config"
+        - .metadata.annotations."vault.hashicorp.com/config-checksum"
   syncPolicy:
     automated:
       prune: true
@@ -30,3 +38,4 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
+      - RespectIgnoreDifferences=true
