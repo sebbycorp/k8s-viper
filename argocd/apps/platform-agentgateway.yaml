@@ -10,7 +10,7 @@ metadata:
 spec:
   project: viper
   sources:
-    - repoURL: oci://cr.agentgateway.dev/charts
+    - repoURL: oci://cr.agentgateway.dev/charts/agentgateway
       chart: agentgateway
       targetRevision: v1.4.1
       helm:
