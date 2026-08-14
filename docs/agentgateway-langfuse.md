@@ -1,29 +1,46 @@
 # agentgateway + OpenAI + DGX Spark + Langfuse
 
-Lab stack for **AI traffic** on k8s-viper:
+Lab stack for **AI traffic** on k8s-viper.
+
+**One Gateway, two providers.** A single Gateway (`agentgateway-proxy` in
+`agentgateway-system`) listens on NodePort **30100**. Two
+`AgentgatewayBackend` + `HTTPRoute` objects attach to that Gateway — not two
+gateways.
 
 | Component | Version / notes |
 |-----------|-----------------|
-| **agentgateway** | Helm/chart **1.4.1** — Gateway API AI data plane |
-| **OpenAI backend** | Vault `secret/platform/openai` → ExternalSecret → gateway auth |
+| **agentgateway** | Helm/chart **v1.4.1** (OCI `oci://cr.agentgateway.dev/charts`) — Gateway API AI data plane |
+| **Gateway** | `agentgateway-proxy` · NodePort **30100** · `http://172.16.10.135:30100/` |
+| **OpenAI backend** | Vault `secret/platform/openai` → ExternalSecret `openai-secret` → gateway auth |
 | **OpenAI models** | Client-selected: **`gpt-5.5`** (full), **`gpt-5-mini`** (small) on `/v1` and `/openai` |
 | **DGX Spark** | vLLM at `172.16.10.173:8000` — **`Qwen/Qwen3.6-35B-A3B-FP8`** on `/spark` (no auth) |
 | **Langfuse** | Helm **1.5.41** (app ~3.224) + Postgres, Redis, **ClickHouse**, MinIO |
-| **OTEL collector** | agentgateway traces → Langfuse OTLP HTTP |
+| **OTEL collector** | `langfuse-otel-collector` in `agentgateway-system` — OTLP HTTP to Langfuse. Path is wired; keys in Vault `secret/platform/langfuse-otel`. Configured — do not treat traces as proven in production. |
+
+```text
+agentgateway-proxy :30100
+     ├─ /v1 · /openai  → OpenAI (Vault key)      gpt-5.5 / gpt-5-mini
+     └─ /spark         → DGX Spark vLLM :8000    Qwen/Qwen3.6-35B-A3B-FP8
+```
+
+`GET /` on `:30100` returns **404 `route not found`** — that is expected.
+
+`svclb-agentgateway-proxy` stays **Pending** because Traefik already owns host
+`:80`/`:443`. Use NodePort **30100**. Do not try to steal port 80.
 
 Traefik remains the **cluster Ingress** for `*.viper.local`. agentgateway is
 **not** a replacement for Traefik; it fronts LLM/API traffic. See
 [why-traefik.md](why-traefik.md).
 
+On Viper, kubectl is inside the k3s container: `docker exec k3s-viper kubectl ...`.
+
 ## Access
 
 | Service | URL |
 |---------|-----|
-| agentgateway (OpenAI `/v1` · `/openai`; Spark `/spark`) | `http://<node-ip>:30100/` |
-| Langfuse UI | `http://<node-ip>:30300/` or `http://langfuse.viper.local/` |
-| Vault | `http://<node-ip>:30200/` |
-
-LAN example: `http://172.16.10.135:30100/`.
+| agentgateway (OpenAI `/v1` · `/openai`; Spark `/spark`) | `http://172.16.10.135:30100/` |
+| Langfuse UI | `http://172.16.10.135:30300/` or `http://langfuse.viper.local/` |
+| Vault | `http://172.16.10.135:30200/` |
 
 Docker k3s must publish **30100** and **30300** (plus existing UI ports). Full
 map: [platform-ui-access.md](platform-ui-access.md).
@@ -31,7 +48,7 @@ map: [platform-ui-access.md](platform-ui-access.md).
 `/etc/hosts`:
 
 ```text
-<node-ip>  langfuse.viper.local headlamp.viper.local whoami.viper.local
+172.16.10.135  langfuse.viper.local headlamp.viper.local whoami.viper.local
 ```
 
 ## Vault paths (no secrets in git)
@@ -113,13 +130,17 @@ Git paths:
 
 ## Wire traces to Langfuse
 
-1. Wait for Langfuse pods: `kubectl -n langfuse get pods`
+The OTEL path is **configured** (proxy env → collector `:4317` → Langfuse OTLP
+HTTP). Keys live in Vault `secret/platform/langfuse-otel`. Do not claim traces
+are proven in production from this runbook alone.
+
+1. Wait for Langfuse pods: `docker exec k3s-viper kubectl -n langfuse get pods`
 2. Open Langfuse UI → first-user signup → **Settings → API Keys**
 3. Store keys in Vault (Vault unsealed):
 
 ```bash
 ROOT=$(python3 -c "import json; print(json.load(open('$HOME/.config/k8s-viper/vault-init.json'))['root_token_initial'])")
-kubectl -n vault exec vault-0 -- sh -c "
+docker exec k3s-viper kubectl -n vault exec vault-0 -- sh -c "
 export VAULT_TOKEN='$ROOT'
 vault kv put secret/platform/langfuse-otel \
   public_key='pk-lf-...' \
@@ -131,13 +152,13 @@ vault kv put secret/platform/langfuse-otel \
 4. ExternalSecret `langfuse-otel-auth` refreshes; restart collector if needed:
 
 ```bash
-kubectl -n agentgateway-system rollout restart deploy/langfuse-otel-collector
+docker exec k3s-viper kubectl -n agentgateway-system rollout restart deploy/langfuse-otel-collector
 ```
 
 5. Ensure proxy exports OTEL (re-apply if controller recreates the Deployment):
 
 ```bash
-kubectl -n agentgateway-system set env deploy/agentgateway-proxy \
+docker exec k3s-viper kubectl -n agentgateway-system set env deploy/agentgateway-proxy \
   OTEL_EXPORTER_OTLP_ENDPOINT=http://langfuse-otel-collector.agentgateway-system.svc.cluster.local:4317 \
   OTEL_EXPORTER_OTLP_PROTOCOL=grpc \
   OTEL_SERVICE_NAME=agentgateway-proxy

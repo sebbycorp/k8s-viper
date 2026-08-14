@@ -12,8 +12,10 @@ This guide runs **after** `scripts/bootstrap.sh` and after Argo has synced:
 After init + unseal, open the Vault UI on the node NodePort:
 
 ```text
-http://<node-ip>:30200/
+http://172.16.10.135:30200/
 ```
+
+On Viper, kubectl is inside the k3s container: `docker exec k3s-viper kubectl ...`.
 
 Full port map: [platform-ui-access.md](platform-ui-access.md).
 
@@ -38,9 +40,9 @@ vault kv put secret/platform/openai api_key='sk-...' provider=openai
 ## 1. Wait for Vault pod
 
 ```bash
-export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-# or: export KUBECONFIG=$HOME/.kube/config
-kubectl -n vault get pods
+# Viper (dockerized k3s):
+docker exec k3s-viper kubectl -n vault get pods
+# Native k3s: export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 # Expect vault-0 Running (sealed until init+unseal)
 ```
 

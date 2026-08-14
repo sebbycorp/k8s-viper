@@ -6,9 +6,9 @@
   <div class="eyebrow">Single-node GitOps lab</div>
   <h2>{{ .Title }}</h2>
   <p class="lede">
-    A single-node <strong>k3s</strong> powerhouse managed with
-    <strong>Argo CD</strong>. Everything after bootstrap lives in git —
-    this page is the full map of the lab.
+    Sebastian Maniak's lab: single-node <strong>dockerized k3s</strong> on
+    Viper, managed with <strong>Argo CD</strong>. Everything after bootstrap
+    lives in git — this page is the full map of the lab.
   </p>
   <div class="pills">
     <span class="pill ok">k3s v1.32</span>
@@ -49,7 +49,7 @@
     <button type="button" class="btn ghost" id="reset-ip">Reset</button>
     <p class="hint">
       Rewrites UI links below. Stored only in this browser.<br />
-      <code>kubectl get nodes -o wide</code>
+      <code>docker exec k3s-viper kubectl get nodes -o wide</code>
     </p>
   </div>
 </header>
@@ -78,7 +78,7 @@
   <div class="section-head"><span class="section-num">02</span><h2>Architecture</h2></div>
   <p class="lead">Imperative install only for k3s + Argo + root app. Platform services are GitOps.</p>
   <div class="arch-box">
-    <pre><code>bootstrap.sh  →  k3s + Argo CD + root Application
+    <pre><code>bootstrap.sh  →  dockerized k3s (k3s-viper) + Argo CD + root Application
                       ↓
               argocd/apps/*  (GitOps, auto-sync)
                       ↓
@@ -87,7 +87,11 @@
                       ↓
    Traefik :80/:443  +  NodePorts 30080 / 30443 / 30200 / 30100 / 30300
                       ↓
-   agentgateway → OpenAI (Vault) + Spark Qwen → traces → Langfuse</code></pre>
+   agentgateway-proxy :30100
+        ├─ /v1 · /openai  → OpenAI (Vault)     gpt-5.5 / gpt-5-mini
+        └─ /spark         → Spark vLLM :8000   Qwen/Qwen3.6-35B-A3B-FP8
+                      ↓
+   OTEL collector → Langfuse (configured)</code></pre>
   </div>
   <div class="callout ok">
     <div>
@@ -139,18 +143,15 @@
   </div>
 
   <h3 id="auth-commands">Auth commands</h3>
-  <pre><code># Node IP
-kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}{"\n"}'
+  <pre><code># Talk to the cluster (kubectl is not on the host PATH)
+docker exec k3s-viper kubectl get nodes -o wide
 
 # Argo CD admin password (user: admin)
-kubectl -n argocd get secret argocd-initial-admin-secret \
+docker exec k3s-viper kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath='{.data.password}' | base64 -d; echo
 
 # Headlamp SA token (paste into login form)
-kubectl -n headlamp create token headlamp --duration=12h
-
-# Kubeconfig on the node
-export KUBECONFIG=/etc/rancher/k3s/k3s.yaml</code></pre>
+docker exec k3s-viper kubectl -n headlamp create token headlamp --duration=12h</code></pre>
   <p class="lead" style="margin-top:0.5rem">
     Argo UI uses a self-signed cert — accept the browser warning.
     Vault UI needs init + unseal first.
@@ -160,7 +161,7 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml</code></pre>
 {{/* 05 Platform apps */}}
 <section id="platform-apps">
   <div class="section-head"><span class="section-num">05</span><h2>Platform apps</h2></div>
-  <p class="lead">Argo CD Applications. Watch with <code>kubectl -n argocd get applications</code>.</p>
+  <p class="lead">Argo CD Applications. Watch with <code>docker exec k3s-viper kubectl -n argocd get applications</code>.</p>
   <div class="card table-wrap">
     <table>
       <thead>
@@ -200,7 +201,7 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml</code></pre>
 <section id="ingress">
   <div class="section-head"><span class="section-num">07</span><h2>Ingress hosts</h2></div>
   <p class="lead">Map hosts to the node IP in <code>/etc/hosts</code>, then hit Traefik on :80.</p>
-  <pre><code>&lt;node-ip&gt;  whoami.viper.local headlamp.viper.local</code></pre>
+  <pre><code>172.16.10.135  whoami.viper.local headlamp.viper.local langfuse.viper.local</code></pre>
   <div class="card table-wrap">
     <table>
       <thead><tr><th>Host</th><th>Target</th><th>Namespace</th><th>Class</th></tr></thead>
@@ -216,7 +217,7 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml</code></pre>
       </tbody>
     </table>
   </div>
-  <pre><code>curl -H 'Host: whoami.viper.local' http://&lt;node-ip&gt;/</code></pre>
+  <pre><code>curl -H 'Host: whoami.viper.local' http://172.16.10.135/</code></pre>
   <div class="callout ok">
     <div>
       <strong>Why Traefik, not kgateway?</strong>
@@ -260,7 +261,7 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml</code></pre>
     Full runbook:
     <a href="{{ .Site.Params.github }}/blob/main/docs/agentgateway-langfuse.md">docs/agentgateway-langfuse.md</a>.
   </p>
-  <pre><code>export GW=http://&lt;node-ip&gt;:30100
+  <pre><code>export GW=http://172.16.10.135:30100
 
 curl -sS "$GW/v1/chat/completions" -H 'content-type: application/json' \
   -d '{"model":"gpt-5.5","messages":[{"role":"user","content":"hi"}],"max_completion_tokens":64}'
@@ -322,7 +323,7 @@ sudo INSTALL_K3S_SKIP=1 ./scripts/bootstrap.sh</code></pre>
     <li>Argo CD auto-syncs (prune + self-heal on platform apps).</li>
   </ol>
   <pre><code>./scripts/validate.sh
-kubectl -n argocd get applications
+docker exec k3s-viper kubectl -n argocd get applications
 
 # Build this handbook locally
 cd site && hugo --minify</code></pre>
@@ -354,7 +355,7 @@ cd site && hugo --minify</code></pre>
   <pre><code># Unseal (lab helper)
 ~/.config/k8s-viper/vault-unseal.sh
 
-# UI after unseal → http://&lt;node-ip&gt;:30200/</code></pre>
+# UI after unseal → http://172.16.10.135:30200/</code></pre>
   <div class="callout danger">
     <div>
       <strong>Never commit</strong> unseal keys, root tokens, or raw secret values.

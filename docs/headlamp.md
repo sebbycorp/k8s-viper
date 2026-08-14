@@ -10,26 +10,21 @@ user namespaces).
 
 ## Access
 
-**Preferred (NodePort):** open `http://<node-ip>:30080/`
+**Preferred (NodePort):** open `http://172.16.10.135:30080/`
 
-```bash
-kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}{"\n"}'
-```
+On Viper, kubectl is inside the k3s container (`docker exec k3s-viper kubectl ...`).
 
 **Also (Ingress):** map the node IP and open http://headlamp.viper.local/
 
 ```text
-<node-ip>  headlamp.viper.local
+172.16.10.135  headlamp.viper.local
 ```
 
 When Headlamp asks for a token, create one (cluster-admin SA used by the chart
 is fine for a private lab; create a read-only SA if you prefer):
 
 ```bash
-export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-
-# Token for the Headlamp service account (chart SA name may be headlamp)
-kubectl -n headlamp create token headlamp --duration=12h
+docker exec k3s-viper kubectl -n headlamp create token headlamp --duration=12h
 ```
 
 Paste the token into the Headlamp login form.
@@ -37,8 +32,8 @@ Paste the token into the Headlamp login form.
 If the SA name differs:
 
 ```bash
-kubectl -n headlamp get sa
-kubectl -n headlamp create token <sa-name> --duration=12h
+docker exec k3s-viper kubectl -n headlamp get sa
+docker exec k3s-viper kubectl -n headlamp create token <sa-name> --duration=12h
 ```
 
 Port map for all platform UIs (including agentgateway and Langfuse):

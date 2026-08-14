@@ -2,7 +2,7 @@
 
 overview:
   - concern: Cluster
-    choice: "k3s, one node (control-plane + worker)"
+    choice: "dockerized k3s (`k3s-viper`, `rancher/k3s:v1.32.5-k3s1`)"
   - concern: Bootstrap
     choice: "`scripts/bootstrap.sh` (once / idempotent)"
   - concern: CD
@@ -16,19 +16,25 @@ overview:
   - concern: Lab UIs
     choice: "NodePorts 30080 / 30443 / 30200 / **30100** / **30300**"
   - concern: AI gateway
-    choice: "agentgateway 1.4.1 → OpenAI (`gpt-5.5`, `gpt-5-mini`) on `/v1` · Spark Qwen on `/spark`"
+    choice: "one Gateway `agentgateway-proxy` :30100 → OpenAI (`/v1`) + DGX Spark (`/spark`)"
   - concern: LLM observability
-    choice: "Langfuse + ClickHouse; OTEL from agentgateway"
+    choice: "Langfuse + ClickHouse; OTEL path configured (Vault `secret/platform/langfuse-otel`)"
   - concern: Git source
     choice: "github.com/sebbycorp/k8s-viper @ `main`"
-  - concern: Public tunnel
-    choice: Not in v1
+  - concern: SSH / tunnel
+    choice: "LAN `smaniak@172.16.10.135`; ngrok TCP for SSH only (not k8s UIs)"
 
 facts:
+  - key: Host
+    value: "Viper · user smaniak"
   - key: Node name
     value: k3s-viper
   - key: LAN IP (clients)
     value: "172.16.10.135"
+  - key: k3s container
+    value: "k3s-viper · rancher/k3s:v1.32.5-k3s1"
+  - key: kubectl
+    value: "docker exec k3s-viper kubectl …"
   - key: k3s InternalIP
     value: "172.17.0.2 (Docker bridge)"
   - key: k3s / API
@@ -37,8 +43,14 @@ facts:
     value: viper
   - key: Ingress class
     value: traefik
+  - key: AI Gateway
+    value: "agentgateway-proxy NodePort 30100 (one proxy, two backends)"
   - key: AI models
     value: "gpt-5.5 · gpt-5-mini · Qwen/Qwen3.6-35B-A3B-FP8 (Spark)"
+  - key: Spark host
+    value: "172.16.10.173:8000 (vLLM)"
+  - key: SSH
+    value: "smaniak@172.16.10.135 · ngrok TCP for remote SSH"
   - key: App of apps
     value: argocd/apps
 
@@ -96,7 +108,7 @@ uis:
     typeLabel: NodePort
     scheme: http
     path: ":30100/"
-    auth: "OpenAI via Vault (no client key)"
+    auth: "OpenAI via Vault; Spark no auth; GET / → 404 expected"
     git: platform/agentgateway-ai/
   - name: Langfuse
     type: ui
@@ -170,13 +182,13 @@ platform:
     kindLabel: dashboard
     ns: headlamp
     source: platform/headlamp/
-    notes: "Headlamp · NodePort :30080"
+    notes: "kustomize helmCharts 0.44.0 · JSON6902 drops hostUsers · :30080"
   - app: platform-argocd-access
     kind: ui
     kindLabel: access
     ns: argocd
     source: platform/argocd-access/
-    notes: "Argo UI NodePort :30443 / :30081"
+    notes: "Argo UI NodePort :30443 / :30081 · argocd-cm --enable-helm"
   - app: platform-gateway-api
     kind: core
     kindLabel: crds
@@ -200,7 +212,7 @@ platform:
     kindLabel: ai
     ns: agentgateway-system
     source: platform/agentgateway-ai/
-    notes: "OpenAI + Spark routes · OTEL · :30100"
+    notes: "one Gateway · OpenAI + Spark backends · OTEL · :30100"
   - app: platform-langfuse-secrets
     kind: secret
     kindLabel: secrets
@@ -251,7 +263,7 @@ ingress:
 ports:
   - port: "80 / 443"
     service: Traefik ingress
-    how: LoadBalancer on node IP (k3s ServiceLB)
+    how: "LoadBalancer on node IP (k3s ServiceLB). Do not steal for agentgateway — svclb-agentgateway-proxy Pending is cosmetic."
   - port: "30080"
     service: Headlamp
     how: NodePort
@@ -283,7 +295,7 @@ vault_paths:
     used_by: Langfuse ExternalSecret
   - path: secret/platform/langfuse-otel
     fields: public_key, secret_key, endpoint
-    used_by: OTEL collector → Langfuse
+    used_by: OTEL collector → Langfuse (configured; keys in Vault)
 
 bootstrap_env:
   - name: REPO_URL
@@ -305,22 +317,34 @@ versions:
     where: scripts/bootstrap.sh
   - name: k3s (lab observed)
     pin: v1.32.5+k3s1
-    where: node install
+    where: "dockerized rancher/k3s:v1.32.5-k3s1"
   - name: Vault Helm chart
     pin: "0.30.0"
     where: argocd/apps/platform-vault.yaml
+  - name: Vault image
+    pin: hashicorp/vault:1.19.0
+    where: lab observed
   - name: External Secrets chart
     pin: "0.14.4"
     where: argocd/apps/platform-external-secrets.yaml
   - name: Headlamp Helm chart
     pin: "0.44.0"
     where: platform/headlamp/kustomization.yaml
+  - name: Headlamp image
+    pin: ghcr.io/headlamp-k8s/headlamp:v0.44.0
+    where: platform/headlamp/values.yaml
   - name: agentgateway / CRDs
-    pin: "1.4.1"
-    where: argocd/apps/platform-agentgateway*.yaml
+    pin: v1.4.1
+    where: "OCI oci://cr.agentgateway.dev/charts"
+  - name: agentgateway images
+    pin: v1.4.1
+    where: chart pin v1.4.1
   - name: Langfuse Helm chart
     pin: "1.5.41"
     where: argocd/apps/platform-langfuse.yaml
+  - name: OTEL collector
+    pin: otel/opentelemetry-collector-contrib:0.132.1
+    where: platform/agentgateway-ai/otel-collector.yaml
   - name: Gateway API CRDs
     pin: v1.6.0
     where: platform/gateway-api/
@@ -367,8 +391,8 @@ layout:
     role: CI validate + Pages deploy
 
 out_of_scope:
-  - item: ngrok / public tunnels
-    why: Keep lab private first
+  - item: ngrok for k8s UIs
+    why: ngrok TCP is SSH to the box only; UIs stay on the LAN
   - item: Multi-node / HA control plane
     why: Single-node powerhouse focus
   - item: MetalLB
@@ -381,26 +405,34 @@ out_of_scope:
     why: Traefik is k3s default; agentgateway is AI data plane only
 
 troubleshooting:
+  - symptom: kubectl not found on the host
+    check: "docker exec k3s-viper kubectl …"
   - symptom: Applications stuck Unknown
     check: Repo URL / OCI chart reachable; argocd-repo-server logs
   - symptom: Project errors
     check: appproject viper sourceRepos + destinations
   - symptom: whoami 404
-    check: Host header / /etc/hosts; kubectl -n apps get ingress,pods
+    check: Host header / /etc/hosts; docker exec k3s-viper kubectl -n apps get ingress,pods
   - symptom: Headlamp 404 / no UI
-    check: "http://<node-ip>:30080/; Docker published ports"
+    check: "http://172.16.10.135:30080/; Docker published ports"
   - symptom: Headlamp token rejected
     check: Create a fresh SA token — docs/headlamp.md
-  - symptom: platform-headlamp ComparisonError / helmCharts
-    check: "argocd-cm kustomize.buildOptions=--enable-helm; restart repo-server"
+  - symptom: platform-headlamp OutOfSync / hostUsers
+    check: "JSON6902 removes hostUsers; do not set false. Restart repo-server after --enable-helm"
   - symptom: Argo UI unreachable
     check: svc argocd-server-nodeport; app platform-argocd-access
   - symptom: Vault sealed / UI down
     check: unseal helper; docs/vault-eso-setup.md
   - symptom: ClusterSecretStore not Ready
     check: Vault unsealed + k8s auth role external-secrets
+  - symptom: agentgateway GET / → 404
+    check: Expected — use /v1 or /spark
   - symptom: agentgateway OpenAI 401/404 model
     check: Vault openai key; use gpt-5.5 or gpt-5-mini
+  - symptom: Spark 502 / no route
+    check: "Backend 172.16.10.173:8000; model Qwen/Qwen3.6-35B-A3B-FP8"
+  - symptom: svclb-agentgateway-proxy Pending
+    check: Cosmetic — Traefik owns :80/:443. Use NodePort 30100
   - symptom: Langfuse ImagePullBackOff
     check: Cluster egress/DNS to Docker Hub
   - symptom: Re-run bootstrap

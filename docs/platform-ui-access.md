@@ -4,27 +4,33 @@ Lab access on the **node / LAN IP** without `kubectl port-forward` where possibl
 Services stay private to your LAN — do not publish these ports to the public
 internet without TLS + real auth.
 
-On this lab the LAN address is often **`172.16.10.135`** (host Wi‑Fi). If k3s
-runs in Docker, that is the host IP; Docker must publish the NodePorts
-(see below). The k3s node InternalIP may still be `172.17.0.2` (bridge only).
+On Viper the LAN address is **`172.16.10.135`**. k3s is dockerized (`k3s-viper`);
+that is the host IP. Docker must publish the NodePorts (see below). The k3s
+node InternalIP may still be `172.17.0.2` (bridge only).
+
+Talk to the cluster with `docker exec k3s-viper kubectl ...` (kubectl is not on
+the host PATH).
+
+ngrok TCP is used for **SSH to the box** (`ssh smaniak@2.tcp.ngrok.io -p <port>`),
+not for exposing these UIs.
 
 ## Ports (fixed)
 
 | UI / API | URL | Auth / notes |
 |----------|-----|----------------|
-| **Headlamp** | `http://<node-ip>:30080/` | SA token — [headlamp.md](headlamp.md) |
-| **Argo CD** | `https://<node-ip>:30443/` | `admin` + initial secret |
-| **Argo CD (HTTP)** | `http://<node-ip>:30081/` | Often redirects to HTTPS |
-| **Vault UI** | `http://<node-ip>:30200/` | Root/app token after init+unseal — [vault-eso-setup.md](vault-eso-setup.md) |
-| **agentgateway** (OpenAI proxy) | `http://<node-ip>:30100/` | No client key; gateway uses Vault OpenAI key — [agentgateway-langfuse.md](agentgateway-langfuse.md) |
-| **Langfuse** | `http://<node-ip>:30300/` | First-user signup in UI |
+| **Headlamp** | `http://172.16.10.135:30080/` | SA token — [headlamp.md](headlamp.md) |
+| **Argo CD** | `https://172.16.10.135:30443/` | `admin` + initial secret |
+| **Argo CD (HTTP)** | `http://172.16.10.135:30081/` | Often redirects to HTTPS |
+| **Vault UI** | `http://172.16.10.135:30200/` | Root/app token after init+unseal — [vault-eso-setup.md](vault-eso-setup.md) |
+| **agentgateway** (OpenAI `/v1` · Spark `/spark`) | `http://172.16.10.135:30100/` | One Gateway, two backends. `GET /` → 404 is expected — [agentgateway-langfuse.md](agentgateway-langfuse.md) |
+| **Langfuse** | `http://172.16.10.135:30300/` | First-user signup in UI |
 
 ### Ingress hosts (Traefik `:80`)
 
 Map in client `/etc/hosts`:
 
 ```text
-<node-ip>  whoami.viper.local headlamp.viper.local langfuse.viper.local
+172.16.10.135  whoami.viper.local headlamp.viper.local langfuse.viper.local
 ```
 
 | Host | Target |
@@ -36,10 +42,10 @@ Map in client `/etc/hosts`:
 Get the IP:
 
 ```bash
-# Prefer LAN IP of the host (e.g. 172.16.10.135) for other devices on the subnet
+# Prefer LAN IP of the host (172.16.10.135) for other devices on the subnet
 ip -4 addr show
 # k3s node InternalIP (may be Docker bridge):
-kubectl get nodes -o wide
+docker exec k3s-viper kubectl get nodes -o wide
 ```
 
 ## Docker k3s host port maps
@@ -51,16 +57,16 @@ If k3s runs in a container, publish at least:
 ## Argo CD login
 
 ```bash
-kubectl -n argocd get secret argocd-initial-admin-secret \
+docker exec k3s-viper kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath='{.data.password}' | base64 -d; echo
 ```
 
-Open `https://<node-ip>:30443/`, user **admin**, accept the self-signed cert warning.
+Open `https://172.16.10.135:30443/`, user **admin**, accept the self-signed cert warning.
 
 ## Headlamp login
 
 ```bash
-kubectl -n headlamp create token headlamp --duration=12h
+docker exec k3s-viper kubectl -n headlamp create token headlamp --duration=12h
 ```
 
 ## Vault UI
@@ -69,14 +75,18 @@ Initialize and unseal first. After every pod/node restart:
 
 ```bash
 ~/.config/k8s-viper/vault-unseal.sh   # if you use the lab helper
-# or: kubectl -n vault exec vault-0 -- vault operator unseal
+# or: docker exec k3s-viper kubectl -n vault exec vault-0 -- vault operator unseal
 ```
 
-## agentgateway (OpenAI)
+## agentgateway (one Gateway, two backends)
+
+Same Gateway (`agentgateway-proxy` :30100). `GET /` returns 404 `route not found`
+— expected. `svclb-agentgateway-proxy` Pending is cosmetic (Traefik owns `:80`).
 
 ```bash
-export GW=http://172.16.10.135:30100   # or your node-ip
+export GW=http://172.16.10.135:30100
 
+# OpenAI
 curl -sS "$GW/v1/chat/completions" \
   -H 'content-type: application/json' \
   -d '{"model":"gpt-5.5","messages":[{"role":"user","content":"hi"}],"max_completion_tokens":64}'
@@ -85,14 +95,23 @@ curl -sS "$GW/v1/chat/completions" \
 curl -sS "$GW/v1/chat/completions" \
   -H 'content-type: application/json' \
   -d '{"model":"gpt-5-mini","messages":[{"role":"user","content":"hi"}],"max_completion_tokens":64}'
+
+# DGX Spark (vLLM)
+curl -sS "$GW/spark/v1/chat/completions" \
+  -H 'content-type: application/json' \
+  -d '{"model":"Qwen/Qwen3.6-35B-A3B-FP8","messages":[{"role":"user","content":"hi"}],"max_tokens":64}'
 ```
 
-Models: **`gpt-5.5`** (full), **`gpt-5-mini`** (small). Details:
-[agentgateway-langfuse.md](agentgateway-langfuse.md).
+| Path | Backend | Model |
+|------|---------|-------|
+| `/v1`, `/openai` | OpenAI (Vault key) | `gpt-5.5`, `gpt-5-mini` |
+| `/spark` | DGX Spark `172.16.10.173:8000` | `Qwen/Qwen3.6-35B-A3B-FP8` |
+
+Details: [agentgateway-langfuse.md](agentgateway-langfuse.md).
 
 ## Langfuse
 
-1. Open `http://<node-ip>:30300/` and create the first user.  
+1. Open `http://172.16.10.135:30300/` and create the first user.  
 2. **Settings → API Keys** → store in Vault for OTEL (same runbook).
 
 ## Change ports later
