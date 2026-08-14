@@ -46,6 +46,8 @@ require_file docs/agentgateway-langfuse.md
 require_file platform/gateway-api/kustomization.yaml
 require_file platform/agentgateway/values.yaml
 require_file platform/agentgateway-ai/kustomization.yaml
+require_file platform/agentgateway-ai/backend-dgx-spark.yaml
+require_file platform/agentgateway-ai/httproute-dgx-spark.yaml
 require_file platform/langfuse/values.yaml
 require_file platform/langfuse/external-secret.yaml
 require_file argocd/apps/platform-gateway-api.yaml

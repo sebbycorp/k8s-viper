@@ -1,0 +1,15 @@
+# DGX Spark vLLM (OpenAI-compatible). No auth.
+# Host/model from k8s-goose config/backends/dgx-spark-llm.yaml.
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayBackend
+metadata:
+  name: dgx-spark-llm
+  namespace: agentgateway-system
+spec:
+  ai:
+    provider:
+      openai:
+        model: Qwen/Qwen3.6-35B-A3B-FP8
+      host: 172.16.10.173
+      port: 8000
+      pathPrefix: /v1
