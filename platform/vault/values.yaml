@@ -15,7 +15,7 @@ csi:
 server:
   image:
     repository: hashicorp/vault
-    # Chart pins default; override only when intentionally upgrading.
+    tag: "1.19.0"
   resources:
     requests:
       memory: 256Mi
