@@ -36,8 +36,10 @@ require_file platform/vault/values.yaml
 require_file platform/external-secrets/values.yaml
 require_file platform/external-secrets/cluster-secret-store-vault.example.yaml
 require_file platform/headlamp/values.yaml
+require_file platform/headlamp/kustomization.yaml
 require_file platform/argocd-access/kustomization.yaml
 require_file platform/argocd-access/argocd-server-nodeport.yaml
+require_file platform/argocd-access/argocd-cm-kustomize.yaml
 require_file docs/vault-eso-setup.md
 require_file docs/headlamp.md
 require_file docs/platform-ui-access.md
@@ -64,7 +66,7 @@ require_file .github/workflows/ci.yaml
 require_file .github/workflows/pages.yml
 
 log "YAML parse check (Python)..."
-mapfile -t yaml_files < <(find argocd bootstrap platform -type f \( -name '*.yaml' -o -name '*.yml' \) | sort)
+mapfile -t yaml_files < <(find argocd bootstrap platform -type f \( -name '*.yaml' -o -name '*.yml' \) ! -path '*/charts/*' | sort)
 if ((${#yaml_files[@]} == 0)); then
   fail "no YAML files found under argocd/ bootstrap/ platform/"
 else
@@ -122,6 +124,20 @@ if command -v kustomize >/dev/null 2>&1; then
   else
     fail "kustomize build platform/argocd-access"
   fi
+  if command -v helm >/dev/null 2>&1; then
+    log "kustomize build --enable-helm platform/headlamp..."
+    if rendered="$(kustomize build --enable-helm platform/headlamp)"; then
+      if printf '%s\n' "${rendered}" | grep -q 'hostUsers:'; then
+        fail "platform/headlamp still emits hostUsers (JSON6902 remove failed)"
+      else
+        ok "kustomize build --enable-helm platform/headlamp (hostUsers removed)"
+      fi
+    else
+      fail "kustomize build --enable-helm platform/headlamp"
+    fi
+  else
+    log "helm not found — skipping platform/headlamp helmCharts build"
+  fi
 elif command -v kubectl >/dev/null 2>&1; then
   log "kubectl kustomize platform/ingress..."
   if kubectl kustomize platform/ingress >/dev/null; then
@@ -151,6 +167,7 @@ if command -v kubeconform >/dev/null 2>&1; then
     argocd/apps/platform-headlamp.yaml
     argocd/apps/platform-argocd-access.yaml
     platform/argocd-access/argocd-server-nodeport.yaml
+    platform/argocd-access/argocd-cm-kustomize.yaml
     platform/ingress/namespace-apps.yaml
     platform/ingress/whoami.yaml
   )

@@ -9,17 +9,10 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: viper
-  sources:
-    - repoURL: https://kubernetes-sigs.github.io/headlamp/
-      chart: headlamp
-      targetRevision: 0.44.0
-      helm:
-        releaseName: headlamp
-        valueFiles:
-          - $values/platform/headlamp/values.yaml
-    - repoURL: https://github.com/sebbycorp/k8s-viper.git
-      targetRevision: main
-      ref: values
+  source:
+    repoURL: https://github.com/sebbycorp/k8s-viper.git
+    targetRevision: main
+    path: platform/headlamp
   destination:
     server: https://kubernetes.default.svc
     namespace: headlamp

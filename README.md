@@ -44,8 +44,8 @@ argocd/apps/                  # child Applications
 platform/ingress/             # Traefik HelmChartConfig + whoami demo
 platform/vault/values.yaml    # Vault Helm values (Raft, 1 replica)
 platform/external-secrets/    # ESO Helm values + Vault store example
-platform/headlamp/values.yaml # Headlamp dashboard Helm values
-platform/argocd-access/       # Argo CD UI NodePort Service
+platform/headlamp/            # Headlamp dashboard (kustomize helmCharts)
+platform/argocd-access/       # Argo CD UI NodePort + argocd-cm --enable-helm
 platform/gateway-api/         # Gateway API CRDs
 platform/agentgateway/        # agentgateway control plane values
 platform/agentgateway-ai/     # OpenAI Gateway/routes + OTEL collector
