@@ -6,6 +6,12 @@
 
 replicaCount: 1
 
+# Chart 0.44.0 default: ghcr.io/headlamp-k8s/headlamp:v0.44.0
+# (empty tag in the chart resolves to v + appVersion).
+image:
+  repository: headlamp-k8s/headlamp
+  tag: v0.44.0
+
 config:
   inCluster: true
   inClusterContextName: main

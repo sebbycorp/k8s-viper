@@ -13,8 +13,10 @@ spec:
   target:
     name: langfuse-otel-auth
     creationPolicy: Owner
+    deletionPolicy: Retain
     template:
       engineVersion: v2
+      mergePolicy: Replace
       data:
         # base64(public:secret) for Authorization: Basic …
         basic_auth: '{{ printf "%s:%s" .public_key .secret_key | b64enc }}'
@@ -24,14 +26,23 @@ spec:
       remoteRef:
         key: platform/langfuse-otel
         property: public_key
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
     - secretKey: secret_key
       remoteRef:
         key: platform/langfuse-otel
         property: secret_key
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
     - secretKey: endpoint
       remoteRef:
         key: platform/langfuse-otel
         property: endpoint
+        conversionStrategy: Default
+        decodingStrategy: None
+        metadataPolicy: None
 ---
 apiVersion: v1
 kind: ConfigMap

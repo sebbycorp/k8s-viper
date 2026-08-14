@@ -11,6 +11,8 @@ spec:
   parentRefs:
     - name: agentgateway-proxy
       namespace: agentgateway-system
+      group: gateway.networking.k8s.io
+      kind: Gateway
   rules:
     - matches:
         - path:
@@ -21,3 +23,4 @@ spec:
           namespace: agentgateway-system
           group: agentgateway.dev
           kind: AgentgatewayBackend
+          weight: 1
