@@ -16,20 +16,6 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: agentgateway-system
-  ignoreDifferences:
-    - group: external-secrets.io
-      kind: ExternalSecret
-      jqPathExpressions:
-        - .spec.data[].remoteRef.conversionStrategy
-        - .spec.data[].remoteRef.decodingStrategy
-        - .spec.data[].remoteRef.metadataPolicy
-        - .spec.target.deletionPolicy
-    - group: gateway.networking.k8s.io
-      kind: HTTPRoute
-      jqPathExpressions:
-        - .spec.parentRefs[].group
-        - .spec.parentRefs[].kind
-        - .spec.rules[].backendRefs[].weight
   syncPolicy:
     automated:
       prune: true
@@ -37,4 +23,3 @@ spec:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-      - RespectIgnoreDifferences=true

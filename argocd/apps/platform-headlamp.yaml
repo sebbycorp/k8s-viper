@@ -23,17 +23,9 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: headlamp
-  ignoreDifferences:
-    - group: apps
-      kind: Deployment
-      jqPathExpressions:
-        - .spec.template.metadata.annotations."checksum/config"
-        - .spec.template.spec.containers[].image
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
-      - ServerSideApply=true
-      - RespectIgnoreDifferences=true
