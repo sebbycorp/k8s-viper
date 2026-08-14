@@ -10,9 +10,9 @@ metadata:
 spec:
   project: viper
   source:
-    # Full OCI chart path (Argo resolves digest on this repoURL)
-    repoURL: oci://cr.agentgateway.dev/charts/agentgateway-crds
-    targetRevision: 1.4.1
+    repoURL: oci://cr.agentgateway.dev/charts
+    chart: agentgateway-crds
+    targetRevision: v1.4.1
     helm:
       releaseName: agentgateway-crds
   destination:
