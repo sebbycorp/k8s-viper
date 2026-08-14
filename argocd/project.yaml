@@ -16,6 +16,9 @@ spec:
     - https://github.com/kubernetes-sigs/gateway-api
     - cr.agentgateway.dev/charts
     - oci://cr.agentgateway.dev/charts
+    - oci://cr.agentgateway.dev/charts/agentgateway
+    - oci://cr.agentgateway.dev/charts/agentgateway-crds
+    - oci://cr.agentgateway.dev/*
   destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc
