@@ -84,12 +84,18 @@
                       ↓
    ingress | vault | ESO | headlamp | argocd-access
    gateway-api | agentgateway | langfuse
+   substrate | kagent | kagent-ai | desktop
                       ↓
-   Traefik :80/:443  +  NodePorts 30080 / 30443 / 30200 / 30100 / 30300
+   Traefik :80/:443  +  NodePorts 30080 / 30443 / 30200 / 30100 / 30300 / 30500
                       ↓
    agentgateway-proxy :30100
         ├─ /v1 · /openai  → OpenAI (Vault)     gpt-5.5 / gpt-5-mini
-        └─ /spark         → Spark vLLM :8000   Qwen/Qwen3.6-35B-A3B-FP8
+        ├─ /spark         → Spark vLLM :8000   Qwen/Qwen3.6-35B-A3B-FP8
+        ├─ /desktop/      → noVNC desktop viewer
+        └─ /desktop-api/  → computer-use HTTP API
+                      ↓
+   kagent UI :30500  → default model gpt-5.5 via gateway /v1
+   Agent Substrate (ate-system) → gVisor workers (kagent-default)
                       ↓
    OTEL collector → Langfuse (configured)</code></pre>
   </div>

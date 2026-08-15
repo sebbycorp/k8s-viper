@@ -1,0 +1,93 @@
+# Desktop viewer + computer-use API on the existing agentgateway-proxy Gateway.
+# Same parentRef pattern as openai / dgx-spark (group/kind/weight defaults).
+# URLRewrite strips the path prefix so noVNC and the API see `/` and `/health`.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: desktop-viewer
+  namespace: agentgateway-system
+  labels:
+    app.kubernetes.io/name: desktop-computer-use
+    app.kubernetes.io/part-of: k8s-viper
+spec:
+  parentRefs:
+    - name: agentgateway-proxy
+      namespace: agentgateway-system
+      group: gateway.networking.k8s.io
+      kind: Gateway
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /desktop
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /desktop/
+            statusCode: 302
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /desktop/
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+      backendRefs:
+        - name: desktop-novnc
+          namespace: agentgateway-system
+          group: agentgateway.dev
+          kind: AgentgatewayBackend
+          weight: 1
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: desktop-api
+  namespace: agentgateway-system
+  labels:
+    app.kubernetes.io/name: desktop-computer-use
+    app.kubernetes.io/part-of: k8s-viper
+spec:
+  parentRefs:
+    - name: agentgateway-proxy
+      namespace: agentgateway-system
+      group: gateway.networking.k8s.io
+      kind: Gateway
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /desktop-api/
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+      backendRefs:
+        - name: desktop-api
+          namespace: agentgateway-system
+          group: agentgateway.dev
+          kind: AgentgatewayBackend
+          weight: 1
+    - matches:
+        - path:
+            type: Exact
+            value: /desktop-api
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+      backendRefs:
+        - name: desktop-api
+          namespace: agentgateway-system
+          group: agentgateway.dev
+          kind: AgentgatewayBackend
+          weight: 1

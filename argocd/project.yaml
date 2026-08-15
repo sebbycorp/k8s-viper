@@ -48,6 +48,8 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: kagent
       server: https://kubernetes.default.svc
+    - namespace: desktop
+      server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"

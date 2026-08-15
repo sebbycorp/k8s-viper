@@ -98,8 +98,10 @@ disable chart JWT bootstrap to “simplify” the lab.
 
 - Solo Enterprise kagent / license JWTs (k8s-goose)
 - A real OpenAI key in git
-- Substrate **desktop / computer-use** worker image — follow-up PR. This
-  install uses `ateom-gvisor` only.
+- Substrate **Actor wrap** for the computer-use desktop — follow-up. The
+  first path is a normal Deployment behind agentgateway:
+  [desktop-computer-use.md](desktop-computer-use.md). This kagent install
+  uses `ateom-gvisor` only.
 
 ## Related
 

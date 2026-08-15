@@ -45,6 +45,18 @@ require_file docs/headlamp.md
 require_file docs/platform-ui-access.md
 require_file docs/why-traefik.md
 require_file docs/agentgateway-langfuse.md
+require_file docs/desktop-computer-use.md
+require_file images/desktop-computer-use/Dockerfile
+require_file images/desktop-computer-use/README.md
+require_file images/desktop-computer-use/entrypoint.sh
+require_file images/desktop-computer-use/api.py
+require_file platform/desktop/kustomization.yaml
+require_file platform/desktop/deployment.yaml
+require_file platform/desktop/service.yaml
+require_file platform/desktop/namespace.yaml
+require_file platform/agentgateway-ai/backend-desktop.yaml
+require_file platform/agentgateway-ai/httproute-desktop.yaml
+require_file argocd/apps/platform-desktop.yaml
 require_file platform/gateway-api/kustomization.yaml
 require_file platform/agentgateway/values.yaml
 require_file platform/agentgateway-ai/kustomization.yaml
@@ -142,6 +154,18 @@ if command -v kustomize >/dev/null 2>&1; then
   else
     fail "kustomize build platform/kagent-ai"
   fi
+  log "kustomize build platform/desktop..."
+  if kustomize build platform/desktop >/dev/null; then
+    ok "kustomize build platform/desktop"
+  else
+    fail "kustomize build platform/desktop"
+  fi
+  log "kustomize build platform/agentgateway-ai..."
+  if kustomize build platform/agentgateway-ai >/dev/null; then
+    ok "kustomize build platform/agentgateway-ai"
+  else
+    fail "kustomize build platform/agentgateway-ai"
+  fi
   if command -v helm >/dev/null 2>&1; then
     log "kustomize build --enable-helm platform/headlamp..."
     if rendered="$(kustomize build --enable-helm platform/headlamp)"; then
@@ -175,6 +199,18 @@ elif command -v kubectl >/dev/null 2>&1; then
   else
     fail "kubectl kustomize platform/kagent-ai"
   fi
+  log "kubectl kustomize platform/desktop..."
+  if kubectl kustomize platform/desktop >/dev/null; then
+    ok "kubectl kustomize platform/desktop"
+  else
+    fail "kubectl kustomize platform/desktop"
+  fi
+  log "kubectl kustomize platform/agentgateway-ai..."
+  if kubectl kustomize platform/agentgateway-ai >/dev/null; then
+    ok "kubectl kustomize platform/agentgateway-ai"
+  else
+    fail "kubectl kustomize platform/agentgateway-ai"
+  fi
 else
   log "kustomize/kubectl not found — skipping kustomize build"
 fi
@@ -202,6 +238,10 @@ if command -v kubeconform >/dev/null 2>&1; then
     platform/argocd-access/argocd-cm-kustomize.yaml
     platform/ingress/namespace-apps.yaml
     platform/ingress/whoami.yaml
+    argocd/apps/platform-desktop.yaml
+    platform/desktop/namespace.yaml
+    platform/desktop/deployment.yaml
+    platform/desktop/service.yaml
   )
   if kubeconform -summary -ignore-missing-schemas "${plain[@]}"; then
     ok "kubeconform"
@@ -230,10 +270,23 @@ else
 fi
 
 # bash syntax check
-if bash -n scripts/bootstrap.sh && bash -n scripts/validate.sh; then
+if bash -n scripts/bootstrap.sh && bash -n scripts/validate.sh && bash -n images/desktop-computer-use/entrypoint.sh; then
   ok "bash -n scripts"
 else
   fail "bash syntax error in scripts"
+fi
+
+if command -v python3 >/dev/null 2>&1; then
+  if python3 -m py_compile images/desktop-computer-use/api.py; then
+    ok "python3 -m py_compile images/desktop-computer-use/api.py"
+  else
+    fail "api.py failed to compile"
+  fi
+  if python3 -c 'import importlib.util; spec=importlib.util.spec_from_file_location("api", "images/desktop-computer-use/api.py"); m=importlib.util.module_from_spec(spec); spec.loader.exec_module(m); m._self_check()'; then
+    ok "computer-use api path self-check"
+  else
+    fail "computer-use api path self-check"
+  fi
 fi
 
 if ((errors > 0)); then
