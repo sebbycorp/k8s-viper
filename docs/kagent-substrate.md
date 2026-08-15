@@ -38,7 +38,7 @@ Argo waves:
 |------|-------------|--------|
 | 1 | `platform-substrate-crds` | OCI `oci://ghcr.io/kagent-dev/substrate/helm/substrate-crds` 0.0.12 |
 | 2 | `platform-substrate` | OCI `oci://ghcr.io/kagent-dev/substrate/helm/substrate` 0.0.12 + `platform/substrate/values.yaml` |
-| 2 | `platform-substrate-rbac` | git `platform/substrate` (extra ate-api RBAC + SandboxConfig `pauseImage` SSA) |
+| 2 | `platform-substrate-rbac` | git `platform/substrate` (extra ate-api ClusterRole/Binding only) |
 | 3 | `platform-kagent-crds` | OCI `oci://ghcr.io/kagent-dev/kagent/helm/kagent-crds` 0.10.0-rc2 |
 | 4 | `platform-kagent` | OCI `oci://ghcr.io/kagent-dev/kagent/helm/kagent` 0.10.0-rc2 + `platform/kagent/values.yaml` |
 | 5 | `platform-kagent-ai` | git `platform/kagent-ai` (dummy Secret, hello agent, UI NodePort) |
@@ -63,8 +63,9 @@ allowlists those full chart URLs. Do not revert to the parent path.
 
 ### Substrate 0.0.12 chart gaps (GitOps, not live-only)
 
-Chart 0.0.12 cannot express these; they live in `platform/substrate`
-and are applied by `platform-substrate-rbac` (wave 2, Server-Side Apply):
+Chart 0.0.12 cannot express extra ate-api-server ClusterRole rules; those
+live in `platform/substrate` and are applied by `platform-substrate-rbac`
+(wave 2, Server-Side Apply):
 
 1. **ate-api-server extra RBAC** — ClusterRole/Binding `ate-api-server-extra`
    for SA `ate-api-server` in `ate-system`: `get`/`list`/`watch` on
@@ -73,20 +74,22 @@ and are applied by `platform-substrate-rbac` (wave 2, Server-Side Apply):
    (`cannot list resource ... at the cluster scope`) and kagent-controller
    then fails with `unable to dial substrate ate-api`. The chart ClusterRole
    is not patched, so Helm upgrades do not fight this.
-2. **`SandboxConfig/gvisor-default` `pauseImage`** — the CRD requires
-   `spec.pauseImage`; the chart template omits it and has no values key.
-   The overlay SSA-merges only that field (does not Replace the CR). Image
-   is the GKE pause digest documented on `controller.substrate.pauseImage`
-   in the kagent chart:
 
-   `gcr.io/gke-release/pause@sha256:bcbd57ba5653580ec647b16d8163cdd1112df3609129b01f912a8032e48265da`
+`SandboxConfig/gvisor-default` is owned only by `platform-substrate` (Helm
+chart 0.0.12). The CRD requires `spec.pauseImage`; the chart template omits
+it and has no values key. Do not apply that CR from `platform-substrate-rbac`
+(SharedResourceWarning). Do not Replace the CR.
 
 `kagent-crds` keeps `substrate.enabled=false` (chart default) so it does **not**
 install the older bundled substrate-crds 0.0.9. Substrate CRDs come from
 `platform-substrate-crds` 0.0.12.
 
 Valkey stays at **6** replicas. The 0.0.12 cluster-init Job hardcodes pods
-`0..5`; shrinking `valkey.replicas` hangs init.
+`0..5`; shrinking `valkey.replicas` hangs init. Chart 0.0.12's
+`StatefulSet/valkey-cluster` also omits API-defaulted fields (typical:
+`volumeClaimTemplates[].spec.volumeMode: Filesystem`, VCT status). There is
+no values key for those; do not Replace the StatefulSet and do not add
+`ignoreDifferences`.
 
 `grafana-mcp` and `observability-agent` are off (no Grafana in this lab).
 `kmcp` stays on.
