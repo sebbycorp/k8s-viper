@@ -1,6 +1,9 @@
 # Desktop viewer + computer-use API on the existing agentgateway-proxy Gateway.
 # Same parentRef pattern as openai / dgx-spark (group/kind/weight defaults).
-# URLRewrite strips the path prefix so noVNC and the API see `/` and `/health`.
+# Exact /desktop and /desktop-api are redirect-only (302 to the trailing-slash
+# prefix). Gateway API rejects URLRewrite.replacePrefixMatch on Exact matches.
+# PathPrefix rewrite then strips the prefix so noVNC and the API see `/` and
+# `/health`.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -61,24 +64,19 @@ spec:
   rules:
     - matches:
         - path:
-            type: PathPrefix
-            value: /desktop-api/
-      filters:
-        - type: URLRewrite
-          urlRewrite:
-            path:
-              type: ReplacePrefixMatch
-              replacePrefixMatch: /
-      backendRefs:
-        - name: desktop-api
-          namespace: agentgateway-system
-          group: agentgateway.dev
-          kind: AgentgatewayBackend
-          weight: 1
-    - matches:
-        - path:
             type: Exact
             value: /desktop-api
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /desktop-api/
+            statusCode: 302
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /desktop-api/
       filters:
         - type: URLRewrite
           urlRewrite:
