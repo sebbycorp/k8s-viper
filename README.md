@@ -274,6 +274,7 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 - MetalLB
 - Push-based deploy from CI
 - Replacing Traefik with kgateway as **cluster Ingress** (agentgateway is the AI data plane only — [docs/why-traefik.md](docs/why-traefik.md))
+- Substrate desktop / computer-use worker image (follow-up PR; this install is OSS kagent + gVisor `ateom-gvisor` only)
 
 ## Troubleshooting
 

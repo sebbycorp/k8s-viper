@@ -469,6 +469,8 @@ out_of_scope:
     why: Manual unseal for v1
   - item: kgateway as primary cluster Ingress
     why: Traefik is k3s default; agentgateway is AI data plane only
+  - item: Substrate desktop / computer-use worker image
+    why: Follow-up PR; this install is OSS kagent + ateom-gvisor only
 
 troubleshooting:
   - symptom: kubectl not found on the host

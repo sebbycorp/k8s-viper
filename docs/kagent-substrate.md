@@ -94,6 +94,13 @@ This does **not** block the GitOps install. If workers CrashLoop or
 JWT-to-ateapi stays on (`ateApiInsecure: true` to the in-cluster API). Do not
 disable chart JWT bootstrap to “simplify” the lab.
 
+## Out of scope (this install)
+
+- Solo Enterprise kagent / license JWTs (k8s-goose)
+- A real OpenAI key in git
+- Substrate **desktop / computer-use** worker image — follow-up PR. This
+  install uses `ateom-gvisor` only.
+
 ## Related
 
 - UI ports: [platform-ui-access.md](platform-ui-access.md)
