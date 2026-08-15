@@ -276,7 +276,7 @@ platform:
     kindLabel: rbac
     ns: ate-system
     source: platform/substrate/
-    notes: "ate-api extra RBAC · SandboxConfig pauseImage SSA"
+    notes: "ate-api extra ClusterRole/Binding only"
   - app: platform-kagent-crds
     kind: core
     kindLabel: crds
@@ -477,7 +477,7 @@ layout:
   - path: platform/langfuse/
     role: Langfuse Helm + ExternalSecret
   - path: platform/substrate/
-    role: Agent Substrate Helm values + extra ate-api RBAC + pauseImage SSA (0.0.12)
+    role: Agent Substrate Helm values + extra ate-api RBAC (0.0.12)
   - path: platform/kagent/
     role: kagent OSS Helm values (0.10.0-rc2)
   - path: platform/kagent-ai/
