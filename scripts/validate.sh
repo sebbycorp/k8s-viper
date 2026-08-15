@@ -79,6 +79,7 @@ require_file argocd/apps/platform-kagent-ai.yaml
 require_file platform/substrate/values.yaml
 require_file platform/substrate/kustomization.yaml
 require_file platform/substrate/ate-api-server-extra-rbac.yaml
+require_file platform/substrate/sandboxconfig-pauseimage.yaml
 require_file platform/kagent/values.yaml
 require_file platform/kagent-ai/kustomization.yaml
 require_file platform/kagent-ai/dummy-openai-secret.yaml

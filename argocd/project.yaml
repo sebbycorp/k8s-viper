@@ -19,6 +19,8 @@ spec:
     - oci://cr.agentgateway.dev/charts/agentgateway
     - oci://cr.agentgateway.dev/charts/agentgateway-crds
     - oci://cr.agentgateway.dev/*
+    # Argo CD 3.5 resolves OCI parent paths as the artifact (GHCR 403).
+    # Apps use the full chart URL; keep both parent and full path allowlisted.
     - oci://ghcr.io/kagent-dev/kagent/helm
     - oci://ghcr.io/kagent-dev/kagent/helm/kagent
     - oci://ghcr.io/kagent-dev/kagent/helm/kagent-crds

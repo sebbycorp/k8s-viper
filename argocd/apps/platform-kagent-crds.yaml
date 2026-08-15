@@ -10,7 +10,9 @@ metadata:
 spec:
   project: viper
   source:
-    repoURL: oci://ghcr.io/kagent-dev/kagent/helm
+    # Argo CD 3.5 treats the OCI parent path as the artifact (GHCR 403).
+    # Full chart URL + chart: matches the working agentgateway pattern.
+    repoURL: oci://ghcr.io/kagent-dev/kagent/helm/kagent-crds
     chart: kagent-crds
     targetRevision: 0.10.0-rc2
     helm:

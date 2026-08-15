@@ -275,8 +275,8 @@ platform:
     kind: core
     kindLabel: rbac
     ns: ate-system
-    source: platform/substrate/ate-api-server-extra-rbac.yaml
-    notes: extra ate-api-server ClusterRole (storageclasses + csidriverconfigs)
+    source: platform/substrate/
+    notes: "ate-api extra RBAC · SandboxConfig pauseImage SSA"
   - app: platform-kagent-crds
     kind: core
     kindLabel: crds
@@ -432,10 +432,10 @@ versions:
     where: platform/ingress/whoami.yaml
   - name: kagent OSS Helm / CRDs
     pin: 0.10.0-rc2
-    where: "OCI oci://ghcr.io/kagent-dev/kagent/helm"
+    where: "OCI oci://ghcr.io/kagent-dev/kagent/helm/kagent"
   - name: Agent Substrate Helm / CRDs
     pin: "0.0.12"
-    where: "OCI oci://ghcr.io/kagent-dev/substrate/helm"
+    where: "OCI oci://ghcr.io/kagent-dev/substrate/helm/substrate"
   - name: Substrate worker image
     pin: ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.12
     where: platform/kagent/values.yaml
@@ -477,7 +477,7 @@ layout:
   - path: platform/langfuse/
     role: Langfuse Helm + ExternalSecret
   - path: platform/substrate/
-    role: Agent Substrate Helm values (0.0.12)
+    role: Agent Substrate Helm values + extra ate-api RBAC + pauseImage SSA (0.0.12)
   - path: platform/kagent/
     role: kagent OSS Helm values (0.10.0-rc2)
   - path: platform/kagent-ai/

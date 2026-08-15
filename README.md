@@ -275,8 +275,8 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 | OTEL collector | `otel/opentelemetry-collector-contrib:0.132.1` |
 | Gateway API CRDs | `v1.6.0` |
 | whoami image | `traefik/whoami:v1.10.2` |
-| kagent OSS Helm / CRDs | `0.10.0-rc2` (OCI `oci://ghcr.io/kagent-dev/kagent/helm`) |
-| Agent Substrate Helm / CRDs | `0.0.12` (OCI `oci://ghcr.io/kagent-dev/substrate/helm`) |
+| kagent OSS Helm / CRDs | `0.10.0-rc2` (OCI `oci://ghcr.io/kagent-dev/kagent/helm/kagent`) |
+| Agent Substrate Helm / CRDs | `0.0.12` (OCI `oci://ghcr.io/kagent-dev/substrate/helm/substrate`) |
 | Substrate worker image | `ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.12` |
 | desktop image | `viper-desktop:dev` (intended publish `ghcr.io/sebbycorp/viper-desktop:dev`) |
 
@@ -295,6 +295,7 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 |---------|--------|
 | `kubectl: command not found` on the host | `docker exec k3s-viper kubectl ...` |
 | Applications stuck `Unknown` | Repo URL / OCI chart reachable; `argocd-repo-server` logs |
+| kagent/substrate OCI **403** | Argo 3.5 needs the **full** GHCR chart URL (`…/helm/kagent`, not `…/helm`) — [docs/kagent-substrate.md](docs/kagent-substrate.md) |
 | Project errors | `docker exec k3s-viper kubectl -n argocd get appproject viper` (sourceRepos + destinations) |
 | whoami 404 | Host header / `/etc/hosts`; `docker exec k3s-viper kubectl -n apps get ingress,pods` |
 | Headlamp 404 / no UI | `http://172.16.10.135:30080/`; Docker published ports |
