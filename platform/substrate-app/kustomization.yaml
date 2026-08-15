@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Do not set kustomize `namespace:` — the chart also emits Role/RoleBinding
+# atenet-dns in kube-system; a transformer would collide those with ate-system.
+helmCharts:
+  - name: substrate
+    # kustomize helm pull uses oci://<repo>/<name>. Do not append /substrate
+    # here (that would fetch …/helm/substrate/substrate). Argo Helm apps still
+    # need the full chart URL; this overlay is git + helmCharts, not OCI source.
+    repo: oci://ghcr.io/kagent-dev/substrate/helm
+    version: 0.0.12
+    releaseName: substrate
+    namespace: ate-system
+    includeCRDs: false
+    valuesFile: values.yaml
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: StatefulSet
+      name: valkey-cluster
+    path: valkey-cluster-sts-defaults.yaml

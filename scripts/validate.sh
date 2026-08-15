@@ -76,7 +76,9 @@ require_file argocd/apps/platform-substrate-rbac.yaml
 require_file argocd/apps/platform-kagent-crds.yaml
 require_file argocd/apps/platform-kagent.yaml
 require_file argocd/apps/platform-kagent-ai.yaml
-require_file platform/substrate/values.yaml
+require_file platform/substrate-app/values.yaml
+require_file platform/substrate-app/kustomization.yaml
+require_file platform/substrate-app/valkey-cluster-sts-defaults.yaml
 require_file platform/substrate/kustomization.yaml
 require_file platform/substrate/ate-api-server-extra-rbac.yaml
 require_file platform/kagent/values.yaml
@@ -186,8 +188,24 @@ if command -v kustomize >/dev/null 2>&1; then
     else
       fail "kustomize build --enable-helm platform/headlamp"
     fi
+    log "kustomize build --enable-helm platform/substrate-app..."
+    if rendered="$(kustomize build --enable-helm platform/substrate-app)"; then
+      if ! printf '%s\n' "${rendered}" | grep -q 'kind: SandboxConfig'; then
+        fail "platform/substrate-app missing SandboxConfig/gvisor-default"
+      elif ! printf '%s\n' "${rendered}" | grep -q 'volumeMode: Filesystem'; then
+        fail "platform/substrate-app STS missing volumeMode (JSON6902 add failed)"
+      elif ! printf '%s\n' "${rendered}" | grep -q 'revisionHistoryLimit: 10'; then
+        fail "platform/substrate-app STS missing revisionHistoryLimit (JSON6902 add failed)"
+      elif printf '%s\n' "${rendered}" | grep -q 'ate-api-server-extra'; then
+        fail "platform/substrate-app must not include extra RBAC (owned by platform-substrate-rbac)"
+      else
+        ok "kustomize build --enable-helm platform/substrate-app (STS defaults + SandboxConfig)"
+      fi
+    else
+      fail "kustomize build --enable-helm platform/substrate-app"
+    fi
   else
-    log "helm not found — skipping platform/headlamp helmCharts build"
+    log "helm not found — skipping helmCharts builds"
   fi
 elif command -v kubectl >/dev/null 2>&1; then
   log "kubectl kustomize platform/ingress..."

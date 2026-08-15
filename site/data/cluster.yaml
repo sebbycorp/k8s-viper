@@ -269,8 +269,8 @@ platform:
     kind: ui
     kindLabel: ai
     ns: ate-system
-    source: platform/substrate/values.yaml
-    notes: "Agent Substrate Helm 0.0.12 · JWT · Valkey ×6"
+    source: platform/substrate-app/
+    notes: "kustomize helmCharts 0.0.12 · JSON6902 STS defaults · Valkey ×6"
   - app: platform-substrate-rbac
     kind: core
     kindLabel: rbac
@@ -435,7 +435,7 @@ versions:
     where: "OCI oci://ghcr.io/kagent-dev/kagent/helm/kagent"
   - name: Agent Substrate Helm / CRDs
     pin: "0.0.12"
-    where: "OCI oci://ghcr.io/kagent-dev/substrate/helm/substrate"
+    where: platform/substrate-app/kustomization.yaml (helmCharts 0.0.12)
   - name: Substrate worker image
     pin: ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.12
     where: platform/kagent/values.yaml
@@ -476,8 +476,10 @@ layout:
     role: viper-desktop:dev image (build on Viper, ctr import)
   - path: platform/langfuse/
     role: Langfuse Helm + ExternalSecret
+  - path: platform/substrate-app/
+    role: Agent Substrate helmCharts + valkey STS JSON6902 (0.0.12)
   - path: platform/substrate/
-    role: Agent Substrate Helm values + extra ate-api RBAC (0.0.12)
+    role: extra ate-api ClusterRole/Binding only
   - path: platform/kagent/
     role: kagent OSS Helm values (0.10.0-rc2)
   - path: platform/kagent-ai/

@@ -6,6 +6,7 @@ site/.hugo_build.lock
 
 # kustomize helmCharts local cache
 platform/headlamp/charts/
+platform/substrate-app/charts/
 
 # Python
 __pycache__/

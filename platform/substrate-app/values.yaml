@@ -3,8 +3,13 @@
 #
 # Chart 0.0.12 has no values key for extra ate-api-server ClusterRole rules.
 # storageclasses + csidriverconfigs are granted by platform-substrate-rbac
-# (ate-api-server-extra-rbac.yaml only). Do not put SandboxConfig here or
-# in that kustomize — the Helm app already renders SandboxConfig/gvisor-default.
+# (platform/substrate/ate-api-server-extra-rbac.yaml only). Do not put
+# SandboxConfig here or in that kustomize — this overlay already renders
+# SandboxConfig/gvisor-default from the chart.
+#
+# Chart 0.0.12 also has no values key for StatefulSet API defaults on
+# valkey-cluster. Those are added by valkey-cluster-sts-defaults.yaml
+# (JSON6902) so desired matches live. Do not ignoreDifferences.
 #
 # JWT auth (chart default) is required for kagent's JWT-to-ateapi path.
 # Do not set auth.mode=mtls (needs feature gates this k3s lab does not enable)
