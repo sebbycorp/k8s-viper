@@ -271,6 +271,12 @@ platform:
     ns: ate-system
     source: platform/substrate/values.yaml
     notes: "Agent Substrate Helm 0.0.12 · JWT · Valkey ×6"
+  - app: platform-substrate-rbac
+    kind: core
+    kindLabel: rbac
+    ns: ate-system
+    source: platform/substrate/ate-api-server-extra-rbac.yaml
+    notes: extra ate-api-server ClusterRole (storageclasses + csidriverconfigs)
   - app: platform-kagent-crds
     kind: core
     kindLabel: crds

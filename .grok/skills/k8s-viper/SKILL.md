@@ -60,6 +60,7 @@ Canonical overview: `README.md`. Design: `docs/superpowers/specs/2026-08-11-k3s-
 | `platform-langfuse` | Langfuse + ClickHouse Helm | `langfuse` |
 | `platform-substrate-crds` | Agent Substrate CRDs Helm 0.0.12 | `ate-system` |
 | `platform-substrate` | Agent Substrate Helm 0.0.12 | `ate-system` |
+| `platform-substrate-rbac` | extra ate-api-server ClusterRole (storageclasses + csidriverconfigs) | `ate-system` |
 | `platform-kagent-crds` | kagent OSS CRDs Helm 0.10.0-rc2 | `kagent` |
 | `platform-kagent` | kagent OSS Helm 0.10.0-rc2 | `kagent` |
 | `platform-kagent-ai` | dummy OpenAI Secret + hello SandboxAgent + UI :30500 | `kagent` |

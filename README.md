@@ -78,7 +78,7 @@ platform/agentgateway/        # agentgateway control plane values
 platform/agentgateway-ai/     # one Gateway, OpenAI + Spark + desktop routes, OTEL collector
 platform/desktop/             # computer-use desktop Deployment (noVNC + API)
 platform/langfuse/            # Langfuse Helm + ExternalSecret
-platform/substrate/           # Agent Substrate Helm values (0.0.12)
+platform/substrate/           # Agent Substrate Helm values (0.0.12) + extra ate-api-server RBAC
 platform/kagent/              # kagent OSS Helm values (0.10.0-rc2)
 platform/kagent-ai/           # dummy OpenAI Secret + hello SandboxAgent + UI NodePort
 images/desktop-computer-use/  # viper-desktop:dev image
@@ -235,7 +235,7 @@ Platform apps **Synced / Healthy** as of 2026-08-14:
 
 `root`, `argocd-project`, `platform-argocd-access`, `platform-headlamp`, `platform-ingress`, `platform-vault`, `platform-external-secrets`, `platform-gateway-api`, `platform-agentgateway`, `platform-agentgateway-crds`, `platform-agentgateway-ai`, `platform-langfuse`, `platform-langfuse-secrets`.
 
-GitOps also defines: `platform-substrate-crds`, `platform-substrate`, `platform-kagent-crds`, `platform-kagent`, `platform-kagent-ai`.
+GitOps also defines: `platform-substrate-crds`, `platform-substrate`, `platform-substrate-rbac`, `platform-kagent-crds`, `platform-kagent`, `platform-kagent-ai`.
 
 `platform-desktop` is the computer-use desktop app (wave 2). The pod stays
 `ImagePullBackOff` until `viper-desktop:dev` is imported on the node —
@@ -311,4 +311,5 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 | Langfuse ImagePullBackOff | Cluster egress/DNS to Docker Hub |
 | kagent UI unreachable | `http://172.16.10.135:30500/`; Docker must publish **30500**; app `platform-kagent-ai` |
 | hello-substrate not Ready | WorkerPool `kagent-default`; gVisor-on-dockerized-k3s — [docs/kagent-substrate.md](docs/kagent-substrate.md) |
+| ate-api-server CrashLoop / not Ready | Missing cluster list on `storageclasses` / `csidriverconfigs` — app `platform-substrate-rbac` |
 | Re-run bootstrap | Safe: skips k3s if healthy; re-applies Argo + root app |

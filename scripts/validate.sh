@@ -72,10 +72,13 @@ require_file argocd/apps/platform-langfuse-secrets.yaml
 require_file argocd/apps/platform-langfuse.yaml
 require_file argocd/apps/platform-substrate-crds.yaml
 require_file argocd/apps/platform-substrate.yaml
+require_file argocd/apps/platform-substrate-rbac.yaml
 require_file argocd/apps/platform-kagent-crds.yaml
 require_file argocd/apps/platform-kagent.yaml
 require_file argocd/apps/platform-kagent-ai.yaml
 require_file platform/substrate/values.yaml
+require_file platform/substrate/kustomization.yaml
+require_file platform/substrate/ate-api-server-extra-rbac.yaml
 require_file platform/kagent/values.yaml
 require_file platform/kagent-ai/kustomization.yaml
 require_file platform/kagent-ai/dummy-openai-secret.yaml
@@ -154,6 +157,12 @@ if command -v kustomize >/dev/null 2>&1; then
   else
     fail "kustomize build platform/kagent-ai"
   fi
+  log "kustomize build platform/substrate..."
+  if kustomize build platform/substrate >/dev/null; then
+    ok "kustomize build platform/substrate"
+  else
+    fail "kustomize build platform/substrate"
+  fi
   log "kustomize build platform/desktop..."
   if kustomize build platform/desktop >/dev/null; then
     ok "kustomize build platform/desktop"
@@ -199,6 +208,12 @@ elif command -v kubectl >/dev/null 2>&1; then
   else
     fail "kubectl kustomize platform/kagent-ai"
   fi
+  log "kubectl kustomize platform/substrate..."
+  if kubectl kustomize platform/substrate >/dev/null; then
+    ok "kubectl kustomize platform/substrate"
+  else
+    fail "kubectl kustomize platform/substrate"
+  fi
   log "kubectl kustomize platform/desktop..."
   if kubectl kustomize platform/desktop >/dev/null; then
     ok "kubectl kustomize platform/desktop"
@@ -228,9 +243,11 @@ if command -v kubeconform >/dev/null 2>&1; then
     argocd/apps/platform-argocd-access.yaml
     argocd/apps/platform-substrate-crds.yaml
     argocd/apps/platform-substrate.yaml
+    argocd/apps/platform-substrate-rbac.yaml
     argocd/apps/platform-kagent-crds.yaml
     argocd/apps/platform-kagent.yaml
     argocd/apps/platform-kagent-ai.yaml
+    platform/substrate/ate-api-server-extra-rbac.yaml
     platform/kagent-ai/dummy-openai-secret.yaml
     platform/kagent-ai/hello-substrate.yaml
     platform/kagent-ai/ui-nodeport.yaml
