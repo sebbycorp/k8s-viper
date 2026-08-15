@@ -9,20 +9,10 @@ metadata:
     - resources-finalizer.argocd.argoproj.io
 spec:
   project: viper
-  sources:
-    # Argo CD 3.5 treats the OCI parent path as the artifact (GHCR 403).
-    # Full chart URL + chart: matches the working agentgateway pattern.
-    - repoURL: oci://ghcr.io/kagent-dev/substrate/helm/substrate
-      chart: substrate
-      targetRevision: 0.0.12
-      helm:
-        releaseName: substrate
-        skipCrds: true
-        valueFiles:
-          - $values/platform/substrate/values.yaml
-    - repoURL: https://github.com/sebbycorp/k8s-viper.git
-      targetRevision: main
-      ref: values
+  source:
+    repoURL: https://github.com/sebbycorp/k8s-viper.git
+    targetRevision: main
+    path: platform/substrate-app
   destination:
     server: https://kubernetes.default.svc
     namespace: ate-system

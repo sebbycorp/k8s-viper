@@ -1,0 +1,69 @@
+# Chart 0.0.12 omits Kubernetes API-defaulted StatefulSet fields. Live
+# valkey-cluster already has these (6/6 ready). Emit them in desired so
+# Argo compares equal. No values key can set them. Do not ignoreDifferences.
+- op: add
+  path: /spec/revisionHistoryLimit
+  value: 10
+- op: add
+  path: /spec/persistentVolumeClaimRetentionPolicy
+  value:
+    whenDeleted: Retain
+    whenScaled: Retain
+- op: add
+  path: /spec/updateStrategy
+  value:
+    type: RollingUpdate
+    rollingUpdate:
+      partition: 0
+- op: add
+  path: /spec/template/spec/dnsPolicy
+  value: ClusterFirst
+- op: add
+  path: /spec/template/spec/restartPolicy
+  value: Always
+- op: add
+  path: /spec/template/spec/schedulerName
+  value: default-scheduler
+- op: add
+  path: /spec/template/spec/securityContext
+  value: {}
+- op: add
+  path: /spec/template/spec/terminationGracePeriodSeconds
+  value: 30
+- op: add
+  path: /spec/template/spec/containers/0/imagePullPolicy
+  value: IfNotPresent
+- op: add
+  path: /spec/template/spec/containers/0/resources
+  value: {}
+- op: add
+  path: /spec/template/spec/containers/0/terminationMessagePath
+  value: /dev/termination-log
+- op: add
+  path: /spec/template/spec/containers/0/terminationMessagePolicy
+  value: File
+- op: add
+  path: /spec/template/spec/containers/0/ports/0/protocol
+  value: TCP
+- op: add
+  path: /spec/template/spec/containers/0/ports/1/protocol
+  value: TCP
+- op: add
+  path: /spec/template/spec/volumes/0/configMap/defaultMode
+  value: 420
+- op: add
+  path: /spec/volumeClaimTemplates/0/apiVersion
+  value: v1
+- op: add
+  path: /spec/volumeClaimTemplates/0/kind
+  value: PersistentVolumeClaim
+- op: add
+  path: /spec/volumeClaimTemplates/0/metadata/creationTimestamp
+  value: null
+- op: add
+  path: /spec/volumeClaimTemplates/0/spec/volumeMode
+  value: Filesystem
+- op: add
+  path: /spec/volumeClaimTemplates/0/status
+  value:
+    phase: Pending

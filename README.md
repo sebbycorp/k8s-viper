@@ -78,7 +78,8 @@ platform/agentgateway/        # agentgateway control plane values
 platform/agentgateway-ai/     # one Gateway, OpenAI + Spark + desktop routes, OTEL collector
 platform/desktop/             # computer-use desktop Deployment (noVNC + API)
 platform/langfuse/            # Langfuse Helm + ExternalSecret
-platform/substrate/           # Agent Substrate Helm values (0.0.12) + extra ate-api-server RBAC
+platform/substrate-app/       # Agent Substrate helmCharts 0.0.12 + valkey STS defaults patch
+platform/substrate/           # extra ate-api-server ClusterRole/Binding only (platform-substrate-rbac)
 platform/kagent/              # kagent OSS Helm values (0.10.0-rc2)
 platform/kagent-ai/           # dummy OpenAI Secret + hello SandboxAgent + UI NodePort
 images/desktop-computer-use/  # viper-desktop:dev image
@@ -211,6 +212,12 @@ Reason: the chart emits `hostUsers: true`; k3s 1.32 drops the API default, so Ar
 
 `argocd-cm` has `kustomize.buildOptions: --enable-helm` via `platform/argocd-access`. After changing that key, restart `argocd-repo-server`.
 
+## Agent Substrate GitOps
+
+`platform-substrate` is a **git path** `platform/substrate-app` using kustomize `helmCharts` (chart **0.0.12**) plus a JSON6902 patch that **adds** Kubernetes API-defaulted fields on `StatefulSet/valkey-cluster` so desired matches live. Chart 0.0.12 has no values key for those fields. Do **not** add `ignoreDifferences`.
+
+`SandboxConfig/gvisor-default` is owned only by this app. Extra ate-api RBAC stays in `platform/substrate` (`platform-substrate-rbac`).
+
 ## Secrets
 
 Do **not** put secret values in git or this README.
@@ -276,7 +283,7 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 | Gateway API CRDs | `v1.6.0` |
 | whoami image | `traefik/whoami:v1.10.2` |
 | kagent OSS Helm / CRDs | `0.10.0-rc2` (OCI `oci://ghcr.io/kagent-dev/kagent/helm/kagent`) |
-| Agent Substrate Helm / CRDs | `0.0.12` (OCI `oci://ghcr.io/kagent-dev/substrate/helm/substrate`) |
+| Agent Substrate Helm / CRDs | `0.0.12` (helmCharts in `platform/substrate-app`; CRDs still OCI) |
 | Substrate worker image | `ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.12` |
 | desktop image | `viper-desktop:dev` (intended publish `ghcr.io/sebbycorp/viper-desktop:dev`) |
 
@@ -301,6 +308,7 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 | Headlamp 404 / no UI | `http://172.16.10.135:30080/`; Docker published ports |
 | Headlamp token rejected | Fresh SA token — [docs/headlamp.md](docs/headlamp.md) |
 | `platform-headlamp` OutOfSync / `hostUsers` | JSON6902 removes `hostUsers`; do not set `false`. Restart `argocd-repo-server` after `--enable-helm` |
+| `platform-substrate` OutOfSync / `valkey-cluster` | JSON6902 adds STS API defaults; do not ignoreDifferences. Path is `platform/substrate-app` |
 | Argo UI unreachable | `svc argocd-server-nodeport`; app `platform-argocd-access` |
 | Vault UI unreachable / sealed | Unseal; [docs/vault-eso-setup.md](docs/vault-eso-setup.md) |
 | ClusterSecretStore not Ready | Vault unsealed + k8s auth role `external-secrets` |
