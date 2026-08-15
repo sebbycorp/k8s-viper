@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: desktop
+  labels:
+    app.kubernetes.io/name: desktop
+    app.kubernetes.io/part-of: k8s-viper

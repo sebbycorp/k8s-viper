@@ -1,0 +1,106 @@
+# Lab computer-use desktop as a normal Deployment, fronted by agentgateway.
+#
+# Image: viper-desktop:dev (local tag for `ctr images import` on the k3s node).
+# Intended published name: ghcr.io/sebbycorp/viper-desktop:dev
+# imagePullPolicy: IfNotPresent — the pod cannot start until the image is
+# imported on Viper. See images/desktop-computer-use/README.md.
+#
+# Do not use hostNetwork. Do not set privileged: true.
+# Xvfb/x11vnc run as uid 1000. Chromium uses --no-sandbox in the image.
+#
+# ---------------------------------------------------------------------------
+# FOLLOW-UP (PR #8 is on main: kagent 0.10.0-rc2 + substrate 0.0.12):
+# Wrap this desktop in an ActorTemplate / AgentHarness.
+#   Human (Chat UI + Desktop Viewer)
+#     → agentgateway
+#     → kagent AgentHarness / Actor
+#     → Substrate Actor (gVisor on this box; microVM later)
+#     → this Custom Desktop Image
+# Substrate on Viper = gVisor. microVM needs /dev/kvm — dockerized k3s on
+# Viper does not have KVM. Do not claim microVM works on Viper.
+# This first path must keep working without substrate or AgentHarness installed.
+# ---------------------------------------------------------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: desktop-computer-use
+  namespace: desktop
+  labels:
+    app.kubernetes.io/name: desktop-computer-use
+    app.kubernetes.io/part-of: k8s-viper
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: desktop-computer-use
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: desktop-computer-use
+        app.kubernetes.io/part-of: k8s-viper
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: desktop
+          image: viper-desktop:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: novnc
+              containerPort: 6080
+              protocol: TCP
+            - name: computer-use
+              containerPort: 18790
+              protocol: TCP
+          env:
+            - name: DISPLAY
+              value: ":99"
+            - name: SCREEN_GEOMETRY
+              value: 1280x800x24
+            - name: START_BROWSER
+              value: "1"
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+          # X11 / Chromium need writable /tmp and a larger /dev/shm than the
+          # default 64Mi. Not privileged. Not hostPath.
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: dshm
+              mountPath: /dev/shm
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: computer-use
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: computer-use
+            initialDelaySeconds: 20
+            periodSeconds: 20
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 256Mi

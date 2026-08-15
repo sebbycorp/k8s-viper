@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: desktop-computer-use
+  namespace: desktop
+  labels:
+    app.kubernetes.io/name: desktop-computer-use
+    app.kubernetes.io/part-of: k8s-viper
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: desktop-computer-use
+  ports:
+    - name: novnc
+      port: 6080
+      targetPort: novnc
+      protocol: TCP
+    - name: computer-use
+      port: 18790
+      targetPort: computer-use
+      protocol: TCP

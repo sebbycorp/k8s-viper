@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-desktop
+  namespace: argocd
+  annotations:
+    # After agentgateway-ai (wave 1): routes exist first; desktop Service is next.
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: viper
+  source:
+    repoURL: https://github.com/sebbycorp/k8s-viper.git
+    targetRevision: main
+    path: platform/desktop
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: desktop
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

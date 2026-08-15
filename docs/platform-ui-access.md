@@ -22,7 +22,9 @@ not for exposing these UIs.
 | **Argo CD** | `https://172.16.10.135:30443/` | `admin` + initial secret |
 | **Argo CD (HTTP)** | `http://172.16.10.135:30081/` | Often redirects to HTTPS |
 | **Vault UI** | `http://172.16.10.135:30200/` | Root/app token after init+unseal — [vault-eso-setup.md](vault-eso-setup.md) |
-| **agentgateway** (OpenAI `/v1` · Spark `/spark`) | `http://172.16.10.135:30100/` | One Gateway, two backends. `GET /` → 404 is expected — [agentgateway-langfuse.md](agentgateway-langfuse.md) |
+| **agentgateway** (OpenAI `/v1` · Spark `/spark` · desktop `/desktop/`) | `http://172.16.10.135:30100/` | One Gateway. `GET /` → 404 is expected — [agentgateway-langfuse.md](agentgateway-langfuse.md) |
+| **Desktop viewer** (noVNC) | `http://172.16.10.135:30100/desktop/` | Lab-open VNC behind the gateway — [desktop-computer-use.md](desktop-computer-use.md) |
+| **Desktop computer-use API** | `http://172.16.10.135:30100/desktop-api/health` | No auth in the process; import `viper-desktop:dev` first |
 | **Langfuse** | `http://172.16.10.135:30300/` | First-user signup in UI |
 | **kagent UI** | `http://172.16.10.135:30500/` | OSS kagent 0.10.0-rc2 + Agent Substrate. Chat with `hello-substrate` — [kagent-substrate.md](kagent-substrate.md) |
 
@@ -79,7 +81,7 @@ Initialize and unseal first. After every pod/node restart:
 # or: docker exec k3s-viper kubectl -n vault exec vault-0 -- vault operator unseal
 ```
 
-## agentgateway (one Gateway, two backends)
+## agentgateway (one Gateway, OpenAI + Spark + desktop)
 
 Same Gateway (`agentgateway-proxy` :30100). `GET /` returns 404 `route not found`
 — expected. `svclb-agentgateway-proxy` Pending is cosmetic (Traefik owns `:80`).
@@ -107,6 +109,8 @@ curl -sS "$GW/spark/v1/chat/completions" \
 |------|---------|-------|
 | `/v1`, `/openai` | OpenAI (Vault key) | `gpt-5.5`, `gpt-5-mini` |
 | `/spark` | DGX Spark `172.16.10.173:8000` | `Qwen/Qwen3.6-35B-A3B-FP8` |
+| `/desktop/` | desktop-computer-use :6080 (noVNC) | viewer |
+| `/desktop-api/` | desktop-computer-use :18790 | computer-use HTTP API |
 
 Details: [agentgateway-langfuse.md](agentgateway-langfuse.md).
 

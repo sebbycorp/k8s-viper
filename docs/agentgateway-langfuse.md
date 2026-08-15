@@ -20,7 +20,9 @@ gateways.
 ```text
 agentgateway-proxy :30100
      ├─ /v1 · /openai  → OpenAI (Vault key)      gpt-5.5 / gpt-5-mini
-     └─ /spark         → DGX Spark vLLM :8000    Qwen/Qwen3.6-35B-A3B-FP8
+     ├─ /spark         → DGX Spark vLLM :8000    Qwen/Qwen3.6-35B-A3B-FP8
+     ├─ /desktop/      → noVNC desktop viewer    (see desktop-computer-use.md)
+     └─ /desktop-api/  → computer-use HTTP API
 ```
 
 `GET /` on `:30100` returns **404 `route not found`** — that is expected.
@@ -38,7 +40,7 @@ On Viper, kubectl is inside the k3s container: `docker exec k3s-viper kubectl ..
 
 | Service | URL |
 |---------|-----|
-| agentgateway (OpenAI `/v1` · `/openai`; Spark `/spark`) | `http://172.16.10.135:30100/` |
+| agentgateway (OpenAI `/v1` · `/openai`; Spark `/spark`; desktop `/desktop/`) | `http://172.16.10.135:30100/` |
 | Langfuse UI | `http://172.16.10.135:30300/` or `http://langfuse.viper.local/` |
 | Vault | `http://172.16.10.135:30200/` |
 

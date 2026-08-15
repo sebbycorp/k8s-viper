@@ -35,6 +35,7 @@ Canonical overview: `README.md`. Design: `docs/superpowers/specs/2026-08-11-k3s-
 | `argocd/project.yaml` | AppProject `viper` (source repos + destination namespaces) |
 | `argocd/apps/` | Child Applications (app-of-apps tree) |
 | `platform/<name>/` | Cluster services (Helm values and/or kustomize) |
+| `images/` | Lab container images (build on Viper, `ctr images import`) |
 | `apps/<name>/` | User workloads |
 | `docs/` | Operator runbooks (Vault, Headlamp, AI gateway, …) |
 | `site/` | Hugo environment handbook (GitHub Pages) |
@@ -54,6 +55,7 @@ Canonical overview: `README.md`. Design: `docs/superpowers/specs/2026-08-11-k3s-
 | `platform-agentgateway-crds` | agentgateway CRDs Helm | `agentgateway-system` |
 | `platform-agentgateway` | agentgateway control plane | `agentgateway-system` |
 | `platform-agentgateway-ai` | OpenAI Gateway/routes + OTEL | `agentgateway-system` |
+| `platform-desktop` | computer-use desktop Deployment (noVNC + API) | `desktop` |
 | `platform-langfuse-secrets` | Langfuse ExternalSecret | `langfuse` |
 | `platform-langfuse` | Langfuse + ClickHouse Helm | `langfuse` |
 | `platform-substrate-crds` | Agent Substrate CRDs Helm 0.0.12 | `ate-system` |
@@ -105,6 +107,7 @@ Lab UI NodePorts (fixed): Headlamp **30080**, Argo CD **30443**, Vault UI **3020
 - Argo UI: `platform-argocd-access` → **:30443**.
 - Vault UI: **:30200** — unseal after restarts.
 - agentgateway OpenAI: **:30100** — models `gpt-5.5` / `gpt-5-mini` — `docs/agentgateway-langfuse.md`.
+- Desktop viewer / computer-use API: **:30100/desktop/** and **/desktop-api/** — `docs/desktop-computer-use.md`.
 - Langfuse: **:30300** — ClickHouse included in chart — same AI runbook.
 - kagent UI: **:30500** — OSS kagent + Agent Substrate — `docs/kagent-substrate.md`. Dummy `kagent-openai` only; real OpenAI key stays on the gateway.
 - Do **not** set Headlamp `config.unsafeUseServiceAccountToken: true` unless behind a real auth proxy.

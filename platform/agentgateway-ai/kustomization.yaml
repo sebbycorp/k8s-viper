@@ -9,5 +9,7 @@ resources:
   - httproute-openai.yaml
   - backend-dgx-spark.yaml
   - httproute-dgx-spark.yaml
+  - backend-desktop.yaml
+  - httproute-desktop.yaml
   - otel-collector.yaml
   - gateway-parameters-tracing.yaml

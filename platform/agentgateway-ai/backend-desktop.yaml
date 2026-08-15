@@ -1,0 +1,30 @@
+# Static HTTP backends for the lab desktop (not LLM providers).
+# Points at the in-cluster Service in ns desktop. agentgateway static HTTP
+# uses AgentgatewayBackend (same pattern as other routes on this Gateway).
+# A core Service backendRef from this kustomization would be rewritten to
+# namespace agentgateway-system by `kustomization.namespace`.
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayBackend
+metadata:
+  name: desktop-novnc
+  namespace: agentgateway-system
+  labels:
+    app.kubernetes.io/name: desktop-computer-use
+    app.kubernetes.io/part-of: k8s-viper
+spec:
+  static:
+    host: desktop-computer-use.desktop.svc.cluster.local
+    port: 6080
+---
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayBackend
+metadata:
+  name: desktop-api
+  namespace: agentgateway-system
+  labels:
+    app.kubernetes.io/name: desktop-computer-use
+    app.kubernetes.io/part-of: k8s-viper
+spec:
+  static:
+    host: desktop-computer-use.desktop.svc.cluster.local
+    port: 18790
