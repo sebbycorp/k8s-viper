@@ -2,7 +2,8 @@
 name: k8s-viper
 description: >
   Work in the k8s-viper repo: single-node k3s GitOps platform (Argo CD app-of-apps,
-  Vault + ESO, Traefik node-IP ingress, Headlamp, agentgateway OpenAI proxy, Langfuse).
+  Vault + ESO, Traefik node-IP ingress, Headlamp, agentgateway OpenAI proxy, Langfuse,
+  OSS kagent + Agent Substrate).
   Use when adding platform components or apps, changing Helm values/manifests,
   bootstrap/validate scripts, secrets wiring, ingress hosts, AI gateway, or day-2
   cluster ops. Triggers: k8s-viper, GitOps, Argo CD app, platform/, apps/, Vault,
@@ -55,10 +56,15 @@ Canonical overview: `README.md`. Design: `docs/superpowers/specs/2026-08-11-k3s-
 | `platform-agentgateway-ai` | OpenAI Gateway/routes + OTEL | `agentgateway-system` |
 | `platform-langfuse-secrets` | Langfuse ExternalSecret | `langfuse` |
 | `platform-langfuse` | Langfuse + ClickHouse Helm | `langfuse` |
+| `platform-substrate-crds` | Agent Substrate CRDs Helm 0.0.12 | `ate-system` |
+| `platform-substrate` | Agent Substrate Helm 0.0.12 | `ate-system` |
+| `platform-kagent-crds` | kagent OSS CRDs Helm 0.10.0-rc2 | `kagent` |
+| `platform-kagent` | kagent OSS Helm 0.10.0-rc2 | `kagent` |
+| `platform-kagent-ai` | dummy OpenAI Secret + hello SandboxAgent + UI :30500 | `kagent` |
 
 Ingress front door: **node IP** `:80`/`:443` via k3s Traefik. Demo hosts: `whoami.viper.local`, `headlamp.viper.local`, `langfuse.viper.local`.
 
-Lab UI NodePorts (fixed): Headlamp **30080**, Argo CD **30443**, Vault UI **30200**, agentgateway **30100**, Langfuse **30300** — see `docs/platform-ui-access.md` and `docs/agentgateway-langfuse.md`.
+Lab UI NodePorts (fixed): Headlamp **30080**, Argo CD **30443**, Vault UI **30200**, agentgateway **30100**, Langfuse **30300**, kagent **30500** — see `docs/platform-ui-access.md`, `docs/agentgateway-langfuse.md`, and `docs/kagent-substrate.md`.
 
 ## Add a platform component
 
@@ -100,6 +106,7 @@ Lab UI NodePorts (fixed): Headlamp **30080**, Argo CD **30443**, Vault UI **3020
 - Vault UI: **:30200** — unseal after restarts.
 - agentgateway OpenAI: **:30100** — models `gpt-5.5` / `gpt-5-mini` — `docs/agentgateway-langfuse.md`.
 - Langfuse: **:30300** — ClickHouse included in chart — same AI runbook.
+- kagent UI: **:30500** — OSS kagent + Agent Substrate — `docs/kagent-substrate.md`. Dummy `kagent-openai` only; real OpenAI key stays on the gateway.
 - Do **not** set Headlamp `config.unsafeUseServiceAccountToken: true` unless behind a real auth proxy.
 - Chart pins live in Application `targetRevision`; record in `README.md`.
 

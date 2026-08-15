@@ -1,0 +1,23 @@
+# kagent 0.10.0-rc2 ui.service template has no nodePort field.
+# Keep the Helm Service as ClusterIP; expose the UI on lab NodePort 30500.
+apiVersion: v1
+kind: Service
+metadata:
+  name: kagent-ui-nodeport
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: kagent
+    app.kubernetes.io/component: ui
+    app.kubernetes.io/part-of: kagent
+spec:
+  type: NodePort
+  ports:
+    - name: ui
+      port: 8080
+      targetPort: 8080
+      nodePort: 30500
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: kagent
+    app.kubernetes.io/instance: kagent
+    app.kubernetes.io/component: ui

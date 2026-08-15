@@ -14,9 +14,11 @@ overview:
   - concern: Ingress
     choice: "Node IP via Traefik (k3s default; not kgateway for cluster edge)"
   - concern: Lab UIs
-    choice: "NodePorts 30080 / 30443 / 30200 / **30100** / **30300**"
+    choice: "NodePorts 30080 / 30443 / 30200 / **30100** / **30300** / **30500**"
   - concern: AI gateway
     choice: "one Gateway `agentgateway-proxy` :30100 → OpenAI (`/v1`) + DGX Spark (`/spark`)"
+  - concern: Agents
+    choice: "OSS kagent 0.10.0-rc2 + Agent Substrate 0.0.12 (`kagent` + `ate-system`); default model via the same gateway"
   - concern: LLM observability
     choice: "Langfuse + ClickHouse; OTEL path configured (Vault `secret/platform/langfuse-otel`)"
   - concern: Git source
@@ -80,6 +82,11 @@ quick_cards:
     icon: "◈"
     scheme: http
     port: "30300"
+  - name: kagent
+    class: headlamp
+    icon: "✦"
+    scheme: http
+    port: "30500"
 
 uis:
   - name: Headlamp
@@ -117,6 +124,13 @@ uis:
     path: ":30300/"
     auth: first-user signup
     git: platform/langfuse/
+  - name: kagent UI
+    type: ui
+    typeLabel: NodePort
+    scheme: http
+    path: ":30500/"
+    auth: "OSS kagent; dummy OpenAI key; real key on gateway"
+    git: platform/kagent-ai/
   - name: Argo CD (HTTP)
     type: ui
     typeLabel: NodePort
@@ -225,6 +239,36 @@ platform:
     ns: langfuse
     source: platform/langfuse/values.yaml
     notes: "Langfuse 1.5.41 + ClickHouse · :30300"
+  - app: platform-substrate-crds
+    kind: core
+    kindLabel: crds
+    ns: ate-system
+    source: oci substrate-crds 0.0.12
+    notes: Agent Substrate CRDs
+  - app: platform-substrate
+    kind: ui
+    kindLabel: ai
+    ns: ate-system
+    source: platform/substrate/values.yaml
+    notes: "Agent Substrate Helm 0.0.12 · JWT · Valkey ×6"
+  - app: platform-kagent-crds
+    kind: core
+    kindLabel: crds
+    ns: kagent
+    source: oci kagent-crds 0.10.0-rc2
+    notes: kagent OSS CRDs (substrate subchart left off)
+  - app: platform-kagent
+    kind: ui
+    kindLabel: ai
+    ns: kagent
+    source: platform/kagent/values.yaml
+    notes: "kagent OSS 0.10.0-rc2 · model via agentgateway /v1"
+  - app: platform-kagent-ai
+    kind: ui
+    kindLabel: ai
+    ns: kagent
+    source: platform/kagent-ai/
+    notes: "dummy kagent-openai · hello-substrate · UI :30500"
 
 namespaces:
   - ns: argocd
@@ -239,6 +283,10 @@ namespaces:
     purpose: agentgateway control plane + OpenAI/Spark proxy + OTEL collector
   - ns: langfuse
     purpose: Langfuse + Postgres/Redis/ClickHouse/MinIO
+  - ns: ate-system
+    purpose: Agent Substrate control plane (ate-api, atelet, Valkey, RustFS)
+  - ns: kagent
+    purpose: OSS kagent controller, UI, WorkerPool, hello-substrate
   - ns: apps
     purpose: Demo / user workloads (whoami)
   - ns: kube-system
@@ -282,6 +330,9 @@ ports:
   - port: "30300"
     service: Langfuse UI
     how: "NodePort (langfuse web service)"
+  - port: "30500"
+    service: kagent UI
+    how: "NodePort (`kagent-ui-nodeport`)"
   - port: "6443"
     service: Kubernetes API
     how: k3s on node (kubeconfig)
@@ -289,7 +340,7 @@ ports:
 vault_paths:
   - path: secret/platform/openai
     fields: api_key
-    used_by: agentgateway ExternalSecret
+    used_by: agentgateway ExternalSecret (kagent uses a dummy Secret; gateway injects this key)
   - path: secret/platform/langfuse
     fields: salt, encryption_key, nextauth_secret, DB passwords
     used_by: Langfuse ExternalSecret
@@ -351,6 +402,15 @@ versions:
   - name: whoami image
     pin: traefik/whoami:v1.10.2
     where: platform/ingress/whoami.yaml
+  - name: kagent OSS Helm / CRDs
+    pin: 0.10.0-rc2
+    where: "OCI oci://ghcr.io/kagent-dev/kagent/helm"
+  - name: Agent Substrate Helm / CRDs
+    pin: "0.0.12"
+    where: "OCI oci://ghcr.io/kagent-dev/substrate/helm"
+  - name: Substrate worker image
+    pin: ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.12
+    where: platform/kagent/values.yaml
 
 layout:
   - path: scripts/bootstrap.sh
@@ -381,6 +441,12 @@ layout:
     role: OpenAI + Spark Gateway, routes, OTEL
   - path: platform/langfuse/
     role: Langfuse Helm + ExternalSecret
+  - path: platform/substrate/
+    role: Agent Substrate Helm values (0.0.12)
+  - path: platform/kagent/
+    role: kagent OSS Helm values (0.10.0-rc2)
+  - path: platform/kagent-ai/
+    role: dummy OpenAI Secret + hello SandboxAgent + UI NodePort
   - path: apps/
     role: User workloads
   - path: docs/
@@ -435,6 +501,10 @@ troubleshooting:
     check: Cosmetic — Traefik owns :80/:443. Use NodePort 30100
   - symptom: Langfuse ImagePullBackOff
     check: Cluster egress/DNS to Docker Hub
+  - symptom: kagent UI unreachable
+    check: "http://172.16.10.135:30500/; Docker published 30500; app platform-kagent-ai"
+  - symptom: hello-substrate not Ready
+    check: "WorkerPool kagent-default; gVisor-on-dockerized-k3s — docs/kagent-substrate.md"
   - symptom: Re-run bootstrap
     check: "Safe: skips k3s if healthy; re-applies Argo + root app"
 
@@ -451,6 +521,8 @@ docs:
     url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/vault-eso-setup.md
   - name: agentgateway + Langfuse
     url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/agentgateway-langfuse.md
+  - name: kagent + Agent Substrate
+    url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/kagent-substrate.md
   - name: Why Traefik (not kgateway)
     url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/why-traefik.md
   - name: Design spec

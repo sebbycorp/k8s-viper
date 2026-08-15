@@ -58,6 +58,18 @@ require_file argocd/apps/platform-agentgateway.yaml
 require_file argocd/apps/platform-agentgateway-ai.yaml
 require_file argocd/apps/platform-langfuse-secrets.yaml
 require_file argocd/apps/platform-langfuse.yaml
+require_file argocd/apps/platform-substrate-crds.yaml
+require_file argocd/apps/platform-substrate.yaml
+require_file argocd/apps/platform-kagent-crds.yaml
+require_file argocd/apps/platform-kagent.yaml
+require_file argocd/apps/platform-kagent-ai.yaml
+require_file platform/substrate/values.yaml
+require_file platform/kagent/values.yaml
+require_file platform/kagent-ai/kustomization.yaml
+require_file platform/kagent-ai/dummy-openai-secret.yaml
+require_file platform/kagent-ai/hello-substrate.yaml
+require_file platform/kagent-ai/ui-nodeport.yaml
+require_file docs/kagent-substrate.md
 require_file site/hugo.toml
 require_file site/data/cluster.yaml
 require_file site/layouts/index.html
@@ -124,6 +136,12 @@ if command -v kustomize >/dev/null 2>&1; then
   else
     fail "kustomize build platform/argocd-access"
   fi
+  log "kustomize build platform/kagent-ai..."
+  if kustomize build platform/kagent-ai >/dev/null; then
+    ok "kustomize build platform/kagent-ai"
+  else
+    fail "kustomize build platform/kagent-ai"
+  fi
   if command -v helm >/dev/null 2>&1; then
     log "kustomize build --enable-helm platform/headlamp..."
     if rendered="$(kustomize build --enable-helm platform/headlamp)"; then
@@ -151,6 +169,12 @@ elif command -v kubectl >/dev/null 2>&1; then
   else
     fail "kubectl kustomize platform/argocd-access"
   fi
+  log "kubectl kustomize platform/kagent-ai..."
+  if kubectl kustomize platform/kagent-ai >/dev/null; then
+    ok "kubectl kustomize platform/kagent-ai"
+  else
+    fail "kubectl kustomize platform/kagent-ai"
+  fi
 else
   log "kustomize/kubectl not found — skipping kustomize build"
 fi
@@ -166,6 +190,14 @@ if command -v kubeconform >/dev/null 2>&1; then
     argocd/apps/platform-external-secrets.yaml
     argocd/apps/platform-headlamp.yaml
     argocd/apps/platform-argocd-access.yaml
+    argocd/apps/platform-substrate-crds.yaml
+    argocd/apps/platform-substrate.yaml
+    argocd/apps/platform-kagent-crds.yaml
+    argocd/apps/platform-kagent.yaml
+    argocd/apps/platform-kagent-ai.yaml
+    platform/kagent-ai/dummy-openai-secret.yaml
+    platform/kagent-ai/hello-substrate.yaml
+    platform/kagent-ai/ui-nodeport.yaml
     platform/argocd-access/argocd-server-nodeport.yaml
     platform/argocd-access/argocd-cm-kustomize.yaml
     platform/ingress/namespace-apps.yaml

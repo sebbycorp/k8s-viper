@@ -25,7 +25,7 @@ Paths used by this platform (KV v2 mount `secret/`):
 
 | Path | Used by | Fields (examples) |
 |------|---------|-------------------|
-| `secret/platform/openai` | agentgateway ExternalSecret | `api_key` |
+| `secret/platform/openai` | agentgateway ExternalSecret (kagent uses a dummy Secret; gateway injects this key) | `api_key` |
 | `secret/platform/langfuse` | Langfuse Helm via ExternalSecret | `salt`, `encryption_key`, `nextauth_secret`, `postgres_password`, `redis_password`, `clickhouse_password`, `minio_root_user`, `minio_root_password`, `nextauth_url` |
 | `secret/platform/langfuse-otel` | OTEL collector → Langfuse | `public_key`, `secret_key`, `endpoint` |
 | `secret/demo/whoami` | optional demo | app-specific |
@@ -127,6 +127,7 @@ Examples in-repo:
 - `platform/agentgateway-ai/external-secret-openai.yaml` → Secret `openai-secret`
 - `platform/langfuse/external-secret.yaml` → Secret `langfuse-credentials`
 - `platform/agentgateway-ai/otel-collector.yaml` → Secret `langfuse-otel-auth`
+- `platform/kagent-ai/dummy-openai-secret.yaml` → dummy Secret `kagent-openai` (not from Vault)
 
 Never put secret **values** in git — only paths and `ExternalSecret` manifests.
 

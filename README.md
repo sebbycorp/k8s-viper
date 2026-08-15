@@ -13,8 +13,9 @@ Sebastian Maniak's lab. Single-node **dockerized k3s** on **Viper**, managed wit
 | Secrets | HashiCorp Vault OSS + External Secrets Operator |
 | Dashboard | Headlamp (OSS, in-cluster) |
 | Ingress | Node IP via Traefik (k3s default) — [why not kgateway](docs/why-traefik.md) |
-| Lab UIs | NodePorts on `172.16.10.135`: Headlamp `:30080`, Argo `:30443`, Vault `:30200`, agentgateway `:30100`, Langfuse `:30300` |
+| Lab UIs | NodePorts on `172.16.10.135`: Headlamp `:30080`, Argo `:30443`, Vault `:30200`, agentgateway `:30100`, Langfuse `:30300`, kagent `:30500` |
 | AI gateway | **One** Gateway (`agentgateway-proxy` :30100) → two backends: OpenAI (`/v1`) + DGX Spark (`/spark`) |
+| Agents | OSS **kagent 0.10.0-rc2** + **Agent Substrate 0.0.12** (`kagent` + `ate-system`); default model via the same gateway |
 | LLM observability | Langfuse + ClickHouse; OTEL path configured (keys in Vault `secret/platform/langfuse-otel`) |
 | SSH | LAN: `smaniak@172.16.10.135`. Remote: ngrok TCP `ssh smaniak@2.tcp.ngrok.io -p <port>` (port changes when ngrok restarts). ngrok is SSH to the box, not k8s UIs. |
 
@@ -31,12 +32,16 @@ bootstrap.sh  →  dockerized k3s (k3s-viper) + Argo CD + root Application
                       ↓
    platform/ingress | vault | external-secrets | headlamp | argocd-access
    platform/gateway-api | agentgateway* | langfuse
+   platform/substrate* | kagent* | kagent-ai
                       ↓
-   Traefik :80/:443  +  NodePorts 30080 / 30443 / 30200 / 30100 / 30300
+   Traefik :80/:443  +  NodePorts 30080 / 30443 / 30200 / 30100 / 30300 / 30500
                       ↓
    agentgateway-proxy :30100
         ├─ /v1 · /openai  → OpenAI (Vault key)      gpt-5.5 / gpt-5-mini
         └─ /spark         → DGX Spark vLLM :8000    Qwen/Qwen3.6-35B-A3B-FP8
+                      ↓
+   kagent UI :30500  → default model gpt-5.5 via gateway /v1 (dummy key in git)
+   Agent Substrate (ate-system) → gVisor workers (kagent-default)
                       ↓
    OTEL collector → Langfuse (configured; keys in Vault)
 ```
@@ -68,6 +73,9 @@ platform/gateway-api/         # Gateway API CRDs
 platform/agentgateway/        # agentgateway control plane values
 platform/agentgateway-ai/     # one Gateway, OpenAI + Spark routes, OTEL collector
 platform/langfuse/            # Langfuse Helm + ExternalSecret
+platform/substrate/           # Agent Substrate Helm values (0.0.12)
+platform/kagent/              # kagent OSS Helm values (0.10.0-rc2)
+platform/kagent-ai/           # dummy OpenAI Secret + hello SandboxAgent + UI NodePort
 apps/                         # your workloads later
 docs/                         # operator runbooks (see below)
 site/                         # Hugo handbook → GitHub Pages
@@ -81,6 +89,7 @@ site/                         # Hugo handbook → GitHub Pages
 | [docs/headlamp.md](docs/headlamp.md) | Headlamp token login + hostUsers GitOps note |
 | [docs/vault-eso-setup.md](docs/vault-eso-setup.md) | Vault init/unseal, ESO, secret paths |
 | [docs/agentgateway-langfuse.md](docs/agentgateway-langfuse.md) | One gateway / two backends, Langfuse, OTEL |
+| [docs/kagent-substrate.md](docs/kagent-substrate.md) | OSS kagent + Agent Substrate (UI :30500, hello agent) |
 | [docs/why-traefik.md](docs/why-traefik.md) | Traefik vs kgateway (cluster Ingress) |
 
 ## Talk to the cluster
@@ -150,6 +159,7 @@ Native k3s installs can still use `export KUBECONFIG=/etc/rancher/k3s/k3s.yaml`.
 | Vault | http://172.16.10.135:30200/ |
 | agentgateway | http://172.16.10.135:30100/ |
 | Langfuse | http://172.16.10.135:30300/ |
+| kagent UI | http://172.16.10.135:30500/ |
 
 ```bash
 # Argo CD admin password
@@ -170,7 +180,8 @@ curl -H 'Host: whoami.viper.local' http://172.16.10.135/
 
 **Vault** — init, unseal, ESO, secret inventory: [docs/vault-eso-setup.md](docs/vault-eso-setup.md)
 
-**AI** — one gateway, two providers: [docs/agentgateway-langfuse.md](docs/agentgateway-langfuse.md)
+**AI** — one gateway, two providers: [docs/agentgateway-langfuse.md](docs/agentgateway-langfuse.md).  
+**Agents** — OSS kagent + Agent Substrate: [docs/kagent-substrate.md](docs/kagent-substrate.md).
 
 ```bash
 export GW=http://172.16.10.135:30100
@@ -199,6 +210,7 @@ Do **not** put secret values in git or this README.
 | Where | What |
 |-------|------|
 | Vault | Paths in [docs/vault-eso-setup.md](docs/vault-eso-setup.md) — `secret/platform/openai`, `secret/platform/langfuse`, `secret/platform/langfuse-otel` |
+| kagent dummy | `platform/kagent-ai/dummy-openai-secret.yaml` — `sk-routed-via-agentgateway` only. Real OpenAI key stays on the gateway. |
 | Notion | Projects / k8s-viper / Secrets (SSH, Vault unseal/root, Langfuse, OpenAI, OTEL) |
 
 Apps consume secrets via `ExternalSecret` only.
@@ -209,11 +221,13 @@ Langfuse + OTEL collector (`langfuse-otel-collector` in `agentgateway-system`) e
 
 Runbook: [docs/agentgateway-langfuse.md](docs/agentgateway-langfuse.md).
 
-## What is running (as of 2026-08-14)
+## What is running (as of 2026-08-15)
 
-All Argo apps **Synced / Healthy**:
+Platform apps **Synced / Healthy** as of 2026-08-14:
 
 `root`, `argocd-project`, `platform-argocd-access`, `platform-headlamp`, `platform-ingress`, `platform-vault`, `platform-external-secrets`, `platform-gateway-api`, `platform-agentgateway`, `platform-agentgateway-crds`, `platform-agentgateway-ai`, `platform-langfuse`, `platform-langfuse-secrets`.
+
+GitOps also defines: `platform-substrate-crds`, `platform-substrate`, `platform-kagent-crds`, `platform-kagent`, `platform-kagent-ai`.
 
 Known cosmetic: `svclb-agentgateway-proxy` **Pending** because Traefik already owns host `:80`/`:443`. AI data plane is NodePort **30100**. Do not try to steal port 80.
 
@@ -249,6 +263,9 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 | OTEL collector | `otel/opentelemetry-collector-contrib:0.132.1` |
 | Gateway API CRDs | `v1.6.0` |
 | whoami image | `traefik/whoami:v1.10.2` |
+| kagent OSS Helm / CRDs | `0.10.0-rc2` (OCI `oci://ghcr.io/kagent-dev/kagent/helm`) |
+| Agent Substrate Helm / CRDs | `0.0.12` (OCI `oci://ghcr.io/kagent-dev/substrate/helm`) |
+| Substrate worker image | `ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.12` |
 
 ## Out of scope (v1)
 
@@ -277,4 +294,6 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 | Spark 502 / no route | Backend `172.16.10.173:8000`; model `Qwen/Qwen3.6-35B-A3B-FP8` |
 | `svclb-agentgateway-proxy` Pending | Cosmetic — Traefik owns `:80`/`:443`. Use NodePort **30100** |
 | Langfuse ImagePullBackOff | Cluster egress/DNS to Docker Hub |
+| kagent UI unreachable | `http://172.16.10.135:30500/`; Docker must publish **30500**; app `platform-kagent-ai` |
+| hello-substrate not Ready | WorkerPool `kagent-default`; gVisor-on-dockerized-k3s — [docs/kagent-substrate.md](docs/kagent-substrate.md) |
 | Re-run bootstrap | Safe: skips k3s if healthy; re-applies Argo + root app |

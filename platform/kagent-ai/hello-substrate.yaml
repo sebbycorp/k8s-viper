@@ -1,0 +1,37 @@
+# SandboxAgent shape matches kagent-crds 0.10.0-rc2 + official
+# Agent Substrate example (kagent.dev/v1alpha2, runtime go).
+apiVersion: kagent.dev/v1alpha2
+kind: SandboxAgent
+metadata:
+  name: hello-substrate
+  namespace: kagent
+spec:
+  type: Declarative
+  description: Kubernetes assistant running on Agent Substrate (gVisor actor)
+  declarative:
+    runtime: go
+    modelConfig: default-model-config
+    systemMessage: |
+      You are a Kubernetes assistant on Agent Substrate.
+      You run as a Go ADK declarative agent inside a gVisor actor on this
+      dockerized k3s lab (k8s-viper). Help with cluster questions, manifests,
+      and troubleshooting. Prefer read-only tools first. Do not invent
+      cluster state — use tools. If you cannot answer, say so.
+    tools:
+      - type: McpServer
+        mcpServer:
+          name: kagent-tool-server
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - k8s_get_resources
+            - k8s_describe_resource
+            - k8s_get_events
+            - k8s_get_pod_logs
+            - k8s_get_resource_yaml
+            - k8s_get_available_api_resources
+            - k8s_get_cluster_configuration
+            - k8s_check_service_connectivity
+  substrate:
+    workerPoolRef:
+      name: kagent-default

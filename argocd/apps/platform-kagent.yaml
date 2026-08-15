@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-kagent
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: viper
+  sources:
+    - repoURL: oci://ghcr.io/kagent-dev/kagent/helm
+      chart: kagent
+      targetRevision: 0.10.0-rc2
+      helm:
+        releaseName: kagent
+        skipCrds: true
+        valueFiles:
+          - $values/platform/kagent/values.yaml
+    - repoURL: https://github.com/sebbycorp/k8s-viper.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kagent
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

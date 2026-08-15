@@ -19,6 +19,12 @@ spec:
     - oci://cr.agentgateway.dev/charts/agentgateway
     - oci://cr.agentgateway.dev/charts/agentgateway-crds
     - oci://cr.agentgateway.dev/*
+    - oci://ghcr.io/kagent-dev/kagent/helm
+    - oci://ghcr.io/kagent-dev/kagent/helm/kagent
+    - oci://ghcr.io/kagent-dev/kagent/helm/kagent-crds
+    - oci://ghcr.io/kagent-dev/substrate/helm
+    - oci://ghcr.io/kagent-dev/substrate/helm/substrate
+    - oci://ghcr.io/kagent-dev/substrate/helm/substrate-crds
   destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc
@@ -37,6 +43,10 @@ spec:
     - namespace: agentgateway-system
       server: https://kubernetes.default.svc
     - namespace: langfuse
+      server: https://kubernetes.default.svc
+    - namespace: ate-system
+      server: https://kubernetes.default.svc
+    - namespace: kagent
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: "*"
