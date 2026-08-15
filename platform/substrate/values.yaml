@@ -1,6 +1,10 @@
 # Agent Substrate Helm 0.0.12 — lab overlay for dockerized k3s.
 # Chart defaults are kept unless noted. Do not invent keys.
 #
+# Chart 0.0.12 has no values key for extra ate-api-server ClusterRole rules.
+# storageclasses + csidriverconfigs are granted by platform-substrate-rbac
+# (ate-api-server-extra-rbac.yaml in this directory).
+#
 # JWT auth (chart default) is required for kagent's JWT-to-ateapi path.
 # Do not set auth.mode=mtls (needs feature gates this k3s lab does not enable)
 # and do not disable auth.jwt.bootstrap.

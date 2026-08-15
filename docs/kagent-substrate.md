@@ -38,6 +38,7 @@ Argo waves:
 |------|-------------|--------|
 | 1 | `platform-substrate-crds` | OCI `substrate-crds` 0.0.12 |
 | 2 | `platform-substrate` | OCI `substrate` 0.0.12 + `platform/substrate/values.yaml` |
+| 2 | `platform-substrate-rbac` | git `platform/substrate` (extra ate-api-server ClusterRole) |
 | 3 | `platform-kagent-crds` | OCI `kagent-crds` 0.10.0-rc2 |
 | 4 | `platform-kagent` | OCI `kagent` 0.10.0-rc2 + `platform/kagent/values.yaml` |
 | 5 | `platform-kagent-ai` | git `platform/kagent-ai` (dummy Secret, hello agent, UI NodePort) |
@@ -45,6 +46,13 @@ Argo waves:
 `kagent-crds` keeps `substrate.enabled=false` (chart default) so it does **not**
 install the older bundled substrate-crds 0.0.9. Substrate CRDs come from
 `platform-substrate-crds` 0.0.12.
+
+Chart 0.0.12's ate-api-server ClusterRole does **not** grant
+`storageclasses` or `csidriverconfigs`. Without those verbs the API
+server crash-loops (`cannot list resource ... at the cluster scope`) and
+kagent-controller then fails with `unable to dial substrate ate-api`.
+`platform-substrate-rbac` adds a durable extra ClusterRole + binding.
+The chart has no values key for this — do not invent one.
 
 Valkey stays at **6** replicas. The 0.0.12 cluster-init Job hardcodes pods
 `0..5`; shrinking `valkey.replicas` hangs init.
