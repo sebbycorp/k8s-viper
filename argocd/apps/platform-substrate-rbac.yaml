@@ -4,6 +4,8 @@ metadata:
   name: platform-substrate-rbac
   namespace: argocd
   annotations:
+    # Same wave as platform-substrate: extra ClusterRole/Binding plus an
+    # SSA pauseImage field on SandboxConfig/gvisor-default.
     argocd.argoproj.io/sync-wave: "2"
   finalizers:
     - resources-finalizer.argocd.argoproj.io

@@ -5,8 +5,8 @@ This is **not** Solo Enterprise kagent (that lives in k8s-goose).
 
 | Piece | Pin | Namespace |
 |-------|-----|-----------|
-| kagent Helm + CRDs | **0.10.0-rc2** (`oci://ghcr.io/kagent-dev/kagent/helm`) | `kagent` |
-| Agent Substrate Helm + CRDs | **0.0.12** (`oci://ghcr.io/kagent-dev/substrate/helm`) | `ate-system` |
+| kagent Helm + CRDs | **0.10.0-rc2** (`oci://ghcr.io/kagent-dev/kagent/helm/kagent` + `…/kagent-crds`) | `kagent` |
+| Agent Substrate Helm + CRDs | **0.0.12** (`oci://ghcr.io/kagent-dev/substrate/helm/substrate` + `…/substrate-crds`) | `ate-system` |
 | Worker image | `ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.12` | WorkerPool `kagent-default` |
 | UI | NodePort **30500** | `kagent-ui-nodeport` |
 
@@ -36,23 +36,54 @@ Argo waves:
 
 | Wave | Application | Source |
 |------|-------------|--------|
-| 1 | `platform-substrate-crds` | OCI `substrate-crds` 0.0.12 |
-| 2 | `platform-substrate` | OCI `substrate` 0.0.12 + `platform/substrate/values.yaml` |
-| 2 | `platform-substrate-rbac` | git `platform/substrate` (extra ate-api-server ClusterRole) |
-| 3 | `platform-kagent-crds` | OCI `kagent-crds` 0.10.0-rc2 |
-| 4 | `platform-kagent` | OCI `kagent` 0.10.0-rc2 + `platform/kagent/values.yaml` |
+| 1 | `platform-substrate-crds` | OCI `oci://ghcr.io/kagent-dev/substrate/helm/substrate-crds` 0.0.12 |
+| 2 | `platform-substrate` | OCI `oci://ghcr.io/kagent-dev/substrate/helm/substrate` 0.0.12 + `platform/substrate/values.yaml` |
+| 2 | `platform-substrate-rbac` | git `platform/substrate` (extra ate-api RBAC + SandboxConfig `pauseImage` SSA) |
+| 3 | `platform-kagent-crds` | OCI `oci://ghcr.io/kagent-dev/kagent/helm/kagent-crds` 0.10.0-rc2 |
+| 4 | `platform-kagent` | OCI `oci://ghcr.io/kagent-dev/kagent/helm/kagent` 0.10.0-rc2 + `platform/kagent/values.yaml` |
 | 5 | `platform-kagent-ai` | git `platform/kagent-ai` (dummy Secret, hello agent, UI NodePort) |
+
+### Argo CD 3.5 OCI URLs (GHCR)
+
+Argo CD **3.5** on this cluster resolves an OCI **parent** path as the
+artifact. `oci://ghcr.io/kagent-dev/kagent/helm` + `chart: kagent` therefore
+pulls the parent index and **403s** — same class of bug as agentgateway
+(`oci://cr.agentgateway.dev/charts/agentgateway` + `chart: agentgateway`).
+
+Working form (keep `chart:`):
+
+```yaml
+repoURL: oci://ghcr.io/kagent-dev/kagent/helm/kagent
+chart: kagent
+targetRevision: 0.10.0-rc2
+```
+
+Same for `kagent-crds`, `substrate`, and `substrate-crds`. AppProject `viper`
+allowlists those full chart URLs. Do not revert to the parent path.
+
+### Substrate 0.0.12 chart gaps (GitOps, not live-only)
+
+Chart 0.0.12 cannot express these; they live in `platform/substrate`
+and are applied by `platform-substrate-rbac` (wave 2, Server-Side Apply):
+
+1. **ate-api-server extra RBAC** — ClusterRole/Binding `ate-api-server-extra`
+   for SA `ate-api-server` in `ate-system`: `get`/`list`/`watch` on
+   `storageclasses` (`storage.k8s.io`) and `csidriverconfigs` (`ate.dev`).
+   Without those verbs the API server crash-loops
+   (`cannot list resource ... at the cluster scope`) and kagent-controller
+   then fails with `unable to dial substrate ate-api`. The chart ClusterRole
+   is not patched, so Helm upgrades do not fight this.
+2. **`SandboxConfig/gvisor-default` `pauseImage`** — the CRD requires
+   `spec.pauseImage`; the chart template omits it and has no values key.
+   The overlay SSA-merges only that field (does not Replace the CR). Image
+   is the GKE pause digest documented on `controller.substrate.pauseImage`
+   in the kagent chart:
+
+   `gcr.io/gke-release/pause@sha256:bcbd57ba5653580ec647b16d8163cdd1112df3609129b01f912a8032e48265da`
 
 `kagent-crds` keeps `substrate.enabled=false` (chart default) so it does **not**
 install the older bundled substrate-crds 0.0.9. Substrate CRDs come from
 `platform-substrate-crds` 0.0.12.
-
-Chart 0.0.12's ate-api-server ClusterRole does **not** grant
-`storageclasses` or `csidriverconfigs`. Without those verbs the API
-server crash-loops (`cannot list resource ... at the cluster scope`) and
-kagent-controller then fails with `unable to dial substrate ate-api`.
-`platform-substrate-rbac` adds a durable extra ClusterRole + binding.
-The chart has no values key for this — do not invent one.
 
 Valkey stays at **6** replicas. The 0.0.12 cluster-init Job hardcodes pods
 `0..5`; shrinking `valkey.replicas` hangs init.
@@ -75,6 +106,15 @@ docker exec k3s-viper kubectl -n argocd get applications | grep -E 'kagent|subst
 ```
 
 Wait for `hello-substrate` Ready. The first golden snapshot is often 60–90s.
+
+`hello-substrate` failed live with
+`spec.containers[0].env[3-6].value: Required value` when the kagent
+controller created the Substrate `ActorTemplate`. The SandboxAgent
+manifest matches the 0.10.0-rc2 / official declarative shape and has no
+env block; ActorTemplate env entries require a literal `value` (CRD).
+That is a **controller bug** in 0.10.0-rc2 (generated env names without
+values, likely OTEL / shared env from the controller process). Do not
+invent env vars on the SandboxAgent to paper over it.
 
 ## Secrets
 
