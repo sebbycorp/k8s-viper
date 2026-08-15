@@ -1,0 +1,52 @@
+# kagent OSS Helm 0.10.0-rc2 — lab overlay.
+# Keys are from the published chart values. Do not invent fields.
+#
+# Default model is routed through the existing agentgateway on :30100
+# (in-cluster /v1). Secret/kagent-openai is a dummy in platform/kagent-ai;
+# the gateway injects Vault secret/platform/openai. Do not put a real
+# key or license JWT here.
+
+providers:
+  default: openAI
+  openAI:
+    provider: OpenAI
+    model: gpt-5.5
+    apiKeySecretRef: kagent-openai
+    apiKeySecretKey: OPENAI_API_KEY
+    # Dummy Secret/kagent-openai is in platform/kagent-ai (not a real key).
+    # Do not set apiKey here — that would make Helm own the same Secret.
+    config:
+      baseUrl: "http://agentgateway-proxy.agentgateway-system.svc.cluster.local/v1"
+
+controller:
+  substrate:
+    enabled: true
+    ateApiEndpoint: dns:///api.ate-system.svc:443
+    ateApiInsecure: true
+    atenetRouterURL: http://atenet-router.ate-system.svc:80
+    ateApiTokenFile: /var/run/secrets/tokens/ate-api/token
+    defaultWorkerPool:
+      namespace: kagent
+      name: kagent-default
+
+# Do not set substrate.enabled (that installs the older bundled substrate
+# subchart). Substrate 0.0.12 is a separate Argo app in ate-system.
+
+substrateWorkerPool:
+  create: true
+  name: kagent-default
+  replicas: 1
+  ateomImage: ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.12
+  sandboxClass: gvisor
+
+# UI stays ClusterIP. Chart ui-service template has no nodePort field.
+# NodePort 30500 is platform/kagent-ai/ui-nodeport.yaml.
+
+kmcp:
+  enabled: true
+
+grafana-mcp:
+  enabled: false
+
+observability-agent:
+  enabled: false

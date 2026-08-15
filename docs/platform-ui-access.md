@@ -24,6 +24,7 @@ not for exposing these UIs.
 | **Vault UI** | `http://172.16.10.135:30200/` | Root/app token after init+unseal — [vault-eso-setup.md](vault-eso-setup.md) |
 | **agentgateway** (OpenAI `/v1` · Spark `/spark`) | `http://172.16.10.135:30100/` | One Gateway, two backends. `GET /` → 404 is expected — [agentgateway-langfuse.md](agentgateway-langfuse.md) |
 | **Langfuse** | `http://172.16.10.135:30300/` | First-user signup in UI |
+| **kagent UI** | `http://172.16.10.135:30500/` | OSS kagent 0.10.0-rc2 + Agent Substrate. Chat with `hello-substrate` — [kagent-substrate.md](kagent-substrate.md) |
 
 ### Ingress hosts (Traefik `:80`)
 
@@ -52,7 +53,7 @@ docker exec k3s-viper kubectl get nodes -o wide
 
 If k3s runs in a container, publish at least:
 
-`80`, `443`, `6443`, `30080`, `30081`, `30200`, `30443`, **`30100`**, **`30300`**.
+`80`, `443`, `6443`, `30080`, `30081`, `30200`, `30443`, **`30100`**, **`30300`**, **`30500`**.
 
 ## Argo CD login
 
@@ -123,6 +124,7 @@ Details: [agentgateway-langfuse.md](agentgateway-langfuse.md).
 | Argo CD | `platform/argocd-access/argocd-server-nodeport.yaml` |
 | agentgateway | `platform/agentgateway-ai/gateway.yaml` → Service `nodePort` |
 | Langfuse | `platform/langfuse/values.yaml` → `langfuse.web.service.nodePort` |
+| kagent UI | `platform/kagent-ai/ui-nodeport.yaml` (Helm UI Service has no `nodePort` field) |
 
 PR → merge `main` → Argo auto-syncs. NodePort range **30000–32767**.
 
@@ -131,7 +133,7 @@ PR → merge `main` → Argo auto-syncs. NodePort range **30000–32767**.
 - Token / password auth only; no SSO in v1.  
 - Headlamp chart uses `cluster-admin` for a full lab view.  
 - Prefer LAN-only access (`172.16.10.0/24`).  
-- Never commit OpenAI or Langfuse secrets.
+- Never commit OpenAI or Langfuse secrets. kagent's `kagent-openai` Secret is a dummy (`sk-routed-via-agentgateway`); the gateway holds the real key.
 
 ## Ingress controller
 

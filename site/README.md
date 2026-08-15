@@ -37,5 +37,6 @@ Canonical markdown runbooks live under `../docs/` (not only this site):
 - `platform-ui-access.md` — all ports
 - `vault-eso-setup.md` — Vault + secret inventory
 - `agentgateway-langfuse.md` — AI gateway + Langfuse
+- `kagent-substrate.md` — OSS kagent + Agent Substrate
 - `why-traefik.md` — Traefik vs kgateway
 - `headlamp.md` — dashboard tokens

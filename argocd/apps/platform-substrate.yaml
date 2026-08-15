@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-substrate
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: viper
+  sources:
+    - repoURL: oci://ghcr.io/kagent-dev/substrate/helm
+      chart: substrate
+      targetRevision: 0.0.12
+      helm:
+        releaseName: substrate
+        skipCrds: true
+        valueFiles:
+          - $values/platform/substrate/values.yaml
+    - repoURL: https://github.com/sebbycorp/k8s-viper.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ate-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

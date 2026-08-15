@@ -184,3 +184,4 @@ docker exec k3s-viper kubectl -n agentgateway-system set env deploy/agentgateway
 - Image pulls (Bitnami legacy / Langfuse) need working egress DNS from the cluster
 - Never commit API keys or Langfuse secrets
 - Day-2: edit git → `./scripts/validate.sh` → merge → Argo sync
+- OSS kagent routes its default model through this same gateway: [kagent-substrate.md](kagent-substrate.md)
