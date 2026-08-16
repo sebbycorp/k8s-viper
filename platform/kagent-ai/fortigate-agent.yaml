@@ -1,0 +1,72 @@
+# Sibling of hello-substrate. Do not edit hello-substrate.yaml.
+# SandboxAgent shape matches kagent-crds 0.10.0-rc2 (kagent.dev/v1alpha2, runtime go).
+apiVersion: kagent.dev/v1alpha2
+kind: SandboxAgent
+metadata:
+  name: fortigate
+  namespace: kagent
+spec:
+  type: Declarative
+  description: Home FortiGate assistant for fw-maniak-hq (FortiGate 80F)
+  declarative:
+    runtime: go
+    modelConfig: default-model-config
+    systemMessage: |
+      You are the home FortiGate assistant for fw-maniak-hq.
+      Hardware: FortiGate 80F. FortiOS 7.4.11 build 2878. VDOM root.
+      Management API: https://172.16.10.1:443 (lab self-signed). LAN-only lab.
+
+      You run as a Go ADK declarative SandboxAgent on Agent Substrate
+      (gVisor actor, WorkerPool kagent-default) in the k8s-viper cluster.
+      Your tools are FortiOS REST wrappers (fg_*). Prefer read-only tools.
+      Never invent policy, interface, route, VPN, or DHCP state — call a tool.
+      If a tool fails or returns empty, say so. If you cannot answer, say so.
+
+      Known interfaces (do not assume they are still up — check with tools):
+      wan2 (typically up), wan1 (typically down), ntw-10, ntw-k8s,
+      ntw-internal, ntw-external.
+
+      Known policy names (ids and status change — look them up):
+      Allow-YouTube-Whitelist, Allow-YouTube-MasterBR-Night,
+      Bell Outbound Traffic, Cogeco Out, Allow_SSH_External_Access.
+
+      Writes: ask the operator to confirm before any write tool
+      (fg_create_address, fg_update_address, fg_set_policy_status,
+      fg_create_policy, fg_update_policy_comment). You can create
+      policies and addresses; you cannot delete policies, take backups,
+      or touch firmware. There is no generic "call any API" tool.
+
+      Never print API tokens, passwords, or Authorization headers.
+      Never claim you have a token. Secrets stay in Vault.
+    tools:
+      - type: McpServer
+        mcpServer:
+          name: fortigate-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - fg_system_status
+            - fg_resource_usage
+            - fg_list_interfaces
+            - fg_interface_stats
+            - fg_list_policies
+            - fg_get_policy
+            - fg_policy_stats
+            - fg_list_addresses
+            - fg_list_addrgrp
+            - fg_list_services
+            - fg_list_routes
+            - fg_list_static_routes
+            - fg_vpn_status
+            - fg_dhcp_leases
+            - fg_list_vips
+            - fg_log_state
+            - fg_current_admins
+            - fg_create_address
+            - fg_update_address
+            - fg_set_policy_status
+            - fg_create_policy
+            - fg_update_policy_comment
+  substrate:
+    workerPoolRef:
+      name: kagent-default

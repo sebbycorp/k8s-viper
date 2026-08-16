@@ -1,0 +1,126 @@
+# FortiOS MCP tools Deployment + Service + RemoteMCPServer.
+# Image: fortigate-mcp:dev (local tag for `ctr images import` on the k3s node).
+# Intended published name: ghcr.io/sebbycorp/fortigate-mcp:dev
+# imagePullPolicy: IfNotPresent — the pod cannot start until the image is
+# imported on Viper. See images/fortigate-mcp/README.md.
+#
+# RemoteMCPServer fields match kagent-crds 0.10.0-rc2 and live
+# RemoteMCPServer/kagent-tool-server (STREAMABLE_HTTP :8084 /mcp).
+# Do not invent spec fields. Do not set spec.tls on an http:// URL.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fortigate-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: fortigate-mcp
+    app.kubernetes.io/part-of: k8s-viper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fortigate-mcp
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fortigate-mcp
+        app.kubernetes.io/part-of: k8s-viper
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: fortigate-mcp
+          image: fortigate-mcp:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mcp
+              containerPort: 8084
+              protocol: TCP
+          env:
+            - name: FORTIGATE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: fortigate-mcp
+                  key: FORTIGATE_TOKEN
+            - name: FORTIGATE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: fortigate-mcp
+                  key: FORTIGATE_HOST
+            - name: FORTIGATE_VERIFY_TLS
+              value: "false"
+            - name: MCP_HOST
+              value: "0.0.0.0"
+            - name: MCP_PORT
+              value: "8084"
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: mcp
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: mcp
+            initialDelaySeconds: 15
+            periodSeconds: 20
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fortigate-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: fortigate-mcp
+    app.kubernetes.io/part-of: k8s-viper
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: fortigate-mcp
+  ports:
+    - name: mcp
+      port: 8084
+      targetPort: mcp
+      protocol: TCP
+---
+# Shape copied from kagent 0.10.0-rc2 helm/kagent/templates/toolserver-kagent.yaml
+# plus protocol (CRD default STREAMABLE_HTTP; live kagent-tool-server is the same).
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: fortigate-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: fortigate-mcp
+    app.kubernetes.io/part-of: k8s-viper
+spec:
+  description: FortiOS REST tools for fw-maniak-hq (FortiGate 80F)
+  protocol: STREAMABLE_HTTP
+  timeout: 30s
+  sseReadTimeout: 5m0s
+  url: http://fortigate-mcp.kagent:8084/mcp

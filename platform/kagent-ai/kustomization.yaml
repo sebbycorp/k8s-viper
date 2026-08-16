@@ -5,3 +5,6 @@ resources:
   - dummy-openai-secret.yaml
   - hello-substrate.yaml
   - ui-nodeport.yaml
+  - fortigate-external-secret.yaml
+  - fortigate-mcp.yaml
+  - fortigate-agent.yaml

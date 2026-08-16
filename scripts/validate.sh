@@ -86,7 +86,15 @@ require_file platform/kagent-ai/kustomization.yaml
 require_file platform/kagent-ai/dummy-openai-secret.yaml
 require_file platform/kagent-ai/hello-substrate.yaml
 require_file platform/kagent-ai/ui-nodeport.yaml
+require_file platform/kagent-ai/fortigate-agent.yaml
+require_file platform/kagent-ai/fortigate-mcp.yaml
+require_file platform/kagent-ai/fortigate-external-secret.yaml
 require_file docs/kagent-substrate.md
+require_file docs/fortigate-agent.md
+require_file images/fortigate-mcp/Dockerfile
+require_file images/fortigate-mcp/README.md
+require_file images/fortigate-mcp/requirements.txt
+require_file images/fortigate-mcp/server.py
 require_file site/hugo.toml
 require_file site/data/cluster.yaml
 require_file site/layouts/index.html
@@ -269,6 +277,9 @@ if command -v kubeconform >/dev/null 2>&1; then
     platform/kagent-ai/dummy-openai-secret.yaml
     platform/kagent-ai/hello-substrate.yaml
     platform/kagent-ai/ui-nodeport.yaml
+    platform/kagent-ai/fortigate-agent.yaml
+    platform/kagent-ai/fortigate-mcp.yaml
+    platform/kagent-ai/fortigate-external-secret.yaml
     platform/argocd-access/argocd-server-nodeport.yaml
     platform/argocd-access/argocd-cm-kustomize.yaml
     platform/ingress/namespace-apps.yaml
@@ -322,6 +333,25 @@ if command -v python3 >/dev/null 2>&1; then
   else
     fail "computer-use api path self-check"
   fi
+  if python3 -m py_compile images/fortigate-mcp/server.py; then
+    ok "python3 -m py_compile images/fortigate-mcp/server.py"
+  else
+    fail "fortigate-mcp server.py failed to compile"
+  fi
+  if python3 images/fortigate-mcp/server.py --self-check; then
+    ok "fortigate-mcp self-check"
+  else
+    fail "fortigate-mcp self-check"
+  fi
+fi
+
+log "Checking FortiGate paths for committed secret values..."
+if git grep -nE '(FORTIGATE_TOKEN|Authorization: Bearer)[[:space:]]*[:=][[:space:]]*['\''\"][A-Za-z0-9_\-]{16,}' -- images/fortigate-mcp platform/kagent-ai docs/fortigate-agent.md >/tmp/fg-secret-scan.txt 2>/dev/null \
+   && [[ -s /tmp/fg-secret-scan.txt ]]; then
+  cat /tmp/fg-secret-scan.txt >&2
+  fail "possible FortiGate secret value in git"
+else
+  ok "no FortiGate secret values in new manifests"
 fi
 
 if ((errors > 0)); then

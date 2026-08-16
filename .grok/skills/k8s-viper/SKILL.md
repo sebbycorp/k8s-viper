@@ -63,7 +63,7 @@ Canonical overview: `README.md`. Design: `docs/superpowers/specs/2026-08-11-k3s-
 | `platform-substrate-rbac` | extra ate-api ClusterRole/Binding only | `ate-system` |
 | `platform-kagent-crds` | kagent OSS CRDs Helm 0.10.0-rc2 | `kagent` |
 | `platform-kagent` | kagent OSS Helm 0.10.0-rc2 | `kagent` |
-| `platform-kagent-ai` | dummy OpenAI Secret + hello SandboxAgent + UI :30500 | `kagent` |
+| `platform-kagent-ai` | dummy OpenAI Secret + hello + fortigate SandboxAgents + UI :30500 | `kagent` |
 
 Ingress front door: **node IP** `:80`/`:443` via k3s Traefik. Demo hosts: `whoami.viper.local`, `headlamp.viper.local`, `langfuse.viper.local`.
 
@@ -98,7 +98,7 @@ Lab UI NodePorts (fixed): Headlamp **30080**, Argo CD **30443**, Vault UI **3020
 
 - Operator runbook: `docs/vault-eso-setup.md` (init, unseal, ESO store, **secret inventory**).
 - Example store: `platform/external-secrets/cluster-secret-store-vault.example.yaml` — copy/adapt; do not commit real credentials.
-- Inventory: `secret/platform/openai`, `secret/platform/langfuse`, `secret/platform/langfuse-otel`.
+- Inventory: `secret/platform/openai`, `secret/platform/langfuse`, `secret/platform/langfuse-otel`, `secret/platform/fortigate`.
 - Apps reference secret **paths/keys** only via `ExternalSecret`.
 
 ## Dashboard + platform UIs + AI
@@ -111,6 +111,7 @@ Lab UI NodePorts (fixed): Headlamp **30080**, Argo CD **30443**, Vault UI **3020
 - Desktop viewer / computer-use API: **:30100/desktop/** and **/desktop-api/** — `docs/desktop-computer-use.md`.
 - Langfuse: **:30300** — ClickHouse included in chart — same AI runbook.
 - kagent UI: **:30500** — OSS kagent + Agent Substrate — `docs/kagent-substrate.md`. Dummy `kagent-openai` only; real OpenAI key stays on the gateway.
+- Home FortiGate agent: SandboxAgent `fortigate` + `fortigate-mcp:dev` — `docs/fortigate-agent.md`. Token in Vault `secret/platform/fortigate` only.
 - Do **not** set Headlamp `config.unsafeUseServiceAccountToken: true` unless behind a real auth proxy.
 - Chart pins live in Application `targetRevision`; record in `README.md`.
 
