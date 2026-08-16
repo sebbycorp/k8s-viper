@@ -29,14 +29,15 @@ controller:
       namespace: kagent
       name: kagent-default
 
-# Do not set substrate.enabled (that installs the older bundled substrate
-# subchart). Substrate 0.0.12 is a separate Argo app in ate-system.
+# Do not set substrate.enabled (that would double-install the bundled
+# substrate 0.0.9 subchart). Substrate 0.0.9 is a separate Argo app in
+# ate-system so it matches the official kagent 0.10.0-rc2 pairing.
 
 substrateWorkerPool:
   create: true
   name: kagent-default
   replicas: 1
-  ateomImage: ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.12
+  ateomImage: ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.9
   sandboxClass: gvisor
 
 # UI stays ClusterIP. Chart ui-service template has no nodePort field.

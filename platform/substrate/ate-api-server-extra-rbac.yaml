@@ -1,18 +1,19 @@
-# Chart 0.0.12 ate-api-server ClusterRole grants pods + ate.dev
-# {actortemplates,workerpools,sandboxconfigs} only. The live process also
-# lists cluster-scoped storageclasses and csidriverconfigs; without these
-# verbs the Deployment crash-loops and never becomes Ready.
+# Chart 0.0.9 ate-api-server ClusterRole already grants pods + ate.dev
+# {actortemplates,workerpools,sandboxconfigs}. Verified against substrate
+# v0.0.9 cmd/ateapi/main.go: the process lists those three CRs plus worker
+# and atelet pods. It does not start StorageClass or CSIDriverConfig
+# informers (those landed in 0.0.12 with the csidriverconfigs CRD).
+#
+# Extra verbs for storageclasses / csidriverconfigs are therefore not
+# required on 0.0.9 and must not be granted "just in case" — listing
+# csidriverconfigs.ate.dev would be a grant for a CRD this pin does not
+# install. This ClusterRole stays as the GitOps hook for future chart
+# gaps (platform-substrate-rbac). Empty rules are intentional.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: ate-api-server-extra
-rules:
-  - apiGroups: ["storage.k8s.io"]
-    resources: ["storageclasses"]
-    verbs: ["get", "list", "watch"]
-  - apiGroups: ["ate.dev"]
-    resources: ["csidriverconfigs"]
-    verbs: ["get", "list", "watch"]
+rules: []
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

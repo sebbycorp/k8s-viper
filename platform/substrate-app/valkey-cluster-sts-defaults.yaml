@@ -1,6 +1,9 @@
-# Chart 0.0.12 omits Kubernetes API-defaulted StatefulSet fields. Live
-# valkey-cluster already has these (6/6 ready). Emit them in desired so
-# Argo compares equal. No values key can set them. Do not ignoreDifferences.
+# Chart 0.0.9 JWT-mode StatefulSet/valkey-cluster omits the same Kubernetes
+# API-defaulted fields as 0.0.12 (revision history, PVC retention, update
+# strategy, pod/container defaults, VCT volumeMode/status). Live STS has
+# these after the API server defaults them. Emit them in desired so Argo
+# compares equal. No values key can set them. Do not ignoreDifferences.
+# Keep 6 replicas — cluster-init hardcodes pods 0-5.
 - op: add
   path: /spec/revisionHistoryLimit
   value: 10

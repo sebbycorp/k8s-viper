@@ -14,7 +14,7 @@ spec:
     # Full chart URL + chart: matches the working agentgateway pattern.
     repoURL: oci://ghcr.io/kagent-dev/substrate/helm/substrate-crds
     chart: substrate-crds
-    targetRevision: 0.0.12
+    targetRevision: 0.0.9
     helm:
       releaseName: substrate-crds
   destination:

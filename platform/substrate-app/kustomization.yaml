@@ -8,7 +8,7 @@ helmCharts:
     # here (that would fetch …/helm/substrate/substrate). Argo Helm apps still
     # need the full chart URL; this overlay is git + helmCharts, not OCI source.
     repo: oci://ghcr.io/kagent-dev/substrate/helm
-    version: 0.0.12
+    version: 0.0.9
     releaseName: substrate
     namespace: ate-system
     includeCRDs: false
