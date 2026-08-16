@@ -1,10 +1,9 @@
 (function () {
   const STORAGE_KEY = "k8s-viper-node-ip";
   const grid = document.getElementById("quick-grid");
-  if (!grid) return;
 
-  const PLACEHOLDER = grid.dataset.placeholder || "<node-ip>";
-  const DEFAULT_HINT = grid.dataset.defaultIp || "172.17.0.2";
+  const PLACEHOLDER = (grid && grid.dataset.placeholder) || "<node-ip>";
+  const DEFAULT_HINT = (grid && grid.dataset.defaultIp) || "172.17.0.2";
 
   function getIp() {
     const v = (localStorage.getItem(STORAGE_KEY) || "").trim();
@@ -27,6 +26,7 @@
   }
 
   function renderQuick(ip) {
+    if (!grid) return;
     grid.querySelectorAll(".quick-card").forEach((card) => {
       const scheme = card.dataset.scheme;
       const port = card.dataset.port;
@@ -92,8 +92,10 @@
       input.value = ip === PLACEHOLDER ? "" : ip;
       input.placeholder = `e.g. ${DEFAULT_HINT}`;
     }
-    renderQuick(ip);
-    renderUis(ip);
+    if (grid) {
+      renderQuick(ip);
+      renderUis(ip);
+    }
   }
 
   document.getElementById("save-ip")?.addEventListener("click", () => {

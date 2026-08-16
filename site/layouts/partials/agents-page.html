@@ -1,0 +1,155 @@
+{{ $d := .Site.Data.agents }}
+
+<header class="hero" id="top">
+  <div class="eyebrow">Isolated sandboxes, not plain Agents</div>
+  <h2>{{ .Title }}</h2>
+  <p class="lede">
+    Five gVisor <strong>SandboxAgents</strong> I built on Viper.
+    Not plain Agent Deployments. The
+    <a href="{{ .Site.Home.RelPermalink }}">lab handbook</a> is still
+    the full map — this page is the one I send people.
+  </p>
+  <div class="pills">
+    {{ range $d.pins }}
+    <span class="pill ok">{{ .name }} {{ .value }}</span>
+    {{ end }}
+  </div>
+</header>
+
+<section id="why-sandboxes">
+  <div class="section-head"><span class="section-num">01</span><h2>Why gVisor sandboxes</h2></div>
+  <p class="lead">
+    A normal kagent <code>Agent</code> is a Kubernetes Deployment:
+    always on, same isolation as any other pod. Fine for a cluster helper.
+  </p>
+  <p class="lead">
+    These agents talk to a firewall, a cloud bill, or a ticket system.
+    The model gets a filesystem, memory, and a network for the whole chat.
+    Substrate puts that session in a <strong>gVisor actor</strong>
+    (<code>SandboxAgent</code>) on WorkerPool <code>kagent-default</code>.
+  </p>
+  <ul class="clean">
+    <li><strong>Isolated sandbox.</strong> gVisor is the wall between the model session and the Viper/k3s host. Tools still call out through an MCP pod; secrets stay in Vault, not in the actor.</li>
+    <li><strong>Idle chats snapshot</strong> (zstd) and free the worker. Next message restores the same session.</li>
+    <li><strong>No always-on pod</strong> per conversation. Golden snapshot you can resume.</li>
+  </ul>
+  <div class="callout">
+    <div>
+      <strong>Tradeoff on this lab:</strong> nested gVisor on dockerized k3s.
+      Snapshots are in-cluster rustfs today (<code>gs://</code> is a URI prefix only), not GCS.
+      Do not bump kagent past <code>0.10.0-rc2</code> or Substrate past <code>0.0.9</code>.
+    </div>
+  </div>
+  <div class="callout danger">
+    <div>
+      <strong>kagent UI is LAN-only.</strong>
+      <code>{{ $d.ui.url }}</code> is not on this public Pages site.
+      {{ $d.ui.note }}
+    </div>
+  </div>
+</section>
+
+<section id="the-five">
+  <div class="section-head"><span class="section-num">02</span><h2>The five</h2></div>
+  <p class="lead">
+    All five are gVisor SandboxAgents. Cards with a photo use a real
+    Chromium chat shot. hello-substrate and fortigate have no live shot
+    in git — I am not inventing one.
+  </p>
+  {{ partial "agent-cards.html" (dict "Site" .Site "home" false) }}
+
+  {{ with $d.gallery }}
+  <figure class="shot">
+    <img src="{{ .image | relURL }}" alt="Live kagent Agents grid — five SandboxAgent cards" />
+    <figcaption>{{ .caption }}</figcaption>
+  </figure>
+  {{ end }}
+</section>
+
+{{ range $i, $a := $d.agents }}
+<section id="{{ $a.slug }}">
+  <div class="section-head">
+    <span class="section-num">{{ printf "%02d" (add $i 3) }}</span>
+    <h2>{{ $a.name }}</h2>
+  </div>
+  <p class="lead">{{ $a.job }} <strong>{{ $a.isolation }}</strong> · {{ $a.runtime }} · ns <code>{{ $a.namespace }}</code></p>
+
+  <div class="pills" style="margin-top:0;margin-bottom:1rem">
+    <span class="pill ok">{{ $a.isolation }}</span>
+    <span class="pill">{{ $a.runtime }}</span>
+    {{ if $a.vault }}<span class="pill">{{ $a.vault }}</span>{{ end }}
+  </div>
+
+  {{ if $a.facts }}
+  <div class="grid-2">
+    {{ range $a.facts }}
+    <div class="stat"><div class="k">{{ .key }}</div><div class="v">{{ .value }}</div></div>
+    {{ end }}
+  </div>
+  {{ end }}
+
+  {{ if $a.live }}
+  <h3>Live (2026-08-16)</h3>
+  <p class="lead">Confirmed through the sandbox A2A path. Not invented.</p>
+  <div class="grid-2">
+    {{ range $a.live }}
+    <div class="stat live"><div class="k">{{ .key }}</div><div class="v">{{ .value }}</div></div>
+    {{ end }}
+  </div>
+  {{ end }}
+
+  {{ with $a.image }}
+  <figure class="shot">
+    <img src="{{ . | relURL }}" alt="Live kagent chat for {{ $a.name }}" />
+    {{ with $a.image_caption }}<figcaption>{{ . }}</figcaption>{{ end }}
+  </figure>
+  {{ end }}
+
+  {{ with $a.gif }}
+  <figure class="shot">
+    <img src="{{ . | relURL }}" alt="Live kagent chat scroll for {{ $a.name }}" />
+    {{ with $a.gif_caption }}<figcaption>{{ . }}</figcaption>{{ end }}
+  </figure>
+  {{ end }}
+
+  {{ range $a.gaps }}
+  <div class="callout{{ if eq .kind "danger" }} danger{{ else if eq .kind "ok" }} ok{{ end }}">
+    <div>{{ .text | markdownify }}</div>
+  </div>
+  {{ end }}
+
+  {{ if $a.links }}
+  <p class="agent-links">
+    {{ range $a.links }}
+    <a href="{{ .url }}">{{ .label }} →</a>
+    {{ end }}
+  </p>
+  {{ end }}
+</section>
+{{ end }}
+
+<section id="pins">
+  <div class="section-head"><span class="section-num">08</span><h2>Pins (do not bump)</h2></div>
+  <p class="lead">
+    Official pairing. Substrate <code>0.0.12</code> drops
+    <code>valueFrom</code> and breaks rc2. Do not “upgrade to fix”
+    a Ready=False agent.
+  </p>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Piece</th><th>Pin</th></tr></thead>
+      <tbody>
+        {{ range $d.pins }}
+        <tr><td>{{ .name }}</td><td class="mono">{{ .value }}</td></tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+  <div class="callout ok">
+    <div>
+      <strong>Hard rule:</strong> never commit secrets, tokens, SA JSON,
+      or Vault values. Git holds path names and <code>ExternalSecret</code>
+      objects only.
+    </div>
+  </div>
+</section>

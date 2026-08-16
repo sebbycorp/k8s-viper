@@ -1,0 +1,20 @@
+{{ $agents := .Site.Data.agents.agents }}
+<div class="agent-grid">
+  {{ range $agents }}
+  <a class="agent-card{{ if and .image (not $.home) }} has-shot{{ end }}" href="{{ if $.home }}{{ with $.Site.GetPage "/agents" }}{{ .RelPermalink }}{{ end }}#{{ .slug }}{{ else }}#{{ .slug }}{{ end }}">
+    {{ if and .image (not $.home) }}
+    <div class="agent-card-shot">
+      <img src="{{ .image | relURL }}" alt="Live kagent chat for {{ .name }}" />
+    </div>
+    {{ end }}
+    <div class="agent-card-body">
+      <div class="agent-card-name">{{ .name }}</div>
+      <p class="agent-card-job">{{ .job }}</p>
+      <div class="pills">
+        <span class="pill ok">{{ .isolation }}</span>
+        {{ if .vault }}<span class="pill">{{ .vault }}</span>{{ end }}
+      </div>
+    </div>
+  </a>
+  {{ end }}
+</div>

@@ -54,6 +54,18 @@
   </div>
 </header>
 
+{{/* Agents showcase teaser — full page is /agents/ */}}
+<section id="agents-showcase">
+  <div class="section-head"><span class="section-num">✦</span><h2>SandboxAgents</h2></div>
+  <p class="lead">
+    Isolated sandboxes, not plain Agents. Five gVisor
+    <code>SandboxAgent</code>s on Viper — the page I send people is
+    <a href="{{ with .Site.GetPage "/agents" }}{{ .RelPermalink }}{{ end }}">/agents/</a>.
+    Handbook below is still the full lab map.
+  </p>
+  {{ partial "agent-cards.html" (dict "Site" .Site "home" true) }}
+</section>
+
 {{/* 01 Overview */}}
 <section id="overview">
   <div class="section-head"><span class="section-num">01</span><h2>Overview</h2></div>

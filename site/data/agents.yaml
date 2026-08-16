@@ -1,0 +1,218 @@
+# SandboxAgents on Viper — public showcase inventory.
+# Vault: path names only. Never put secret values, tokens, or SA JSON here.
+# Live numbers: only what was confirmed on 2026-08-16. Do not invent.
+
+pins:
+  - name: kagent OSS
+    value: 0.10.0-rc2
+  - name: Agent Substrate
+    value: "0.0.9"
+  - name: WorkerPool
+    value: kagent-default
+  - name: kagent UI
+    value: ":30500"
+  - name: model
+    value: gpt-5.5 via agentgateway :30100
+
+ui:
+  url: "http://172.16.10.135:30500/"
+  note: LAN-only. Not published on this GitHub Pages site.
+
+gallery:
+  image: agents/ui-agents-grid.png
+  caption: "Live kagent UI, 2026-08-16. Chromium capture from the gcp-sandbox-agent demo — five SandboxAgent cards. Not reconstructed."
+
+agents:
+  - name: hello-substrate
+    slug: hello-substrate
+    job: Kubernetes helper for this dockerized k3s lab.
+    isolation: gVisor SandboxAgent
+    namespace: kagent
+    runtime: Go Declarative
+    vault: ""
+    image: ""
+    gif: ""
+    image_caption: ""
+    gif_caption: ""
+    facts:
+      - key: Job
+        value: Cluster questions, manifests, troubleshooting
+      - key: Tools
+        value: kagent-tool-server (k8s_get_*)
+      - key: WorkerPool
+        value: kagent-default
+      - key: Git
+        value: platform/kagent-ai/hello-substrate.yaml
+    live: []
+    gaps:
+      - kind: warn
+        text: No live screenshot in this repo. I am not inventing or generating one.
+      - kind: warn
+        text: Nested gVisor on dockerized k3s can fail (runsc / seccomp). Worker CrashLoop is day-2 — do not bump pins to “fix” it.
+    links:
+      - label: Manifest
+        url: https://github.com/sebbycorp/k8s-viper/blob/main/platform/kagent-ai/hello-substrate.yaml
+      - label: Runbook
+        url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/kagent-substrate.md
+
+  - name: fortigate
+    slug: fortigate
+    job: Home FortiGate 80F assistant (fw-maniak-hq).
+    isolation: gVisor SandboxAgent
+    namespace: kagent
+    runtime: Go Declarative
+    vault: secret/platform/fortigate
+    image: ""
+    gif: ""
+    image_caption: ""
+    gif_caption: ""
+    facts:
+      - key: Box
+        value: "FortiGate 80F · fw-maniak-hq · 172.16.10.1"
+      - key: Tools
+        value: FortiOS REST wrappers (fg_*) via fortigate-mcp
+      - key: Vault
+        value: secret/platform/fortigate
+      - key: Git
+        value: platform/kagent-ai/fortigate-*.yaml
+    live: []
+    gaps:
+      - kind: warn
+        text: No live PNG in this repo. I am not inventing or generating one.
+      - kind: warn
+        text: Image must be imported on the k3s node (ctr images import) before the MCP pod starts.
+      - kind: danger
+        text: Never commit the REST token. Vault path name only. LAN-only — do not publish :30500 or the FortiGate API.
+    links:
+      - label: SandboxAgent
+        url: https://github.com/sebbycorp/k8s-viper/blob/main/platform/kagent-ai/fortigate-agent.yaml
+      - label: MCP + ExternalSecret
+        url: https://github.com/sebbycorp/k8s-viper/tree/main/platform/kagent-ai
+      - label: Image
+        url: https://github.com/sebbycorp/k8s-viper/tree/main/images/fortigate-mcp
+      - label: Runbook
+        url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/fortigate-agent.md
+
+  - name: aws-budget
+    slug: aws-budget
+    job: Executive AWS budget and capacity for us-east-2.
+    isolation: gVisor SandboxAgent
+    namespace: kagent
+    runtime: Go Declarative
+    vault: secret/platform/aws-budget
+    image: agents/aws-budget-chat.png
+    gif: ""
+    image_caption: "Live kagent UI, 2026-08-16. Isolated sandbox chat — $0.67 MTD us-east-2 spend and capacity. Chromium capture, not reconstructed."
+    gif_caption: ""
+    facts:
+      - key: Region
+        value: us-east-2
+      - key: Account
+        value: "616973157416"
+      - key: IAM user
+        value: aws-budget-agent
+      - key: Vault
+        value: secret/platform/aws-budget
+    live:
+      - key: MTD spend
+        value: "$0.67"
+      - key: Budget
+        value: 4.13% of $100
+      - key: EC2 / ASG / RDS / EBS
+        value: "0 / 0 / 0 / 0"
+    gaps:
+      - kind: warn
+        text: Cost Explorer and Budgets APIs live in us-east-1; tools still filter to us-east-2.
+      - kind: warn
+        text: No generic “run any aws cli” tool. No IAM create, no terminate, no budget-delete.
+    links:
+      - label: Demo repo
+        url: https://github.com/sebbycorp/kagent-agent-substrate-demos/tree/main/aws-sandbox-agent
+      - label: JOURNEY
+        url: https://github.com/sebbycorp/kagent-agent-substrate-demos/blob/main/aws-sandbox-agent/JOURNEY.md
+      - label: REPORT
+        url: https://github.com/sebbycorp/kagent-agent-substrate-demos/blob/main/aws-sandbox-agent/REPORT.md
+
+  - name: servicenow
+    slug: servicenow
+    job: Manager-facing IT tickets on a personal developer instance.
+    isolation: gVisor SandboxAgent
+    namespace: kagent
+    runtime: Go Declarative
+    vault: secret/platform/servicenow
+    image: agents/servicenow-chat.png
+    gif: agents/servicenow-live.gif
+    image_caption: "Live kagent UI, 2026-08-16. Open-ticket summary by priority, then VPN INC0000015 and DNS INC0000016. Chromium capture, not reconstructed."
+    gif_caption: "Live capture of that same chat scroll. Real kagent SPA on Viper — not a reconstructed reel."
+    facts:
+      - key: Host
+        value: https://dev203166.service-now.com
+      - key: Vault
+        value: secret/platform/servicenow
+    live:
+      - key: Active this page
+        value: "25 (13 P1 / 4 P2 / 5 P3 / 3 P5)"
+      - key: Unassigned P1
+        value: INC0007001 payroll
+      - key: VPN
+        value: INC0000015
+      - key: DNS leak
+        value: INC0000016
+    gaps:
+      - kind: warn
+        text: No generic shell. No incident create, close, or delete.
+      - kind: warn
+        text: Writes (sn_add_work_note, sn_assign_incident) exist but the agent must ask first.
+      - kind: danger
+        text: Never commit ServiceNow password or username values. Vault path name only.
+    links:
+      - label: Demo repo
+        url: https://github.com/sebbycorp/kagent-agent-substrate-demos/tree/main/service-now-sandbox-agent
+      - label: JOURNEY
+        url: https://github.com/sebbycorp/kagent-agent-substrate-demos/blob/main/service-now-sandbox-agent/JOURNEY.md
+      - label: REPORT
+        url: https://github.com/sebbycorp/kagent-agent-substrate-demos/blob/main/service-now-sandbox-agent/REPORT.md
+
+  - name: gcp-budget
+    slug: gcp-budget
+    job: Executive GCP budget and capacity for us-east1.
+    isolation: gVisor SandboxAgent
+    namespace: kagent
+    runtime: Go Declarative
+    vault: secret/platform/gcp-budget
+    image: agents/gcp-budget-chat.png
+    gif: ""
+    image_caption: "Live kagent UI, 2026-08-16. Billing/budgets/MTD unavailable; 0 VMs in us-east1. Chromium capture, not reconstructed."
+    gif_caption: ""
+    facts:
+      - key: Region
+        value: us-east1
+      - key: Org
+        value: maniak.io
+      - key: Project
+        value: viper-kagent
+      - key: Billing account
+        value: 011C38-867461-BE95B1
+      - key: SA
+        value: gcp-budget-agent@viper-kagent.iam.gserviceaccount.com
+      - key: Vault
+        value: secret/platform/gcp-budget
+    live:
+      - key: VMs us-east1
+        value: "0"
+      - key: CPUs
+        value: 0/200
+      - key: Instances
+        value: 0/24
+    gaps:
+      - kind: danger
+        text: "First live Q1: ImportError billing_budgets_v1. After rebuild, Cloud Billing returned Unauthenticated. Trail budget $1 was not returned. I am not inventing spend."
+      - kind: warn
+        text: Cloud Billing does not return month-to-date spend. Tools say unavailable. No generic “run any gcloud” tool.
+    links:
+      - label: Demo repo
+        url: https://github.com/sebbycorp/kagent-agent-substrate-demos/tree/main/gcp-sandbox-agent
+      - label: JOURNEY
+        url: https://github.com/sebbycorp/kagent-agent-substrate-demos/blob/main/gcp-sandbox-agent/JOURNEY.md
+      - label: REPORT
+        url: https://github.com/sebbycorp/kagent-agent-substrate-demos/blob/main/gcp-sandbox-agent/REPORT.md
