@@ -497,7 +497,7 @@ layout:
   - path: docs/
     role: Operator runbooks
   - path: site/
-    role: Hugo handbook (this site)
+    role: Hugo handbook + Agents showcase (`/agents/`)
   - path: .github/workflows/
     role: CI validate + Pages deploy
 
@@ -560,6 +560,8 @@ troubleshooting:
     check: "Safe: skips k3s if healthy; re-applies Argo + root app"
 
 docs:
+  - name: Agents showcase (this site)
+    url: https://sebbycorp.github.io/k8s-viper/agents/
   - name: Repository
     url: https://github.com/sebbycorp/k8s-viper
   - name: README

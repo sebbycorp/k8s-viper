@@ -11,15 +11,19 @@
   {{ $css := resources.Get "css/main.css" | minify | fingerprint }}
   <link rel="stylesheet" href="{{ $css.RelPermalink }}" integrity="{{ $css.Data.Integrity }}" />
 </head>
-<body>
+<body class="{{ if .IsHome }}page-home{{ else if eq .Section "agents" }}page-agents{{ end }}">
   <button type="button" class="toc-toggle" id="toc-toggle" aria-expanded="false">☰ Contents</button>
   <div class="shell">
     {{ partial "toc.html" . }}
     <main>
+      {{ partial "site-nav.html" . }}
       {{ block "main" . }}{{ end }}
       <footer class="site-footer">
-        <span>k8s-viper · Hugo handbook</span>
-        <a href="#top">↑ Back to top</a>
+        <span>k8s-viper · SandboxAgents + lab handbook</span>
+        <span class="footer-links">
+          {{ partial "site-nav.html" . }}
+          <a href="#top">↑ Back to top</a>
+        </span>
       </footer>
     </main>
   </div>

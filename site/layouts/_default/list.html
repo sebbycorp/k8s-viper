@@ -1,0 +1,10 @@
+{{ define "main" }}
+{{ if eq .Section "agents" }}
+{{ partial "agents-page.html" . }}
+{{ else }}
+<header class="hero" id="top">
+  <h2>{{ .Title }}</h2>
+</header>
+{{ .Content }}
+{{ end }}
+{{ end }}
