@@ -96,8 +96,13 @@ pod/container defaults). There is no values key for those. Desired matches
 live via JSON6902 in `platform/substrate-app/valkey-cluster-sts-defaults.yaml`.
 Do not Replace the StatefulSet and do not add `ignoreDifferences`.
 
-`grafana-mcp` and `observability-agent` are off (no Grafana in this lab).
-`kmcp` stays on.
+All default Helm Agents are off (`k8s-agent`, `kgateway-agent`, `istio-agent`,
+`promql-agent`, `observability-agent`, `argo-rollouts-agent`, `helm-agent`,
+`cilium-policy-agent`, `cilium-manager-agent`, `cilium-debug-agent`). Chart
+0.10.0-rc2 toggles are top-level `<name>.enabled` (not `agents.*`).
+`grafana-mcp` is off (no Grafana). `querydoc` stays on (tool Deployment, not
+an Agent). `kmcp` stays on. The only lab agent is `hello-substrate`
+(`platform-kagent-ai`).
 
 ## Chat
 
