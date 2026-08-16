@@ -9,7 +9,7 @@
 # Xvfb/x11vnc run as uid 1000. Chromium uses --no-sandbox in the image.
 #
 # ---------------------------------------------------------------------------
-# FOLLOW-UP (PR #8 is on main: kagent 0.10.0-rc2 + substrate 0.0.12):
+# FOLLOW-UP (PR #8 is on main: kagent 0.10.0-rc2 + substrate 0.0.9):
 # Wrap this desktop in an ActorTemplate / AgentHarness.
 #   Human (Chat UI + Desktop Viewer)
 #     → agentgateway

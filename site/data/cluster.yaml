@@ -18,7 +18,7 @@ overview:
   - concern: AI gateway
     choice: "one Gateway `agentgateway-proxy` :30100 → OpenAI (`/v1`) + DGX Spark (`/spark`) + desktop (`/desktop/`, `/desktop-api/`)"
   - concern: Agents
-    choice: "OSS kagent 0.10.0-rc2 + Agent Substrate 0.0.12 (`kagent` + `ate-system`); default model via the same gateway"
+    choice: "OSS kagent 0.10.0-rc2 + Agent Substrate 0.0.9 (`kagent` + `ate-system`); default model via the same gateway"
   - concern: LLM observability
     choice: "Langfuse + ClickHouse; OTEL path configured (Vault `secret/platform/langfuse-otel`)"
   - concern: Git source
@@ -263,20 +263,20 @@ platform:
     kind: core
     kindLabel: crds
     ns: ate-system
-    source: oci substrate-crds 0.0.12
+    source: oci substrate-crds 0.0.9
     notes: Agent Substrate CRDs
   - app: platform-substrate
     kind: ui
     kindLabel: ai
     ns: ate-system
     source: platform/substrate-app/
-    notes: "kustomize helmCharts 0.0.12 · JSON6902 STS defaults · Valkey ×6"
+    notes: "kustomize helmCharts 0.0.9 · JSON6902 STS defaults · Valkey ×6 (8.0)"
   - app: platform-substrate-rbac
     kind: core
     kindLabel: rbac
     ns: ate-system
     source: platform/substrate/
-    notes: "ate-api extra ClusterRole/Binding only"
+    notes: "ate-api extra ClusterRole/Binding hook (empty on 0.0.9)"
   - app: platform-kagent-crds
     kind: core
     kindLabel: crds
@@ -434,10 +434,10 @@ versions:
     pin: 0.10.0-rc2
     where: "OCI oci://ghcr.io/kagent-dev/kagent/helm/kagent"
   - name: Agent Substrate Helm / CRDs
-    pin: "0.0.12"
-    where: platform/substrate-app/kustomization.yaml (helmCharts 0.0.12)
+    pin: "0.0.9"
+    where: platform/substrate-app/kustomization.yaml (helmCharts 0.0.9)
   - name: Substrate worker image
-    pin: ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.12
+    pin: ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.9
     where: platform/kagent/values.yaml
   - name: desktop image
     pin: viper-desktop:dev
@@ -477,7 +477,7 @@ layout:
   - path: platform/langfuse/
     role: Langfuse Helm + ExternalSecret
   - path: platform/substrate-app/
-    role: Agent Substrate helmCharts + valkey STS JSON6902 (0.0.12)
+    role: Agent Substrate helmCharts + valkey STS JSON6902 (0.0.9)
   - path: platform/substrate/
     role: extra ate-api ClusterRole/Binding only
   - path: platform/kagent/
@@ -545,7 +545,7 @@ troubleshooting:
   - symptom: kagent UI unreachable
     check: "http://172.16.10.135:30500/; Docker published 30500; app platform-kagent-ai"
   - symptom: hello-substrate not Ready
-    check: "WorkerPool kagent-default; gVisor-on-dockerized-k3s — docs/kagent-substrate.md"
+    check: "ActorTemplate CRD must be 0.0.9 (valueFrom); WorkerPool kagent-default; gVisor-on-dockerized-k3s — docs/kagent-substrate.md"
   - symptom: Re-run bootstrap
     check: "Safe: skips k3s if healthy; re-applies Argo + root app"
 

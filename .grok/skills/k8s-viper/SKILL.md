@@ -58,8 +58,8 @@ Canonical overview: `README.md`. Design: `docs/superpowers/specs/2026-08-11-k3s-
 | `platform-desktop` | computer-use desktop Deployment (noVNC + API) | `desktop` |
 | `platform-langfuse-secrets` | Langfuse ExternalSecret | `langfuse` |
 | `platform-langfuse` | Langfuse + ClickHouse Helm | `langfuse` |
-| `platform-substrate-crds` | Agent Substrate CRDs Helm 0.0.12 | `ate-system` |
-| `platform-substrate` | kustomize helmCharts + STS defaults (`platform/substrate-app`) 0.0.12 | `ate-system` |
+| `platform-substrate-crds` | Agent Substrate CRDs Helm 0.0.9 | `ate-system` |
+| `platform-substrate` | kustomize helmCharts + STS defaults (`platform/substrate-app`) 0.0.9 | `ate-system` |
 | `platform-substrate-rbac` | extra ate-api ClusterRole/Binding only | `ate-system` |
 | `platform-kagent-crds` | kagent OSS CRDs Helm 0.10.0-rc2 | `kagent` |
 | `platform-kagent` | kagent OSS Helm 0.10.0-rc2 | `kagent` |

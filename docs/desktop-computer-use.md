@@ -39,8 +39,9 @@ agentgateway-proxy :30100
 
 ## What is next (follow-up — do not do this yet)
 
-**PR #8** (kagent **0.10.0-rc2** + substrate **0.0.12**) is on `main`. Next
-wrap this desktop in an **ActorTemplate / AgentHarness**.
+**PR #8** landed kagent **0.10.0-rc2** on `main`. Substrate is pinned to
+**0.0.9** (official rc2 pairing). Next wrap this desktop in an
+**ActorTemplate / AgentHarness**.
 
 - Substrate on Viper = **gVisor** (this box).
 - **microVM later.** Viper is dockerized k3s with **no `/dev/kvm`**. Do not

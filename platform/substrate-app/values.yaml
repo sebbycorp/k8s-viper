@@ -1,13 +1,15 @@
-# Agent Substrate Helm 0.0.12 — lab overlay for dockerized k3s.
+# Agent Substrate Helm 0.0.9 — official pairing with kagent 0.10.0-rc2.
 # Chart defaults are kept unless noted. Do not invent keys.
 #
-# Chart 0.0.12 has no values key for extra ate-api-server ClusterRole rules.
-# storageclasses + csidriverconfigs are granted by platform-substrate-rbac
-# (platform/substrate/ate-api-server-extra-rbac.yaml only). Do not put
-# SandboxConfig here or in that kustomize — this overlay already renders
-# SandboxConfig/gvisor-default from the chart.
+# Chart 0.0.9 has no values key for extra ate-api-server ClusterRole rules.
+# v0.0.9 ateapi lists pods + ate.dev {actortemplates,workerpools,sandboxconfigs}
+# only (chart ClusterRole already grants those). It does not list
+# storageclasses or csidriverconfigs (those informers are 0.0.12+).
+# platform-substrate-rbac stays as the GitOps hook; it grants no extra verbs
+# on 0.0.9. Do not put SandboxConfig here or in that kustomize — this overlay
+# already renders SandboxConfig/gvisor-default from the chart.
 #
-# Chart 0.0.12 also has no values key for StatefulSet API defaults on
+# Chart 0.0.9 also has no values key for StatefulSet API defaults on
 # valkey-cluster. Those are added by valkey-cluster-sts-defaults.yaml
 # (JSON6902) so desired matches live. Do not ignoreDifferences.
 #
@@ -16,7 +18,8 @@
 # and do not disable auth.jwt.bootstrap.
 #
 # Valkey stays at 6 replicas. The cluster-init Job hardcodes pods 0-5, so
-# setting valkey.replicas below 6 hangs initialization.
+# setting valkey.replicas below 6 hangs initialization. Chart default image
+# is valkey/valkey:8.0 (0.0.12 was 9.1 — treat the downgrade as a wipe).
 
 valkey:
   enabled: true

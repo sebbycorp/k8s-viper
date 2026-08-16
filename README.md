@@ -15,7 +15,7 @@ Sebastian Maniak's lab. Single-node **dockerized k3s** on **Viper**, managed wit
 | Ingress | Node IP via Traefik (k3s default) — [why not kgateway](docs/why-traefik.md) |
 | Lab UIs | NodePorts on `172.16.10.135`: Headlamp `:30080`, Argo `:30443`, Vault `:30200`, agentgateway `:30100`, Langfuse `:30300`, kagent `:30500` |
 | AI gateway | **One** Gateway (`agentgateway-proxy` :30100) → OpenAI (`/v1`) + DGX Spark (`/spark`) + desktop (`/desktop/`) |
-| Agents | OSS **kagent 0.10.0-rc2** + **Agent Substrate 0.0.12** (`kagent` + `ate-system`); default model via the same gateway |
+| Agents | OSS **kagent 0.10.0-rc2** + **Agent Substrate 0.0.9** (`kagent` + `ate-system`); default model via the same gateway |
 | LLM observability | Langfuse + ClickHouse; OTEL path configured (keys in Vault `secret/platform/langfuse-otel`) |
 | SSH | LAN: `smaniak@172.16.10.135`. Remote: ngrok TCP `ssh smaniak@2.tcp.ngrok.io -p <port>` (port changes when ngrok restarts). ngrok is SSH to the box, not k8s UIs. |
 
@@ -78,7 +78,7 @@ platform/agentgateway/        # agentgateway control plane values
 platform/agentgateway-ai/     # one Gateway, OpenAI + Spark + desktop routes, OTEL collector
 platform/desktop/             # computer-use desktop Deployment (noVNC + API)
 platform/langfuse/            # Langfuse Helm + ExternalSecret
-platform/substrate-app/       # Agent Substrate helmCharts 0.0.12 + valkey STS defaults patch
+platform/substrate-app/       # Agent Substrate helmCharts 0.0.9 + valkey STS defaults patch
 platform/substrate/           # extra ate-api-server ClusterRole/Binding only (platform-substrate-rbac)
 platform/kagent/              # kagent OSS Helm values (0.10.0-rc2)
 platform/kagent-ai/           # dummy OpenAI Secret + hello SandboxAgent + UI NodePort
@@ -214,7 +214,7 @@ Reason: the chart emits `hostUsers: true`; k3s 1.32 drops the API default, so Ar
 
 ## Agent Substrate GitOps
 
-`platform-substrate` is a **git path** `platform/substrate-app` using kustomize `helmCharts` (chart **0.0.12**) plus a JSON6902 patch that **adds** Kubernetes API-defaulted fields on `StatefulSet/valkey-cluster` so desired matches live. Chart 0.0.12 has no values key for those fields. Do **not** add `ignoreDifferences`.
+`platform-substrate` is a **git path** `platform/substrate-app` using kustomize `helmCharts` (chart **0.0.9**, official kagent 0.10.0-rc2 pairing) plus a JSON6902 patch that **adds** Kubernetes API-defaulted fields on `StatefulSet/valkey-cluster` so desired matches live. Chart 0.0.9 has no values key for those fields. Do **not** add `ignoreDifferences`. Valkey image is **8.0**; a cluster that already ran 0.0.12 (Valkey 9.1) must treat the downgrade as a wipe.
 
 `SandboxConfig/gvisor-default` is owned only by this app. Extra ate-api RBAC stays in `platform/substrate` (`platform-substrate-rbac`).
 
@@ -283,8 +283,8 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 | Gateway API CRDs | `v1.6.0` |
 | whoami image | `traefik/whoami:v1.10.2` |
 | kagent OSS Helm / CRDs | `0.10.0-rc2` (OCI `oci://ghcr.io/kagent-dev/kagent/helm/kagent`) |
-| Agent Substrate Helm / CRDs | `0.0.12` (helmCharts in `platform/substrate-app`; CRDs still OCI) |
-| Substrate worker image | `ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.12` |
+| Agent Substrate Helm / CRDs | `0.0.9` (helmCharts in `platform/substrate-app`; CRDs still OCI) |
+| Substrate worker image | `ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.9` |
 | desktop image | `viper-desktop:dev` (intended publish `ghcr.io/sebbycorp/viper-desktop:dev`) |
 
 ## Out of scope (v1)
@@ -319,6 +319,6 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 | `svclb-agentgateway-proxy` Pending | Cosmetic — Traefik owns `:80`/`:443`. Use NodePort **30100** |
 | Langfuse ImagePullBackOff | Cluster egress/DNS to Docker Hub |
 | kagent UI unreachable | `http://172.16.10.135:30500/`; Docker must publish **30500**; app `platform-kagent-ai` |
-| hello-substrate not Ready | WorkerPool `kagent-default`; gVisor-on-dockerized-k3s — [docs/kagent-substrate.md](docs/kagent-substrate.md) |
-| ate-api-server CrashLoop / not Ready | Missing cluster list on `storageclasses` / `csidriverconfigs` — app `platform-substrate-rbac` |
+| hello-substrate not Ready | ActorTemplate CRD must be 0.0.9 (`valueFrom`); WorkerPool `kagent-default`; gVisor-on-dockerized-k3s — [docs/kagent-substrate.md](docs/kagent-substrate.md) |
+| ate-api-server CrashLoop / not Ready | Chart 0.0.9 ClusterRole already covers ateapi's lists; extra RBAC is an empty hook. Check Valkey 8.0 wipe + JWT bootstrap |
 | Re-run bootstrap | Safe: skips k3s if healthy; re-applies Argo + root app |
