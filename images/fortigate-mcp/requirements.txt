@@ -1,0 +1,4 @@
+# Pinned for the lab image. FastMCP 2.x Streamable HTTP matches
+# kagent 0.10.0-rc2 RemoteMCPServer protocol STREAMABLE_HTTP.
+fastmcp==2.14.7
+httpx==0.28.1

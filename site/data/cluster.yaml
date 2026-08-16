@@ -294,7 +294,7 @@ platform:
     kindLabel: ai
     ns: kagent
     source: platform/kagent-ai/
-    notes: "dummy kagent-openai · hello-substrate · UI :30500"
+    notes: "dummy kagent-openai · hello-substrate · fortigate · UI :30500"
 
 namespaces:
   - ns: argocd
@@ -314,7 +314,7 @@ namespaces:
   - ns: ate-system
     purpose: Agent Substrate control plane (ate-api, atelet, Valkey, RustFS)
   - ns: kagent
-    purpose: OSS kagent controller, UI, WorkerPool, hello-substrate
+    purpose: OSS kagent controller, UI, WorkerPool, hello-substrate, fortigate
   - ns: apps
     purpose: Demo / user workloads (whoami)
   - ns: kube-system
@@ -375,6 +375,9 @@ vault_paths:
   - path: secret/platform/langfuse-otel
     fields: public_key, secret_key, endpoint
     used_by: OTEL collector → Langfuse (configured; keys in Vault)
+  - path: secret/platform/fortigate
+    fields: token, host
+    used_by: FortiOS MCP ExternalSecret fortigate-mcp (never commit token)
 
 bootstrap_env:
   - name: REPO_URL
@@ -442,6 +445,9 @@ versions:
   - name: desktop image
     pin: viper-desktop:dev
     where: "images/desktop-computer-use/ (intended ghcr.io/sebbycorp/viper-desktop:dev)"
+  - name: FortiOS MCP image
+    pin: fortigate-mcp:dev
+    where: "images/fortigate-mcp/ (intended ghcr.io/sebbycorp/fortigate-mcp:dev)"
 
 layout:
   - path: scripts/bootstrap.sh
@@ -483,7 +489,9 @@ layout:
   - path: platform/kagent/
     role: kagent OSS Helm values (0.10.0-rc2)
   - path: platform/kagent-ai/
-    role: dummy OpenAI Secret + hello SandboxAgent + UI NodePort
+    role: dummy OpenAI Secret + hello + fortigate SandboxAgents + UI NodePort
+  - path: images/fortigate-mcp/
+    role: fortigate-mcp:dev image (build on Viper, ctr import)
   - path: apps/
     role: User workloads
   - path: docs/
@@ -534,6 +542,8 @@ troubleshooting:
     check: Expected — use /v1, /spark, /desktop/, or /desktop-api/health
   - symptom: desktop ImagePullBackOff
     check: "Import viper-desktop:dev — docs/desktop-computer-use.md"
+  - symptom: fortigate-mcp ImagePullBackOff
+    check: "Import fortigate-mcp:dev — docs/fortigate-agent.md"
   - symptom: agentgateway OpenAI 401/404 model
     check: Vault openai key; use gpt-5.5 or gpt-5-mini
   - symptom: Spark 502 / no route
@@ -564,6 +574,8 @@ docs:
     url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/agentgateway-langfuse.md
   - name: kagent + Agent Substrate
     url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/kagent-substrate.md
+  - name: FortiGate agent
+    url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/fortigate-agent.md
   - name: Computer-use desktop
     url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/desktop-computer-use.md
   - name: Why Traefik (not kgateway)

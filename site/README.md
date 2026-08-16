@@ -38,5 +38,6 @@ Canonical markdown runbooks live under `../docs/` (not only this site):
 - `vault-eso-setup.md` — Vault + secret inventory
 - `agentgateway-langfuse.md` — AI gateway + Langfuse
 - `kagent-substrate.md` — OSS kagent + Agent Substrate
+- `fortigate-agent.md` — home FortiGate SandboxAgent + FortiOS MCP
 - `why-traefik.md` — Traefik vs kgateway
 - `headlamp.md` — dashboard tokens
