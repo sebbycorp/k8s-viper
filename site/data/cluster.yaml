@@ -294,7 +294,7 @@ platform:
     kindLabel: ai
     ns: kagent
     source: platform/kagent-ai/
-    notes: "dummy kagent-openai · hello-substrate · fortigate · UI :30500"
+    notes: "dummy kagent-openai · hello-substrate · fortigate · f5-bigip · UI :30500"
 
 namespaces:
   - ns: argocd
@@ -314,7 +314,7 @@ namespaces:
   - ns: ate-system
     purpose: Agent Substrate control plane (ate-api, atelet, Valkey, RustFS)
   - ns: kagent
-    purpose: OSS kagent controller, UI, WorkerPool, hello-substrate, fortigate
+    purpose: OSS kagent controller, UI, WorkerPool, hello-substrate, fortigate, f5-bigip
   - ns: apps
     purpose: Demo / user workloads (whoami)
   - ns: kube-system
@@ -378,6 +378,9 @@ vault_paths:
   - path: secret/platform/fortigate
     fields: token, host
     used_by: FortiOS MCP ExternalSecret fortigate-mcp (never commit token)
+  - path: secret/platform/f5-bigip
+    fields: host, username, password
+    used_by: F5 iControl MCP ExternalSecret f5-bigip-mcp (never commit password)
 
 bootstrap_env:
   - name: REPO_URL
