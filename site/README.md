@@ -39,7 +39,7 @@ Edit `data/cluster.yaml` for handbook inventory, `data/agents.yaml`
 for the SandboxAgent showcase, then rebuild.
 
 The Agents page is the public send-link:
-[https://sebbycorp.github.io/k8s-viper/agents/](https://sebbycorp.github.io/k8s-viper/agents/).
+[https://viper.maniak.io/agents/](https://viper.maniak.io/agents/).
 kagent UI `:30500` stays LAN-only.
 
 Shots under `static/agents/` are live Chromium captures from
