@@ -1,0 +1,480 @@
+{{ define "main" }}
+{{ $c := .Site.Data.cluster }}
+{{ $placeholder := "<node-ip>" }}
+
+<header class="hero" id="top">
+  <div class="eyebrow">Single-node GitOps lab</div>
+  <h2>{{ .Title }}</h2>
+  <p class="lede">
+    Sebastian Maniak's lab: single-node <strong>dockerized k3s</strong> on
+    Viper, managed with <strong>Argo CD</strong>. Everything after bootstrap
+    lives in git — this page is the full map of the lab.
+  </p>
+  <div class="pills">
+    <span class="pill ok">k3s v1.32</span>
+    <span class="pill ok">Argo CD</span>
+    <span class="pill">Vault OSS</span>
+    <span class="pill">External Secrets</span>
+    <span class="pill">Headlamp</span>
+    <span class="pill">Traefik</span>
+    <span class="pill ok">agentgateway</span>
+    <span class="pill">Langfuse</span>
+    <span class="pill ok">Hugo</span>
+  </div>
+
+  <div class="quick-grid" id="quick-grid"
+       data-placeholder="{{ $placeholder }}"
+       data-default-ip="{{ .Site.Params.defaultNodeIP }}">
+    {{ range $c.quick_cards }}
+    <div class="quick-card {{ .class }}"
+         data-scheme="{{ .scheme }}"
+         data-port="{{ .port }}"
+         data-name="{{ .name }}">
+      <div class="qc-icon">{{ .icon }}</div>
+      <div class="qc-name">{{ .name }}</div>
+      <div class="qc-url" data-url></div>
+      <span class="qc-port">:{{ .port }}</span>
+    </div>
+    {{ end }}
+  </div>
+
+  <div class="controls">
+    <label>
+      Node IP
+      <input id="node-ip" type="text" spellcheck="false"
+             placeholder="e.g. {{ .Site.Params.defaultNodeIP }}"
+             autocomplete="off" />
+    </label>
+    <button type="button" class="btn" id="save-ip">Save</button>
+    <button type="button" class="btn ghost" id="reset-ip">Reset</button>
+    <p class="hint">
+      Rewrites UI links below. Stored only in this browser.<br />
+      <code>docker exec k3s-viper kubectl get nodes -o wide</code>
+    </p>
+  </div>
+</header>
+
+{{/* Agents showcase teaser — full page is /agents/ */}}
+<section id="agents-showcase">
+  <div class="section-head"><span class="section-num">✦</span><h2>SandboxAgents</h2></div>
+  <p class="lead">
+    Isolated sandboxes, not plain Agents. Five gVisor
+    <code>SandboxAgent</code>s on Viper — the page I send people is
+    <a href="{{ with .Site.GetPage "/agents" }}{{ .RelPermalink }}{{ end }}">/agents/</a>.
+    Handbook below is still the full lab map.
+  </p>
+  {{ partial "agent-cards.html" (dict "Site" .Site "home" true) }}
+</section>
+
+{{/* 01 Overview */}}
+<section id="overview">
+  <div class="section-head"><span class="section-num">01</span><h2>Overview</h2></div>
+  <p class="lead">
+    <strong>k8s-viper</strong> is a lab-grade single-node Kubernetes box.
+    Bootstrap once; everything after that is git → Argo CD.
+  </p>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Concern</th><th>Choice</th></tr></thead>
+      <tbody>
+        {{ range $c.overview }}
+        <tr><td>{{ .concern }}</td><td>{{ .choice | markdownify }}</td></tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{{/* 02 Architecture */}}
+<section id="architecture">
+  <div class="section-head"><span class="section-num">02</span><h2>Architecture</h2></div>
+  <p class="lead">Imperative install only for k3s + Argo + root app. Platform services are GitOps.</p>
+  <div class="arch-box">
+    <pre><code>bootstrap.sh  →  dockerized k3s (k3s-viper) + Argo CD + root Application
+                      ↓
+              argocd/apps/*  (GitOps, auto-sync)
+                      ↓
+   ingress | vault | ESO | headlamp | argocd-access
+   gateway-api | agentgateway | langfuse
+   substrate | kagent | kagent-ai | desktop
+                      ↓
+   Traefik :80/:443  +  NodePorts 30080 / 30443 / 30200 / 30100 / 30300 / 30500
+                      ↓
+   agentgateway-proxy :30100
+        ├─ /v1 · /openai  → OpenAI (Vault)     gpt-5.5 / gpt-5-mini
+        ├─ /spark         → Spark vLLM :8000   Qwen/Qwen3.6-35B-A3B-FP8
+        ├─ /desktop/      → noVNC desktop viewer
+        └─ /desktop-api/  → computer-use HTTP API
+                      ↓
+   kagent UI :30500  → default model gpt-5.5 via gateway /v1
+   Agent Substrate (ate-system) → gVisor workers (kagent-default)
+                      ↓
+   OTEL collector → Langfuse (configured)</code></pre>
+  </div>
+  <div class="callout ok">
+    <div>
+      <strong>Hard rule:</strong> never commit secrets. Values live in Vault; git holds
+      <code>ExternalSecret</code> paths only. Prefer PR → validate → merge over
+      <code>kubectl apply</code> for platform desired state.
+    </div>
+  </div>
+</section>
+
+{{/* 03 Quick facts */}}
+<section id="quick-facts">
+  <div class="section-head"><span class="section-num">03</span><h2>Quick facts</h2></div>
+  <p class="lead">Typical lab node values. Set your InternalIP above if different.</p>
+  <div class="grid-2">
+    {{ range $c.facts }}
+    <div class="stat"><div class="k">{{ .key }}</div><div class="v">{{ .value }}</div></div>
+    {{ end }}
+  </div>
+</section>
+
+{{/* 04 UI access */}}
+<section id="ui-access">
+  <div class="section-head"><span class="section-num">04</span><h2>UI access</h2></div>
+  <p class="lead">
+    Fixed NodePorts for LAN access without port-forward.
+    Keep these private — no public exposure without TLS and real identity.
+  </p>
+  <div class="card table-wrap">
+    <table>
+      <thead>
+        <tr><th>UI</th><th>Type</th><th>URL</th><th>Auth</th><th>Git source</th></tr>
+      </thead>
+      <tbody id="ui-rows">
+        {{ range $c.uis }}
+        <tr data-ui
+            data-scheme="{{ .scheme }}"
+            {{ with .path }}data-path="{{ . }}"{{ end }}
+            {{ with .host }}data-host="{{ . }}"{{ end }}>
+          <td><strong>{{ .name }}</strong></td>
+          <td><span class="badge {{ .type }}">{{ .typeLabel }}</span></td>
+          <td class="url" data-url-cell></td>
+          <td>{{ .auth }}</td>
+          <td class="mono">{{ .git }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+
+  <h3 id="auth-commands">Auth commands</h3>
+  <pre><code># Talk to the cluster (kubectl is not on the host PATH)
+docker exec k3s-viper kubectl get nodes -o wide
+
+# Argo CD admin password (user: admin)
+docker exec k3s-viper kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath='{.data.password}' | base64 -d; echo
+
+# Headlamp SA token (paste into login form)
+docker exec k3s-viper kubectl -n headlamp create token headlamp --duration=12h</code></pre>
+  <p class="lead" style="margin-top:0.5rem">
+    Argo UI uses a self-signed cert — accept the browser warning.
+    Vault UI needs init + unseal first.
+  </p>
+</section>
+
+{{/* 05 Platform apps */}}
+<section id="platform-apps">
+  <div class="section-head"><span class="section-num">05</span><h2>Platform apps</h2></div>
+  <p class="lead">Argo CD Applications. Watch with <code>docker exec k3s-viper kubectl -n argocd get applications</code>.</p>
+  <div class="card table-wrap">
+    <table>
+      <thead>
+        <tr><th>Application</th><th>Kind</th><th>Namespace</th><th>Source</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        {{ range $c.platform }}
+        <tr>
+          <td class="mono"><strong>{{ .app }}</strong></td>
+          <td><span class="badge {{ .kind }}">{{ .kindLabel }}</span></td>
+          <td class="mono">{{ .ns }}</td>
+          <td class="mono">{{ .source }}</td>
+          <td>{{ .notes }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{{/* 06 Namespaces */}}
+<section id="namespaces">
+  <div class="section-head"><span class="section-num">06</span><h2>Namespaces</h2></div>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Namespace</th><th>Purpose</th></tr></thead>
+      <tbody>
+        {{ range $c.namespaces }}
+        <tr><td class="mono">{{ .ns }}</td><td>{{ .purpose }}</td></tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{{/* 07 Ingress */}}
+<section id="ingress">
+  <div class="section-head"><span class="section-num">07</span><h2>Ingress hosts</h2></div>
+  <p class="lead">Map hosts to the node IP in <code>/etc/hosts</code>, then hit Traefik on :80.</p>
+  <pre><code>172.16.10.135  whoami.viper.local headlamp.viper.local langfuse.viper.local</code></pre>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Host</th><th>Target</th><th>Namespace</th><th>Class</th></tr></thead>
+      <tbody>
+        {{ range $c.ingress }}
+        <tr>
+          <td class="mono">{{ .host }}</td>
+          <td>{{ .target }}</td>
+          <td class="mono">{{ .ns }}</td>
+          <td class="mono">{{ .class }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+  <pre><code>curl -H 'Host: whoami.viper.local' http://172.16.10.135/</code></pre>
+  <div class="callout ok">
+    <div>
+      <strong>Why Traefik, not kgateway?</strong>
+      k3s ships Traefik; v1 only needs simple host Ingress on the node IP.
+      kgateway / Gateway API is deferred as a later platform choice —
+      <a href="https://github.com/sebbycorp/k8s-viper/blob/main/docs/why-traefik.md">docs/why-traefik.md</a>.
+    </div>
+  </div>
+</section>
+
+{{/* 08 Network */}}
+<section id="network">
+  <div class="section-head"><span class="section-num">08</span><h2>Network &amp; ports</h2></div>
+
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Port</th><th>Service</th><th>How</th></tr></thead>
+      <tbody>
+        {{ range $c.ports }}
+        <tr>
+          <td class="mono">{{ .port }}</td>
+          <td>{{ .service }}</td>
+          <td>{{ .how | markdownify }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{{/* 09 AI stack */}}
+<section id="ai-stack">
+  <div class="section-head"><span class="section-num">09</span><h2>AI stack</h2></div>
+  <p class="lead">
+    <strong>agentgateway</strong> fronts OpenAI (<code>/v1</code>, <code>/openai</code>)
+    with credentials from Vault, and DGX Spark Qwen (<code>/spark</code>) at
+    <code>172.16.10.173:8000</code> with no auth.
+    Models: <code>gpt-5.5</code>, <code>gpt-5-mini</code>,
+    <code>Qwen/Qwen3.6-35B-A3B-FP8</code>.
+    <strong>Langfuse</strong> (+ ClickHouse) receives OTEL traces.
+    Full runbook:
+    <a href="{{ .Site.Params.github }}/blob/main/docs/agentgateway-langfuse.md">docs/agentgateway-langfuse.md</a>.
+  </p>
+  <pre><code>export GW=http://172.16.10.135:30100
+
+curl -sS "$GW/v1/chat/completions" -H 'content-type: application/json' \
+  -d '{"model":"gpt-5.5","messages":[{"role":"user","content":"hi"}],"max_completion_tokens":64}'
+
+# small model
+curl -sS "$GW/v1/chat/completions" -H 'content-type: application/json' \
+  -d '{"model":"gpt-5-mini","messages":[{"role":"user","content":"hi"}],"max_completion_tokens":64}'
+
+# DGX Spark (vLLM)
+curl -sS "$GW/spark/v1/chat/completions" -H 'content-type: application/json' \
+  -d '{"model":"Qwen/Qwen3.6-35B-A3B-FP8","messages":[{"role":"user","content":"hi"}],"max_tokens":64}'</code></pre>
+  <div class="callout ok">
+    <div>
+      <strong>No client OpenAI key</strong> — gateway injects
+      <code>secret/platform/openai</code> from Vault via ExternalSecret.
+      Prefer LAN IP <code>172.16.10.135</code> for devices on the subnet.
+    </div>
+  </div>
+</section>
+
+{{/* 10 Bootstrap */}}
+<section id="bootstrap">
+  <div class="section-head"><span class="section-num">10</span><h2>Bootstrap</h2></div>
+  <p class="lead">Run on the target Linux node with outbound HTTPS.</p>
+  <pre><code>git clone https://github.com/sebbycorp/k8s-viper.git
+cd k8s-viper
+sudo ./scripts/bootstrap.sh</code></pre>
+  <h3>Optional environment</h3>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Variable</th><th>Default</th><th>Meaning</th></tr></thead>
+      <tbody>
+        {{ range $c.bootstrap_env }}
+        <tr>
+          <td class="mono">{{ .name }}</td>
+          <td>{{ .default | markdownify }}</td>
+          <td>{{ .meaning | markdownify }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+  <pre><code>sudo REPO_URL=https://github.com/YOU/k8s-viper.git \
+     REPO_REVISION=main \
+     ARGOCD_VERSION=v3.5.0 \
+     ./scripts/bootstrap.sh
+
+# Existing cluster:
+sudo INSTALL_K3S_SKIP=1 ./scripts/bootstrap.sh</code></pre>
+</section>
+
+{{/* 11 Day-2 */}}
+<section id="day2">
+  <div class="section-head"><span class="section-num">11</span><h2>Day-2 GitOps</h2></div>
+  <ol class="clean">
+    <li>Edit manifests or Helm values on a branch.</li>
+    <li>Open a PR — CI runs <code>scripts/validate.sh</code> (no cluster credentials).</li>
+    <li>Merge to <code>main</code>.</li>
+    <li>Argo CD auto-syncs (prune + self-heal on platform apps).</li>
+  </ol>
+  <pre><code>./scripts/validate.sh
+docker exec k3s-viper kubectl -n argocd get applications
+
+# Build this handbook locally
+cd site && hugo --minify</code></pre>
+</section>
+
+{{/* 12 Secrets */}}
+<section id="secrets">
+  <div class="section-head"><span class="section-num">12</span><h2>Secrets (Vault + ESO)</h2></div>
+  <p class="lead">
+    After Argo syncs Vault and External Secrets, init and unseal once, then wire
+    Kubernetes auth for ESO.
+    Full runbook:
+    <a href="{{ .Site.Params.github }}/blob/main/docs/vault-eso-setup.md">docs/vault-eso-setup.md</a>.
+  </p>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Vault path</th><th>Fields</th><th>Used by</th></tr></thead>
+      <tbody>
+        {{ range $c.vault_paths }}
+        <tr>
+          <td class="mono">{{ .path }}</td>
+          <td>{{ .fields }}</td>
+          <td>{{ .used_by }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+  <pre><code># Unseal (lab helper)
+~/.config/k8s-viper/vault-unseal.sh
+
+# UI after unseal → http://172.16.10.135:30200/</code></pre>
+  <div class="callout danger">
+    <div>
+      <strong>Never commit</strong> unseal keys, root tokens, or raw secret values.
+      Example store only:
+      <code>platform/external-secrets/cluster-secret-store-vault.example.yaml</code>.
+    </div>
+  </div>
+</section>
+
+{{/* 13 Versions */}}
+<section id="versions">
+  <div class="section-head"><span class="section-num">13</span><h2>Versions</h2></div>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Component</th><th>Pin</th><th>Where</th></tr></thead>
+      <tbody>
+        {{ range $c.versions }}
+        <tr>
+          <td>{{ .name }}</td>
+          <td class="mono">{{ .pin }}</td>
+          <td class="mono">{{ .where }}</td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{{/* 14 Repo layout */}}
+<section id="repo-layout">
+  <div class="section-head"><span class="section-num">14</span><h2>Repo layout</h2></div>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Path</th><th>Role</th></tr></thead>
+      <tbody>
+        {{ range $c.layout }}
+        <tr><td class="mono">{{ .path }}</td><td>{{ .role }}</td></tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{{/* 15 Security */}}
+<section id="security">
+  <div class="section-head"><span class="section-num">15</span><h2>Security notes</h2></div>
+  <ul class="clean">
+    <li>v1 lab assumes <strong>private LAN</strong> access to NodePorts and Traefik.</li>
+    <li>Headlamp binds <code>cluster-admin</code> for full lab visibility — tighten for multi-user.</li>
+    <li>Leave <code>config.unsafeUseServiceAccountToken</code> off unless behind a real auth proxy.</li>
+    <li>Argo CD serves a self-signed TLS cert on the NodePort.</li>
+    <li>Vault <code>tlsDisable: true</code> in chart values — fine for lab, not production.</li>
+    <li>No OIDC / SSO in v1.</li>
+  </ul>
+</section>
+
+{{/* 16 Out of scope */}}
+<section id="out-of-scope">
+  <div class="section-head"><span class="section-num">16</span><h2>Out of scope (v1)</h2></div>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Deferred</th><th>Why later</th></tr></thead>
+      <tbody>
+        {{ range $c.out_of_scope }}
+        <tr><td>{{ .item }}</td><td>{{ .why }}</td></tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{{/* 17 Troubleshooting */}}
+<section id="troubleshooting">
+  <div class="section-head"><span class="section-num">17</span><h2>Troubleshooting</h2></div>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Symptom</th><th>Check</th></tr></thead>
+      <tbody>
+        {{ range $c.troubleshooting }}
+        <tr><td>{{ .symptom }}</td><td>{{ .check }}</td></tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{{/* 18 Docs */}}
+<section id="docs">
+  <div class="section-head"><span class="section-num">18</span><h2>Docs &amp; links</h2></div>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Resource</th><th>Link</th></tr></thead>
+      <tbody>
+        {{ range $c.docs }}
+        <tr>
+          <td>{{ .name }}</td>
+          <td><a href="{{ .url }}">{{ .url | strings.TrimPrefix "https://" }}</a></td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+{{ end }}
