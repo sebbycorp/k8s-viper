@@ -9,11 +9,6 @@
     <a href="{{ with .Site.GetPage "/handbook" }}{{ .RelPermalink }}{{ end }}">handbook</a> is still
     the full map — this page is the one I send people.
   </p>
-  <div class="pills">
-    {{ range $d.pins }}
-    <span class="pill ok">{{ .name }} {{ .value }}</span>
-    {{ end }}
-  </div>
 </header>
 
 <section id="why-sandboxes">

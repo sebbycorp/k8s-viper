@@ -10,15 +10,10 @@
     <strong>SandboxAgents</strong> — not plain Agents.
     LAN UIs (kagent, Argo, Vault, Headlamp) are not on this public site.
   </p>
-  <div class="pills">
-    {{ range $d.pins }}
-    <span class="pill ok">{{ .name }} {{ .value }}</span>
-    {{ end }}
-  </div>
 </header>
 
 <section id="agents">
-  <div class="section-head"><span class="section-num">✦</span><h2>SandboxAgents</h2></div>
+  <div class="section-head"><span class="section-num">01</span><h2>SandboxAgents</h2></div>
   <p class="lead">
     Isolated sandboxes, not plain Agents. gVisor
     <code>SandboxAgent</code>s on Viper — the page I send people is
@@ -30,7 +25,7 @@
 </section>
 
 <section id="how-it-works">
-  <div class="section-head"><span class="section-num">01</span><h2>How it works</h2></div>
+  <div class="section-head"><span class="section-num">02</span><h2>How it works</h2></div>
   <p class="lead">
     Imperative install only for k3s + Argo + root app. Platform services are GitOps.
     LAN consoles stay off this public site.
@@ -51,7 +46,7 @@ Agent Substrate (ate-system) → gVisor workers (kagent-default)</code></pre>
 </section>
 
 <section id="pins">
-  <div class="section-head"><span class="section-num">02</span><h2>Pins</h2></div>
+  <div class="section-head"><span class="section-num">03</span><h2>Pins</h2></div>
   <p class="lead">Official pairing. Do not bump these to “fix” a Ready=False agent.</p>
   <div class="card table-wrap">
     <table>

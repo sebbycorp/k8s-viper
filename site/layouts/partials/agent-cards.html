@@ -10,10 +10,7 @@
     <div class="agent-card-body">
       <div class="agent-card-name">{{ .name }}</div>
       <p class="agent-card-job">{{ .job }}</p>
-      <div class="pills">
-        <span class="pill ok">{{ .isolation }}</span>
-        {{ if .vault }}<span class="pill">{{ .vault }}</span>{{ end }}
-      </div>
+      {{ if .vault }}<div class="agent-card-meta">{{ .vault }}</div>{{ end }}
     </div>
   </a>
   {{ end }}
