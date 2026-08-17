@@ -564,7 +564,7 @@ troubleshooting:
 
 docs:
   - name: Agents showcase (this site)
-    url: https://sebbycorp.github.io/k8s-viper/agents/
+    url: https://viper.maniak.io/agents/
   - name: Repository
     url: https://github.com/sebbycorp/k8s-viper
   - name: README
