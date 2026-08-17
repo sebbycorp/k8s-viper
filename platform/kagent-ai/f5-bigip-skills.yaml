@@ -1,0 +1,43 @@
+# Skill markdown included into SandboxAgent.spec.declarative.systemMessage
+# via promptTemplate (kagent 0.10.0-rc2). spec.skills is rejected on
+# SandboxAgent. Do not put secrets here.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: f5-bigip-skills
+  namespace: kagent
+data:
+  vip-status.md: |
+    # Skill: VIP status
+
+    Help the operator see which F5 virtual servers are up.
+
+    ## Do this
+
+    1. Call `f5_system` first if identity is not already known this turn.
+    2. For a fleet view, call `f5_vip_brief` (list + availability).
+    3. For one VIP, call `f5_vip_status` with the name or `/Common/name`.
+    4. Quote availabilityState and enabledState from the tool. If a tool
+       returns unavailable or Unauthenticated, keep that word.
+
+    ## Do not
+
+    - Invent a VIP name, destination, or availability.
+    - Print F5_PASSWORD, Authorization headers, or Vault tokens.
+    - Disable, delete, or create virtuals. This server is read-only.
+
+  pools.md: |
+    # Skill: pools
+
+    Check the pool behind a VIP and whether members are up.
+
+    ## Do this
+
+    1. Call `f5_list_pools` or `f5_pool_status` with the pool name from
+       the VIP object.
+    2. Report member `state` / `session` as returned. Do not guess UP.
+
+    ## Do not
+
+    - Force a member offline or change monitors.
+    - Invent member IPs.
