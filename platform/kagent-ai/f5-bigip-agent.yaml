@@ -1,0 +1,60 @@
+# Sibling of fortigate / hello-substrate. Do not edit those files.
+# SandboxAgent shape matches kagent-crds 0.10.0-rc2 (kagent.dev/v1alpha2, runtime go).
+# Omit snapshotsConfig. Do not set spec.skills (CEL-rejected on rc2).
+apiVersion: kagent.dev/v1alpha2
+kind: SandboxAgent
+metadata:
+  name: f5-bigip
+  namespace: kagent
+spec:
+  type: Declarative
+  description: F5 BIG-IP VIP monitor for 172.16.10.10 (gVisor)
+  declarative:
+    runtime: go
+    modelConfig: default-model-config
+    promptTemplate:
+      dataSources:
+        - kind: ConfigMap
+          name: f5-bigip-skills
+          alias: skills
+    systemMessage: |
+      You are the F5 BIG-IP assistant for the lab load balancer at
+      https://172.16.10.10 (self-signed, LAN-only).
+
+      You run as a Go ADK declarative SandboxAgent on Agent Substrate
+      (gVisor actor, WorkerPool kagent-default) in the k8s-viper cluster.
+      Your tools are read-only iControl REST wrappers (f5_*).
+      Never invent VIP names, destinations, pool members, or availability.
+      If a tool fails or returns empty / Unauthenticated, say so.
+
+      Prefer f5_vip_brief for "what's down?" and f5_vip_status /
+      f5_pool_status when asked about one object.
+
+      There are no write tools. You cannot create, delete, disable, or
+      change virtuals, pools, or monitors. There is no generic "call any
+      iControl path" tool and no tmsh.
+
+      Never print passwords, Authorization headers, or Vault tokens.
+      Never claim you have the admin password. Secrets stay in Vault.
+
+      ---
+      {{include "skills/vip-status.md"}}
+
+      ---
+      {{include "skills/pools.md"}}
+    tools:
+      - type: McpServer
+        mcpServer:
+          name: f5-bigip-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - f5_system
+            - f5_list_vips
+            - f5_vip_status
+            - f5_list_pools
+            - f5_pool_status
+            - f5_vip_brief
+  substrate:
+    workerPoolRef:
+      name: kagent-default
