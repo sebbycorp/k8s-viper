@@ -5,8 +5,10 @@
       <h1>{{ .Site.Title }}</h1>
       {{ if eq .Section "agents" }}
       <p>SandboxAgents</p>
+      {{ else if eq .Section "handbook" }}
+      <p>full lab map</p>
       {{ else }}
-      <p>environment handbook</p>
+      <p>lab site</p>
       {{ end }}
       <p class="hugo-badge">built with Hugo</p>
     </div>
@@ -23,9 +25,10 @@
       <li><a href="#aws-budget"><span class="num">05</span> aws-budget</a></li>
       <li><a href="#servicenow"><span class="num">06</span> servicenow</a></li>
       <li><a href="#gcp-budget"><span class="num">07</span> gcp-budget</a></li>
-      <li><a href="#pins"><span class="num">08</span> Pins</a></li>
+      <li><a href="#f5-bigip"><span class="num">08</span> f5-bigip</a></li>
+      <li><a href="#pins"><span class="num">09</span> Pins</a></li>
     </ul>
-    {{ else }}
+    {{ else if eq .Section "handbook" }}
     <ul class="toc" id="toc-list">
       <li><a href="#agents-showcase"><span class="num">✦</span> Agents</a></li>
       <li><a href="#overview"><span class="num">01</span> Overview</a></li>
@@ -48,6 +51,12 @@
       <li><a href="#troubleshooting"><span class="num">17</span> Troubleshooting</a></li>
       <li><a href="#docs"><span class="num">18</span> Docs &amp; links</a></li>
     </ul>
+    {{ else }}
+    <ul class="toc" id="toc-list">
+      <li><a href="#agents"><span class="num">✦</span> Agents</a></li>
+      <li><a href="#how-it-works"><span class="num">01</span> How it works</a></li>
+      <li><a href="#pins"><span class="num">02</span> Pins</a></li>
+    </ul>
     {{ end }}
   </nav>
   <div class="toc-foot">
@@ -55,8 +64,10 @@
     <a href="{{ .Site.Params.github }}/blob/main/README.md">→ README</a>
     {{ if eq .Section "agents" }}
     <span>Static showcase · not live status</span>
-    {{ else }}
+    {{ else if eq .Section "handbook" }}
     <span>Static handbook · not live status</span>
+    {{ else }}
+    <span>Static lab site · not live status</span>
     {{ end }}
   </div>
 </aside>

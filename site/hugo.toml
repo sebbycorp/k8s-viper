@@ -7,7 +7,7 @@ relativeURLs = false
 canonifyURLs = false
 
 [params]
-  description = "kagent SandboxAgents on Viper (gVisor, not plain Agents) plus the single-node k3s GitOps lab handbook."
+  description = "public light handbook for Viper SandboxAgents + lab map."
   github = "https://github.com/sebbycorp/k8s-viper"
   defaultNodeIP = "172.16.10.135"
 

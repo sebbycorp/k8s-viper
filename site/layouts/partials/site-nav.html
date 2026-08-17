@@ -1,8 +1,12 @@
 {{ $home := .Site.Home.RelPermalink }}
 {{ $agents := $home }}
+{{ $handbook := $home }}
 {{ with .Site.GetPage "/agents" }}{{ $agents = .RelPermalink }}{{ end }}
+{{ with .Site.GetPage "/handbook" }}{{ $handbook = .RelPermalink }}{{ end }}
 <nav class="site-nav" aria-label="Site">
+  <a href="{{ $home }}"{{ if .IsHome }} class="is-active" aria-current="page"{{ end }}>Home</a>
+  <span class="site-nav-sep" aria-hidden="true">|</span>
   <a href="{{ $agents }}"{{ if eq .Section "agents" }} class="is-active" aria-current="page"{{ end }}>Agents</a>
   <span class="site-nav-sep" aria-hidden="true">|</span>
-  <a href="{{ $home }}"{{ if .IsHome }} class="is-active" aria-current="page"{{ end }}>Lab handbook</a>
+  <a href="{{ $handbook }}"{{ if eq .Section "handbook" }} class="is-active" aria-current="page"{{ end }}>Handbook</a>
 </nav>

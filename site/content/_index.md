@@ -1,3 +1,3 @@
 ---
-title: k8s-viper environment
+title: k8s-viper
 ---
