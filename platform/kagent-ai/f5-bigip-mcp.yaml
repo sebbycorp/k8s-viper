@@ -1,0 +1,123 @@
+# F5 iControl MCP tools Deployment + Service + RemoteMCPServer.
+# Image: f5-bigip-mcp:dev (local tag for `ctr images import` on the k3s node).
+# imagePullPolicy: IfNotPresent — import on Viper before the pod can start.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: f5-bigip-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: f5-bigip-mcp
+    app.kubernetes.io/part-of: k8s-viper
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: f5-bigip-mcp
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: f5-bigip-mcp
+        app.kubernetes.io/part-of: k8s-viper
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: f5-bigip-mcp
+          image: f5-bigip-mcp:dev
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mcp
+              containerPort: 8084
+              protocol: TCP
+          env:
+            - name: F5_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: f5-bigip-mcp
+                  key: F5_HOST
+            - name: F5_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: f5-bigip-mcp
+                  key: F5_USERNAME
+            - name: F5_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: f5-bigip-mcp
+                  key: F5_PASSWORD
+            - name: F5_VERIFY_TLS
+              value: "false"
+            - name: MCP_HOST
+              value: "0.0.0.0"
+            - name: MCP_PORT
+              value: "8084"
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: mcp
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: mcp
+            initialDelaySeconds: 15
+            periodSeconds: 20
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: f5-bigip-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: f5-bigip-mcp
+    app.kubernetes.io/part-of: k8s-viper
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: f5-bigip-mcp
+  ports:
+    - name: mcp
+      port: 8084
+      targetPort: mcp
+      protocol: TCP
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: f5-bigip-mcp
+  namespace: kagent
+  labels:
+    app.kubernetes.io/name: f5-bigip-mcp
+    app.kubernetes.io/part-of: k8s-viper
+spec:
+  description: F5 iControl REST tools for BIG-IP VIP status (172.16.10.10)
+  protocol: STREAMABLE_HTTP
+  timeout: 30s
+  sseReadTimeout: 5m0s
+  url: http://f5-bigip-mcp.kagent:8084/mcp
