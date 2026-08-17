@@ -1,4 +1,4 @@
-baseURL = "https://viper.maniak.io/"
+baseURL = "https://viper.maniak.ai/"
 languageCode = "en-us"
 title = "k8s-viper"
 enableRobotsTXT = true
