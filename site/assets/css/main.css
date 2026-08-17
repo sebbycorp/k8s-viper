@@ -143,8 +143,9 @@ a:hover { color: #1d4ed8; }
 }
 
 .toc a.active {
-  color: var(--green);
-  background: var(--green-soft);
+  color: var(--text);
+  background: transparent;
+  box-shadow: inset 2px 0 0 var(--text);
 }
 
 .toc a.active .num { color: var(--green); }
@@ -226,9 +227,9 @@ main { padding: 2.25rem 2.25rem 5rem; max-width: 900px; }
 }
 
 .pill.ok {
-  color: var(--green);
-  border-color: rgba(5, 150, 105, 0.3);
-  background: var(--green-soft);
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--bg-2);
 }
 
 .quick-grid {
@@ -388,13 +389,14 @@ section {
 .section-num {
   font-family: var(--mono);
   font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--green);
-  background: var(--green-soft);
-  border: 1px solid rgba(5, 150, 105, 0.2);
-  border-radius: 2px;
-  padding: 0.25rem 0.5rem;
-  letter-spacing: 0.02em;
+  font-weight: 500;
+  color: var(--dim);
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  letter-spacing: 0.04em;
+  min-width: 1.6rem;
 }
 
 .section-head h2 {
@@ -827,3 +829,14 @@ figure.shot figcaption {
 @media (max-width: 520px) {
   .hero h2 { font-size: 1.75rem; }
 }
+
+.agent-card-meta {
+  margin-top: 0.65rem;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--dim);
+}
+main > .site-nav, .site-footer .site-nav { display: none; }
+.site-nav { gap: 1.15rem; }
+.site-nav-sep { display: none; }
+.toc a.active .num { color: var(--text); }
