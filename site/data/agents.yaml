@@ -216,3 +216,35 @@ agents:
         url: https://github.com/sebbycorp/kagent-agent-substrate-demos/blob/main/gcp-sandbox-agent/JOURNEY.md
       - label: REPORT
         url: https://github.com/sebbycorp/kagent-agent-substrate-demos/blob/main/gcp-sandbox-agent/REPORT.md
+
+  - name: f5-bigip
+    slug: f5-bigip
+    job: F5 BIG-IP VIP monitor for 172.16.10.10.
+    isolation: gVisor SandboxAgent
+    namespace: kagent
+    runtime: Go Declarative
+    vault: secret/platform/f5-bigip
+    image: ""
+    gif: ""
+    image_caption: ""
+    gif_caption: ""
+    facts:
+      - key: Box
+        value: "BIG-IP · 172.16.10.10"
+      - key: Tools
+        value: iControl REST wrappers (f5_*) via f5-bigip-mcp
+      - key: Vault
+        value: secret/platform/f5-bigip
+      - key: Git
+        value: platform/kagent-ai/f5-bigip-*.yaml
+    live: []
+    gaps:
+      - kind: warn
+        text: No live screenshot yet. I am not inventing or generating one.
+      - kind: danger
+        text: Never commit the admin password. Vault path name only. LAN-only.
+    links:
+      - label: Runbook
+        url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/f5-bigip-agent.md
+      - label: SandboxAgent
+        url: https://github.com/sebbycorp/k8s-viper/blob/main/platform/kagent-ai/f5-bigip-agent.yaml
