@@ -8,3 +8,7 @@ resources:
   - fortigate-external-secret.yaml
   - fortigate-mcp.yaml
   - fortigate-agent.yaml
+  - f5-bigip-external-secret.yaml
+  - f5-bigip-mcp.yaml
+  - f5-bigip-skills.yaml
+  - f5-bigip-agent.yaml
