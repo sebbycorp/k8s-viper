@@ -12,18 +12,14 @@
   <link rel="stylesheet" href="{{ $css.RelPermalink }}" integrity="{{ $css.Data.Integrity }}" />
 </head>
 <body class="{{ if .IsHome }}page-home{{ else if eq .Section "agents" }}page-agents{{ else if eq .Section "handbook" }}page-handbook{{ end }}">
-  <button type="button" class="toc-toggle" id="toc-toggle" aria-expanded="false">☰ Contents</button>
+  <button type="button" class="toc-toggle" id="toc-toggle" aria-expanded="false">Contents</button>
   <div class="shell">
     {{ partial "toc.html" . }}
     <main>
-      {{ partial "site-nav.html" . }}
       {{ block "main" . }}{{ end }}
       <footer class="site-footer">
-        <span>light lab site · full map in Handbook</span>
-        <span class="footer-links">
-          {{ partial "site-nav.html" . }}
-          <a href="#top">↑ Back to top</a>
-        </span>
+        <span>k8s-viper · public lab site</span>
+        <a href="#top">Back to top</a>
       </footer>
     </main>
   </div>
