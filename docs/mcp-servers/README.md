@@ -19,26 +19,114 @@ One Gateway, already used for OpenAI and Spark:
 | Client auth | none (same as `/spark`). Anything on the LAN that can hit `:30100` can call these tools. |
 | Git | `platform/agentgateway-ai/backend-viper-mcp.yaml`, `httproute-viper-mcp.yaml` |
 
-```text
-Grok Bot / Cursor / Inspector
-        │
-        │  Streamable HTTP
-        ▼
-agentgateway-proxy :30100 /mcp     (viper-mcp AgentgatewayBackend)
-        │
-        ├─ fortigate-mcp.kagent:8084/mcp
-        ├─ f5-bigip-mcp.kagent:8084/mcp
-        ├─ arista-ceos-mcp.kagent:8084/mcp
-        ├─ aws-budget-mcp.kagent:8084/mcp
-        ├─ servicenow-mcp.kagent:8084/mcp
-        ├─ gcp-budget-mcp.kagent:8084/mcp
-        └─ kagent-tools.kagent:8084/mcp
-                │
-                ▼
-        FortiGate / BIG-IP / cEOS / AWS / ServiceNow / GCP / k8s API
+kagent SandboxAgents still talk to the ClusterIP Services directly (`RemoteMCPServer` in `kagent`). The gateway is the extra front door for Grok Bot and other MCP clients.
+
+## Traffic flow
+
+A client hits **one** URL. The gateway multiplexes `tools/list` and `tools/call` onto the right ClusterIP MCP. Those pods hold the Vault creds and talk to the real boxes and APIs. The client never sees FortiOS / iControl / eAPI / cloud keys.
+
+```mermaid
+flowchart TB
+  subgraph clients["Clients on the LAN"]
+    GB["Grok Bot / k8s-viper"]
+    CUR["Cursor / Inspector"]
+    KA["kagent UI :30500"]
+  end
+
+  subgraph gw["agentgateway-proxy :30100"]
+    R1["/v1 /openai → OpenAI"]
+    R2["/spark → DGX Spark vLLM"]
+    R3["/mcp → viper-mcp backend"]
+    R4["/desktop → noVNC + computer-use"]
+  end
+
+  subgraph mcp["kagent namespace · ClusterIP :8084/mcp"]
+    FG["fortigate-mcp"]
+    F5["f5-bigip-mcp"]
+    AR["arista-ceos-mcp"]
+    AWS["aws-budget-mcp"]
+    SN["servicenow-mcp"]
+    GCP["gcp-budget-mcp"]
+    KT["kagent-tools"]
+  end
+
+  subgraph targets["Targets · not in the cluster"]
+    T1["FortiGate 172.16.10.1"]
+    T2["BIG-IP 172.16.10.10"]
+    T3["cEOS lab eAPI"]
+    T4["AWS / GCP / ServiceNow APIs"]
+    T5["k8s API on k3s-viper"]
+  end
+
+  GB -->|Streamable HTTP| R3
+  CUR -->|Streamable HTTP| R3
+  KA -->|RemoteMCPServer ClusterIP| mcp
+  R3 --> FG & F5 & AR & AWS & SN & GCP & KT
+  FG --> T1
+  F5 --> T2
+  AR --> T3
+  AWS --> T4
+  SN --> T4
+  GCP --> T4
+  KT --> T5
 ```
 
-kagent SandboxAgents still talk to the ClusterIP Services directly (`RemoteMCPServer` in `kagent`). The gateway is the extra front door for Grok Bot and other MCP clients.
+One tool call, after the client is connected:
+
+```mermaid
+sequenceDiagram
+  participant C as Grok Bot or Cursor
+  participant G as agentgateway :30100/mcp
+  participant P as MCP pod in kagent
+  participant T as FortiGate / F5 / cEOS / cloud / k8s
+
+  C->>G: initialize (Streamable HTTP)
+  G-->>C: serverInfo agentgateway 1.4.1
+  C->>G: tools/list
+  G->>P: list each target (FailOpen)
+  P-->>G: native tool names
+  G-->>C: prefixed names (fortigate_…, arista-ceos_…)
+  C->>G: tools/call fortigate_fg_list_policies
+  G->>P: call fg_list_policies
+  P->>T: REST / eAPI with Vault creds
+  T-->>P: result
+  P-->>G: result
+  G-->>C: result
+```
+
+kagent UI skips the gateway for tools. It still uses this same Gateway for the **model** (`/v1` → gpt-5.5).
+
+## What agentgateway helps with
+
+This is what the 1.4.1 Gateway is doing on Viper today. Not a product brochure. Not features we have not wired.
+
+```mermaid
+flowchart LR
+  subgraph one["One data plane"]
+    L["LLM: /v1 OpenAI · /spark Qwen"]
+    M["MCP: /mcp multiplex"]
+    D["Desktop: /desktop"]
+  end
+  subgraph help["On the MCP path"]
+    A["One URL instead of seven ClusterIPs"]
+    B["Prefix tools so names do not collide"]
+    C["FailOpen if one MCP is down"]
+    E["Keep MCP pods off the node IP"]
+  end
+  one --> help
+```
+
+| Job | How it shows up here |
+|-----|----------------------|
+| Single front door | Same `agentgateway-proxy` for models, MCP, and desktop. Not a second proxy. |
+| MCP multiplex | Seven Streamable HTTP targets behind `http://172.16.10.135:30100/mcp`. |
+| Name isolation | `prefixMode: Conditional` → `fortigate_fg_…`, `arista-ceos_…`. |
+| Partial failure | `failureMode: FailOpen`. A dead budget MCP does not hide Fortigate tools. |
+| Hide ClusterIP | Clients never need `fortigate-mcp.kagent:8084`. Only `:30100`. |
+| Keep secrets in Vault | Gateway does not inject Fortigate / F5 / cloud keys. The MCP pods already have ExternalSecrets. |
+| Same path as kagent models | SandboxAgents chat through `/v1`. Grok Bot can use `/mcp` for the tools. |
+
+Not on this lab yet (do not pretend they are): client auth on `/mcp`, tool-level allow lists, public internet exposure. `/mcp` is LAN, no bearer, same as `/spark`.
 
 ## agentgateway configuration
 
