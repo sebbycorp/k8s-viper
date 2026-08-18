@@ -1,0 +1,49 @@
+{{ $d := .Site.Data.agents }}
+{{ $delays := slice "0s" "1.3s" "2.6s" "0.7s" "2s" "3.4s" "1.1s" }}
+<section class="cluster" id="cluster" aria-labelledby="cluster-title">
+  <header class="cluster-bar">
+    <div class="cluster-bar-left">
+      <span class="cluster-kind">Node</span>
+      <strong>k3s-viper</strong>
+      <span class="cluster-sep">·</span>
+      <span class="cluster-meta">dockerized k3s</span>
+    </div>
+    <div class="cluster-bar-chips">
+      <span class="chip">ns/ate-system</span>
+      <span class="chip">WorkerPool kagent-default</span>
+      <span class="chip">gVisor · ateom-gvisor:v0.0.9</span>
+    </div>
+  </header>
+
+  <p class="cluster-note" id="cluster-title">
+    SandboxAgents on this node. Actors sit idle until a chat, then a gVisor worker comes up.
+    The idle/active flip is an illustration of that lifecycle, not live pod status.
+  </p>
+
+  <div class="actor-grid">
+    {{ range $i, $a := $d.agents }}
+    <a class="actor" href="{{ with $.Site.GetPage "/agents" }}{{ .RelPermalink }}{{ end }}#{{ $a.slug }}" style="--d: {{ index $delays $i }}">
+      <span class="actor-pulse" aria-hidden="true"></span>
+      <div class="actor-top">
+        <span class="actor-kind">SandboxAgent</span>
+        <span class="actor-state">
+          <span class="st-idle">idle</span>
+          <span class="st-active">active</span>
+        </span>
+      </div>
+      <div class="actor-name">{{ $a.name }}</div>
+      <p class="actor-job">{{ $a.job }}</p>
+      <div class="actor-iso">{{ $a.isolation }} · kagent-default</div>
+    </a>
+    {{ end }}
+  </div>
+
+  <ol class="call-path">
+    <li>chat</li>
+    <li>kagent</li>
+    <li>SandboxAgent</li>
+    <li>gVisor actor</li>
+    <li>MCP</li>
+    <li>target</li>
+  </ol>
+</section>
