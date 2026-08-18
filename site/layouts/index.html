@@ -5,20 +5,20 @@
   <div class="eyebrow">Single-node GitOps lab</div>
   <h2>{{ .Title }}</h2>
   <p class="lede">
-    Single-node <strong>dockerized k3s</strong> on Viper, managed with
-    <strong>Argo CD</strong> GitOps. Isolated gVisor
-    <strong>SandboxAgents</strong> — not plain Agents.
-    LAN UIs (kagent, Argo, Vault, Headlamp) are not on this public site.
+    Dockerized <strong>k3s</strong> on Viper. Isolated gVisor
+    <strong>SandboxAgents</strong> on Agent Substrate — not plain Agents.
+    They sit idle until a chat, then a worker comes up.
   </p>
 </header>
+
+{{ partial "substrate-cluster.html" . }}
 
 <section id="agents">
   <div class="section-head"><span class="section-num">01</span><h2>SandboxAgents</h2></div>
   <p class="lead">
-    Isolated sandboxes, not plain Agents. gVisor
-    <code>SandboxAgent</code>s on Viper — the page I send people is
+    Same inventory as the cluster above. Detail, live shots, and vault path names live on
     <a href="{{ with .Site.GetPage "/agents" }}{{ .RelPermalink }}{{ end }}">/agents/</a>.
-    The full lab map lives in the
+    The lab map is in the
     <a href="{{ with .Site.GetPage "/handbook" }}{{ .RelPermalink }}{{ end }}">handbook</a>.
   </p>
   {{ partial "agent-cards.html" (dict "Site" .Site "home" true) }}
