@@ -5,10 +5,15 @@ Read-only network operator for the isolated Containerlab cEOS demo
 `hello-substrate`. Pins unchanged: kagent **0.10.0-rc2**, Agent Substrate
 **0.0.9**.
 
-**Live verification pending.** GitOps + unit tests are in this repo. The
-parallel Containerlab topology and eAPI reachability from dockerized k3s
-have not been confirmed on Viper. Do not treat BGP, LLDP, or routes as
-proven.
+**Live on Viper 2026-08-17.** `SandboxAgent/arista-ceos` is Ready. The
+3-node cEOS lab (`ceos:4.33.9M`) has eBGP Established. eAPI from the
+MCP pod returns inventory count 3.
+
+## Live screenshot
+
+Real kagent UI capture, 2026-08-17. Question: “What is the BGP summary on spine1?”
+
+![Live kagent arista-ceos BGP chat](/agents/arista-ceos-chat.png)
 
 ## Architecture
 
@@ -34,8 +39,7 @@ flowchart LR
   ui --> sa --> actor --> mcp --> lab
 ```
 
-**Planned fabric** (Containerlab verification still pending — do not
-treat this as live): `spine1` / `leaf1` / `leaf2`, eBGP AS **65000** /
+**Live fabric** on Viper: `spine1` / `leaf1` / `leaf2`, eBGP AS **65000** /
 **65101** / **65102**, management network **172.20.20.0/24**. eAPI is
 on that management network. A parallel repo owns the Containerlab
 topology.
