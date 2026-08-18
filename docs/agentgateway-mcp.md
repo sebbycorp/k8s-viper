@@ -30,7 +30,7 @@ kagent `RemoteMCPServer` objects already point at these ClusterIP Services. The 
 | `gcp-budget_` | `gcp-budget-mcp.kagent:8084` | GCP us-east1 billing / capacity |
 | `kagent-tools_` | `kagent-tools.kagent:8084` | stock k8s tools (hello-substrate) |
 
-`failureMode: FailOpen` — a down MCP is skipped; the others stay up.
+`failureMode: FailOpen`: a down MCP is skipped; the others stay up.
 
 The MCP *servers* are pods in `kagent`. The *targets* (firewall, F5, cEOS, cloud APIs) stay outside the cluster.
 
