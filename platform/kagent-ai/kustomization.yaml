@@ -12,3 +12,7 @@ resources:
   - f5-bigip-mcp.yaml
   - f5-bigip-skills.yaml
   - f5-bigip-agent.yaml
+  - arista-ceos-external-secret.yaml
+  - arista-ceos-mcp.yaml
+  - arista-ceos-skills.yaml
+  - arista-ceos-agent.yaml

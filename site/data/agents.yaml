@@ -248,3 +248,43 @@ agents:
         url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/f5-bigip-agent.md
       - label: SandboxAgent
         url: https://github.com/sebbycorp/k8s-viper/blob/main/platform/kagent-ai/f5-bigip-agent.yaml
+
+  - name: arista-ceos
+    slug: arista-ceos
+    job: Read-only Arista cEOS operator for the Containerlab spine/leaf demo.
+    isolation: gVisor SandboxAgent
+    namespace: kagent
+    runtime: Go Declarative
+    vault: secret/platform/arista-ceos
+    image: ""
+    gif: ""
+    image_caption: ""
+    gif_caption: ""
+    facts:
+      - key: Fabric
+        value: "Containerlab cEOS · spine1 / leaf1 / leaf2 · eBGP 65000/65101/65102"
+      - key: Tools
+        value: EOS eAPI show wrappers (arista_*) via arista-ceos-mcp
+      - key: Vault
+        value: secret/platform/arista-ceos
+      - key: Git
+        value: platform/kagent-ai/arista-ceos-*.yaml
+    live: []
+    gaps:
+      - kind: warn
+        text: Live verification pending. Containerlab eAPI reachability from dockerized k3s has not been confirmed. I am not inventing BGP, LLDP, or route state.
+      - kind: warn
+        text: No live screenshot in this repo. I am not inventing or generating one.
+      - kind: warn
+        text: Image must be imported on the k3s node (ctr images import) before the MCP pod starts.
+      - kind: danger
+        text: Never commit the eAPI password. Vault path name only. LAN-only — do not publish :30500 or cEOS eAPI.
+    links:
+      - label: Runbook
+        url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/arista-ceos-agent.md
+      - label: SandboxAgent
+        url: https://github.com/sebbycorp/k8s-viper/blob/main/platform/kagent-ai/arista-ceos-agent.yaml
+      - label: MCP + ExternalSecret
+        url: https://github.com/sebbycorp/k8s-viper/tree/main/platform/kagent-ai
+      - label: Image
+        url: https://github.com/sebbycorp/k8s-viper/tree/main/images/arista-ceos-mcp

@@ -43,6 +43,7 @@ kagent UI :30500
         → WorkerPool kagent-default  (1 replica, gVisor ateom)
               → SandboxAgent hello-substrate
               → SandboxAgent fortigate  (home FortiGate — docs/fortigate-agent.md)
+              → SandboxAgent arista-ceos  (cEOS lab — docs/arista-ceos-agent.md)
 ```
 
 **One gateway.** kagent does not get a second OpenAI path and does not get a
@@ -119,8 +120,9 @@ All default Helm Agents are off (`k8s-agent`, `kgateway-agent`, `istio-agent`,
 0.10.0-rc2 toggles are top-level `<name>.enabled` (not `agents.*`).
 `grafana-mcp` is off (no Grafana). `querydoc` stays on (tool Deployment, not
 an Agent). `kmcp` stays on. Lab agents in `platform/kagent-ai` are
-`hello-substrate` (cluster) and `fortigate` (home FortiGate —
-[fortigate-agent.md](fortigate-agent.md)).
+`hello-substrate` (cluster), `fortigate` (home FortiGate —
+[fortigate-agent.md](fortigate-agent.md)), and `arista-ceos` (cEOS demo —
+[arista-ceos-agent.md](arista-ceos-agent.md)).
 
 ## Chat
 
@@ -128,7 +130,9 @@ an Agent). `kmcp` stays on. Lab agents in `platform/kagent-ai` are
 2. Open `http://172.16.10.135:30500/`.
 3. Pick **kagent/hello-substrate** for cluster questions, or
    **kagent/fortigate** for the home FortiGate
-   ([fortigate-agent.md](fortigate-agent.md)).
+   ([fortigate-agent.md](fortigate-agent.md)). `arista-ceos` is **not** a
+   live chat target yet — pending Containerlab + Vault + MCP import
+   ([arista-ceos-agent.md](arista-ceos-agent.md)).
 4. Ask hello-substrate something like: `What Kubernetes version is this cluster, and where are you running?`
 
 ```bash
@@ -155,6 +159,7 @@ vars on `SandboxAgent/hello-substrate`.
 | Real OpenAI key | Vault `secret/platform/openai` → gateway ExternalSecret `openai-secret` |
 | Dummy kagent key | `platform/kagent-ai/dummy-openai-secret.yaml` — `sk-routed-via-agentgateway` |
 | FortiGate REST token | Vault `secret/platform/fortigate` → ExternalSecret `fortigate-mcp` — [fortigate-agent.md](fortigate-agent.md) |
+| Arista eAPI password | Vault `secret/platform/arista-ceos` → ExternalSecret `arista-ceos-mcp` — [arista-ceos-agent.md](arista-ceos-agent.md) |
 | License JWTs / Solo keys | **Not used.** OSS only. Do not commit them. |
 
 ## Known risk: gVisor on dockerized k3s
@@ -187,6 +192,7 @@ disable chart JWT bootstrap to “simplify” the lab.
 ## Related
 
 - Home FortiGate agent: [fortigate-agent.md](fortigate-agent.md)
+- Arista cEOS agent: [arista-ceos-agent.md](arista-ceos-agent.md)
 - UI ports: [platform-ui-access.md](platform-ui-access.md)
 - Gateway + models: [agentgateway-langfuse.md](agentgateway-langfuse.md)
 - Vault paths: [vault-eso-setup.md](vault-eso-setup.md)

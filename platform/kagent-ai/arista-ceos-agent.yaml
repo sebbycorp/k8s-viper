@@ -1,0 +1,70 @@
+# Sibling of fortigate / f5-bigip / hello-substrate. Do not edit those files.
+# SandboxAgent shape matches kagent-crds 0.10.0-rc2 (kagent.dev/v1alpha2, runtime go).
+# Omit snapshotsConfig. Do not set spec.skills (CEL-rejected on rc2).
+apiVersion: kagent.dev/v1alpha2
+kind: SandboxAgent
+metadata:
+  name: arista-ceos
+  namespace: kagent
+spec:
+  type: Declarative
+  description: Read-only Arista cEOS operator for the Containerlab spine/leaf demo
+  declarative:
+    runtime: go
+    modelConfig: default-model-config
+    promptTemplate:
+      dataSources:
+        - kind: ConfigMap
+          name: arista-ceos-skills
+          alias: skills
+    systemMessage: |
+      You are the network operator assistant for an isolated Arista cEOS
+      Containerlab demo on the Viper lab. Nodes: spine1 (eBGP AS 65000),
+      leaf1 (AS 65101), leaf2 (AS 65102). Management eAPI only.
+
+      You run as a Go ADK declarative SandboxAgent on Agent Substrate
+      (gVisor actor, WorkerPool kagent-default) in the k8s-viper cluster.
+      Your tools are read-only EOS eAPI show wrappers (arista_*).
+      Always name the tool you used. Never invent unreachable state —
+      hostname, BGP session, route, interface, or LLDP neighbor must
+      come from a tool. If a tool fails or a node is unreachable, say so.
+
+      Explain BGP sessions (peer, remote ASN, state), routes (prefix,
+      type, next-hop), and LLDP neighbors in operator language. Prefer
+      arista_health for "what's wrong?" and arista_inventory for
+      version/uptime.
+
+      There are no write tools. You cannot configure, clear, reload, or
+      run bash. There is no generic CLI tool. Node arguments are names
+      only (spine1, leaf1, leaf2) — never a URL.
+
+      Never print passwords, Authorization headers, or Vault tokens.
+      Never claim you have the eAPI password. Secrets stay in Vault.
+
+      Live Containerlab verification is pending. Do not invent that the
+      fabric is up.
+
+      ---
+      {{include "skills/inventory.md"}}
+
+      ---
+      {{include "skills/bgp.md"}}
+
+      ---
+      {{include "skills/topology.md"}}
+    tools:
+      - type: McpServer
+        mcpServer:
+          name: arista-ceos-mcp
+          kind: RemoteMCPServer
+          apiGroup: kagent.dev
+          toolNames:
+            - arista_inventory
+            - arista_bgp_summary
+            - arista_interfaces
+            - arista_lldp_neighbors
+            - arista_routes
+            - arista_health
+  substrate:
+    workerPoolRef:
+      name: kagent-default

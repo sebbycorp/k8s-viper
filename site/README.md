@@ -44,8 +44,9 @@ kagent UI `:30500` stays LAN-only.
 
 Shots under `static/agents/` are live Chromium captures from
 [kagent-agent-substrate-demos](https://github.com/sebbycorp/kagent-agent-substrate-demos).
-Do not add generated, reconstructed, or AI-drawn images. hello-substrate
-and fortigate have no live shot — leave those cards without a photo.
+Do not add generated, reconstructed, or AI-drawn images. hello-substrate,
+fortigate, f5-bigip, and arista-ceos have no live shot — leave those
+cards without a photo.
 
 Canonical markdown runbooks live under `../docs/` (not only this site):
 
@@ -54,5 +55,7 @@ Canonical markdown runbooks live under `../docs/` (not only this site):
 - `agentgateway-langfuse.md` — AI gateway + Langfuse
 - `kagent-substrate.md` — OSS kagent + Agent Substrate
 - `fortigate-agent.md` — home FortiGate SandboxAgent + FortiOS MCP
+- `f5-bigip-agent.md` — F5 BIG-IP VIP monitor
+- `arista-ceos-agent.md` — read-only Arista cEOS Containerlab agent
 - `why-traefik.md` — Traefik vs kgateway
 - `headlamp.md` — dashboard tokens

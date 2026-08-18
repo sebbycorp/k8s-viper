@@ -294,7 +294,7 @@ platform:
     kindLabel: ai
     ns: kagent
     source: platform/kagent-ai/
-    notes: "dummy kagent-openai · hello-substrate · fortigate · f5-bigip · UI :30500"
+    notes: "dummy kagent-openai · hello-substrate · fortigate · f5-bigip · arista-ceos · UI :30500"
 
 namespaces:
   - ns: argocd
@@ -314,7 +314,7 @@ namespaces:
   - ns: ate-system
     purpose: Agent Substrate control plane (ate-api, atelet, Valkey, RustFS)
   - ns: kagent
-    purpose: OSS kagent controller, UI, WorkerPool, hello-substrate, fortigate, f5-bigip
+    purpose: OSS kagent controller, UI, WorkerPool, hello-substrate, fortigate, f5-bigip, arista-ceos
   - ns: apps
     purpose: Demo / user workloads (whoami)
   - ns: kube-system
@@ -381,6 +381,9 @@ vault_paths:
   - path: secret/platform/f5-bigip
     fields: host, username, password
     used_by: F5 iControl MCP ExternalSecret f5-bigip-mcp (never commit password)
+  - path: secret/platform/arista-ceos
+    fields: username, password, hosts_json
+    used_by: Arista eAPI MCP ExternalSecret arista-ceos-mcp (never commit password)
 
 bootstrap_env:
   - name: REPO_URL
@@ -451,6 +454,9 @@ versions:
   - name: FortiOS MCP image
     pin: fortigate-mcp:dev
     where: "images/fortigate-mcp/ (intended ghcr.io/sebbycorp/fortigate-mcp:dev)"
+  - name: Arista cEOS MCP image
+    pin: arista-ceos-mcp:dev
+    where: "images/arista-ceos-mcp/ (intended ghcr.io/sebbycorp/arista-ceos-mcp:dev)"
 
 layout:
   - path: scripts/bootstrap.sh
@@ -492,9 +498,11 @@ layout:
   - path: platform/kagent/
     role: kagent OSS Helm values (0.10.0-rc2)
   - path: platform/kagent-ai/
-    role: dummy OpenAI Secret + hello + fortigate SandboxAgents + UI NodePort
+    role: dummy OpenAI Secret + hello + fortigate + f5-bigip + arista-ceos SandboxAgents + UI NodePort
   - path: images/fortigate-mcp/
     role: fortigate-mcp:dev image (build on Viper, ctr import)
+  - path: images/arista-ceos-mcp/
+    role: arista-ceos-mcp:dev image (build on Viper, ctr import)
   - path: apps/
     role: User workloads
   - path: docs/
@@ -547,6 +555,8 @@ troubleshooting:
     check: "Import viper-desktop:dev — docs/desktop-computer-use.md"
   - symptom: fortigate-mcp ImagePullBackOff
     check: "Import fortigate-mcp:dev — docs/fortigate-agent.md"
+  - symptom: arista-ceos-mcp ImagePullBackOff
+    check: "Import arista-ceos-mcp:dev — docs/arista-ceos-agent.md"
   - symptom: agentgateway OpenAI 401/404 model
     check: Vault openai key; use gpt-5.5 or gpt-5-mini
   - symptom: Spark 502 / no route
@@ -581,6 +591,8 @@ docs:
     url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/kagent-substrate.md
   - name: FortiGate agent
     url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/fortigate-agent.md
+  - name: Arista cEOS agent
+    url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/arista-ceos-agent.md
   - name: Computer-use desktop
     url: https://github.com/sebbycorp/k8s-viper/blob/main/docs/desktop-computer-use.md
   - name: Why Traefik (not kgateway)

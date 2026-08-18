@@ -21,7 +21,7 @@ Sebastian Maniak's lab. Single-node **dockerized k3s** on **Viper**, managed wit
 
 Design: [`docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md`](docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md)
 
-**Environment handbook (GitHub Pages):** [sebbycorp.github.io/k8s-viper](https://sebbycorp.github.io/k8s-viper/) — Hugo TOC + full lab docs. Source: [`site/`](site/) (`cd site && hugo server`).
+**Environment handbook (GitHub Pages):** [viper.maniak.ai](https://viper.maniak.ai/) — Hugo TOC + full lab docs. Source: [`site/`](site/) (`cd site && hugo server`).
 
 ## Architecture
 
@@ -45,7 +45,8 @@ bootstrap.sh  →  dockerized k3s (k3s-viper) + Argo CD + root Application
    kagent UI :30500  → default model gpt-5.5 via gateway /v1 (dummy key in git)
    Agent Substrate (ate-system) → gVisor workers (kagent-default)
         ├─ SandboxAgent hello-substrate
-        └─ SandboxAgent fortigate → fortigate-mcp → 172.16.10.1/api/v2
+        ├─ SandboxAgent fortigate → fortigate-mcp → 172.16.10.1/api/v2
+        └─ SandboxAgent arista-ceos → arista-ceos-mcp → cEOS eAPI (Containerlab)
                       ↓
    OTEL collector → Langfuse (configured; keys in Vault)
 ```
@@ -83,9 +84,10 @@ platform/langfuse/            # Langfuse Helm + ExternalSecret
 platform/substrate-app/       # Agent Substrate helmCharts 0.0.9 + valkey STS defaults patch
 platform/substrate/           # extra ate-api-server ClusterRole/Binding only (platform-substrate-rbac)
 platform/kagent/              # kagent OSS Helm values (0.10.0-rc2)
-platform/kagent-ai/           # dummy OpenAI Secret + hello + fortigate SandboxAgents + UI NodePort
+platform/kagent-ai/           # dummy OpenAI Secret + hello + fortigate + arista-ceos SandboxAgents + UI NodePort
 images/desktop-computer-use/  # viper-desktop:dev image
 images/fortigate-mcp/         # fortigate-mcp:dev FortiOS MCP tools
+images/arista-ceos-mcp/       # arista-ceos-mcp:dev Arista eAPI MCP tools
 apps/                         # your workloads later
 docs/                         # operator runbooks (see below)
 site/                         # Hugo handbook → GitHub Pages
@@ -101,6 +103,7 @@ site/                         # Hugo handbook → GitHub Pages
 | [docs/agentgateway-langfuse.md](docs/agentgateway-langfuse.md) | One gateway / two backends, Langfuse, OTEL |
 | [docs/kagent-substrate.md](docs/kagent-substrate.md) | OSS kagent + Agent Substrate (UI :30500, hello agent) |
 | [docs/fortigate-agent.md](docs/fortigate-agent.md) | Home FortiGate Go SandboxAgent + FortiOS MCP (fw-maniak-hq) |
+| [docs/arista-ceos-agent.md](docs/arista-ceos-agent.md) | Read-only Arista cEOS Go SandboxAgent + eAPI MCP (Containerlab) |
 | [docs/desktop-computer-use.md](docs/desktop-computer-use.md) | Computer-use desktop (noVNC + API) behind agentgateway |
 | [docs/why-traefik.md](docs/why-traefik.md) | Traefik vs kgateway (cluster Ingress) |
 
@@ -195,7 +198,8 @@ curl -H 'Host: whoami.viper.local' http://172.16.10.135/
 
 **AI** — one gateway, two providers: [docs/agentgateway-langfuse.md](docs/agentgateway-langfuse.md).  
 **Agents** — OSS kagent + Agent Substrate: [docs/kagent-substrate.md](docs/kagent-substrate.md).  
-**Home FortiGate** — Go SandboxAgent `fortigate`: [docs/fortigate-agent.md](docs/fortigate-agent.md).
+**Home FortiGate** — Go SandboxAgent `fortigate`: [docs/fortigate-agent.md](docs/fortigate-agent.md).  
+**Arista cEOS** — Go SandboxAgent `arista-ceos` (live verification pending): [docs/arista-ceos-agent.md](docs/arista-ceos-agent.md).
 
 ```bash
 export GW=http://172.16.10.135:30100
@@ -229,7 +233,7 @@ Do **not** put secret values in git or this README.
 
 | Where | What |
 |-------|------|
-| Vault | Paths in [docs/vault-eso-setup.md](docs/vault-eso-setup.md) — `secret/platform/openai`, `secret/platform/langfuse`, `secret/platform/langfuse-otel`, `secret/platform/fortigate` |
+| Vault | Paths in [docs/vault-eso-setup.md](docs/vault-eso-setup.md) — `secret/platform/openai`, `secret/platform/langfuse`, `secret/platform/langfuse-otel`, `secret/platform/fortigate`, `secret/platform/arista-ceos` |
 | kagent dummy | `platform/kagent-ai/dummy-openai-secret.yaml` — `sk-routed-via-agentgateway` only. Real OpenAI key stays on the gateway. |
 | Notion | Projects / k8s-viper / Secrets (SSH, Vault unseal/root, Langfuse, OpenAI, OTEL) |
 
@@ -256,6 +260,11 @@ GitOps also defines: `platform-substrate-crds`, `platform-substrate`, `platform-
 `platform-kagent-ai` also ships SandboxAgent `fortigate` + `fortigate-mcp`.
 Import `fortigate-mcp:dev` and write Vault `secret/platform/fortigate`
 before that pod can start — [docs/fortigate-agent.md](docs/fortigate-agent.md).
+
+`platform-kagent-ai` also ships SandboxAgent `arista-ceos` + `arista-ceos-mcp`.
+Import `arista-ceos-mcp:dev` and write Vault `secret/platform/arista-ceos`
+before that pod can start. Live Containerlab verification is pending —
+[docs/arista-ceos-agent.md](docs/arista-ceos-agent.md).
 
 Known cosmetic: `svclb-agentgateway-proxy` **Pending** because Traefik already owns host `:80`/`:443`. AI data plane is NodePort **30100**. Do not try to steal port 80.
 
@@ -296,6 +305,7 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 | Substrate worker image | `ghcr.io/kagent-dev/substrate/ateom-gvisor:v0.0.9` |
 | desktop image | `viper-desktop:dev` (intended publish `ghcr.io/sebbycorp/viper-desktop:dev`) |
 | FortiOS MCP image | `fortigate-mcp:dev` (intended publish `ghcr.io/sebbycorp/fortigate-mcp:dev`) |
+| Arista cEOS MCP image | `arista-ceos-mcp:dev` (intended publish `ghcr.io/sebbycorp/arista-ceos-mcp:dev`) |
 
 ## Out of scope (v1)
 
@@ -325,6 +335,7 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 | agentgateway `GET /` → 404 | Expected — use `/v1`, `/spark`, `/desktop/`, or `/desktop-api/health` |
 | desktop ImagePullBackOff | Import `viper-desktop:dev` on the node — [docs/desktop-computer-use.md](docs/desktop-computer-use.md) |
 | fortigate-mcp ImagePullBackOff | Import `fortigate-mcp:dev` on the node — [docs/fortigate-agent.md](docs/fortigate-agent.md) |
+| arista-ceos-mcp ImagePullBackOff | Import `arista-ceos-mcp:dev` on the node — [docs/arista-ceos-agent.md](docs/arista-ceos-agent.md) |
 | agentgateway OpenAI 401/404 | Vault openai key; model id (`gpt-5.5` / `gpt-5-mini`) |
 | Spark 502 / no route | Backend `172.16.10.173:8000`; model `Qwen/Qwen3.6-35B-A3B-FP8` |
 | `svclb-agentgateway-proxy` Pending | Cosmetic — Traefik owns `:80`/`:443`. Use NodePort **30100** |
