@@ -1,0 +1,63 @@
+# One MCP multiplex on the existing agentgateway-proxy Gateway.
+# Client: Streamable HTTP  http://172.16.10.135:30100/mcp
+# Tools are prefixed <target>_ when more than one target is listed.
+# FailOpen: a down MCP does not fail the whole session.
+#
+# backendRef is namespace-local only. These Services live in kagent, so
+# use cluster DNS host + StreamableHTTP (CRD enum, chart 1.4.1).
+# Do not invent protocol values. Do not put this on viper.maniak.ai.
+apiVersion: agentgateway.dev/v1alpha1
+kind: AgentgatewayBackend
+metadata:
+  name: viper-mcp
+  namespace: agentgateway-system
+  labels:
+    app.kubernetes.io/name: viper-mcp
+    app.kubernetes.io/part-of: k8s-viper
+spec:
+  mcp:
+    failureMode: FailOpen
+    prefixMode: Conditional
+    targets:
+      - name: fortigate
+        static:
+          host: fortigate-mcp.kagent.svc.cluster.local
+          port: 8084
+          path: /mcp
+          protocol: StreamableHTTP
+      - name: f5-bigip
+        static:
+          host: f5-bigip-mcp.kagent.svc.cluster.local
+          port: 8084
+          path: /mcp
+          protocol: StreamableHTTP
+      - name: arista-ceos
+        static:
+          host: arista-ceos-mcp.kagent.svc.cluster.local
+          port: 8084
+          path: /mcp
+          protocol: StreamableHTTP
+      - name: aws-budget
+        static:
+          host: aws-budget-mcp.kagent.svc.cluster.local
+          port: 8084
+          path: /mcp
+          protocol: StreamableHTTP
+      - name: servicenow
+        static:
+          host: servicenow-mcp.kagent.svc.cluster.local
+          port: 8084
+          path: /mcp
+          protocol: StreamableHTTP
+      - name: gcp-budget
+        static:
+          host: gcp-budget-mcp.kagent.svc.cluster.local
+          port: 8084
+          path: /mcp
+          protocol: StreamableHTTP
+      - name: kagent-tools
+        static:
+          host: kagent-tools.kagent.svc.cluster.local
+          port: 8084
+          path: /mcp
+          protocol: StreamableHTTP

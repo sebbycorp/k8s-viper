@@ -14,7 +14,7 @@ Sebastian Maniak's lab. Single-node **dockerized k3s** on **Viper**, managed wit
 | Dashboard | Headlamp (OSS, in-cluster) |
 | Ingress | Node IP via Traefik (k3s default) — [why not kgateway](docs/why-traefik.md) |
 | Lab UIs | NodePorts on `172.16.10.135`: Headlamp `:30080`, Argo `:30443`, Vault `:30200`, agentgateway `:30100`, Langfuse `:30300`, kagent `:30500` |
-| AI gateway | **One** Gateway (`agentgateway-proxy` :30100) → OpenAI (`/v1`) + DGX Spark (`/spark`) + desktop (`/desktop/`) |
+| AI gateway | **One** Gateway (`agentgateway-proxy` :30100) → OpenAI (`/v1`) + DGX Spark (`/spark`) + MCP (`/mcp`) + desktop (`/desktop/`) |
 | Agents | OSS **kagent 0.10.0-rc2** + **Agent Substrate 0.0.9** (`kagent` + `ate-system`); default model via the same gateway |
 | LLM observability | Langfuse + ClickHouse; OTEL path configured (keys in Vault `secret/platform/langfuse-otel`) |
 | SSH | LAN: `smaniak@172.16.10.135`. Remote: ngrok TCP `ssh smaniak@2.tcp.ngrok.io -p <port>` (port changes when ngrok restarts). ngrok is SSH to the box, not k8s UIs. |
@@ -39,6 +39,7 @@ bootstrap.sh  →  dockerized k3s (k3s-viper) + Argo CD + root Application
    agentgateway-proxy :30100
         ├─ /v1 · /openai  → OpenAI (Vault key)      gpt-5.5 / gpt-5-mini
         ├─ /spark         → DGX Spark vLLM :8000    Qwen/Qwen3.6-35B-A3B-FP8
+        ├─ /mcp           → multiplexed SandboxAgent MCP servers
         ├─ /desktop/      → noVNC desktop viewer
         └─ /desktop-api/  → computer-use HTTP API
                       ↓
@@ -51,12 +52,13 @@ bootstrap.sh  →  dockerized k3s (k3s-viper) + Argo CD + root Application
    OTEL collector → Langfuse (configured; keys in Vault)
 ```
 
-**One AI gateway, two providers.** There is a single Gateway (`agentgateway-proxy` in `agentgateway-system`) on NodePort **30100**. Not two gateways. Two `AgentgatewayBackend` + `HTTPRoute` objects attach to that Gateway.
+**One AI gateway.** There is a single Gateway (`agentgateway-proxy` in `agentgateway-system`) on NodePort **30100**. Not two gateways. LLM, MCP, and desktop `AgentgatewayBackend` + `HTTPRoute` objects attach to that Gateway.
 
 | Path | Backend | Model | Auth |
 |------|---------|-------|------|
 | `/v1`, `/openai` | OpenAI (`api.openai.com`) | `gpt-5.5`, `gpt-5-mini` | Vault `secret/platform/openai` → ExternalSecret `openai-secret` |
 | `/spark` | DGX Spark `172.16.10.173:8000` (vLLM) | `Qwen/Qwen3.6-35B-A3B-FP8` | none (config inspired by [sebbycorp/k8s-goose](https://github.com/sebbycorp/k8s-goose)) |
+| `/mcp` | Multiplexed MCP (Fortigate, F5, Arista, AWS, ServiceNow, GCP, kagent-tools) | Streamable HTTP | none (LAN). See [docs/agentgateway-mcp.md](docs/agentgateway-mcp.md) |
 
 Desktop viewer (noVNC) and computer-use API share the same Gateway: `/desktop/` and `/desktop-api/` — [docs/desktop-computer-use.md](docs/desktop-computer-use.md).
 
@@ -78,7 +80,7 @@ platform/headlamp/            # Headlamp (kustomize helmCharts + hostUsers patch
 platform/argocd-access/       # Argo CD UI NodePort + argocd-cm --enable-helm
 platform/gateway-api/         # Gateway API CRDs
 platform/agentgateway/        # agentgateway control plane values
-platform/agentgateway-ai/     # one Gateway, OpenAI + Spark + desktop routes, OTEL collector
+platform/agentgateway-ai/     # one Gateway, OpenAI + Spark + MCP + desktop routes, OTEL collector
 platform/desktop/             # computer-use desktop Deployment (noVNC + API)
 platform/langfuse/            # Langfuse Helm + ExternalSecret
 platform/substrate-app/       # Agent Substrate helmCharts 0.0.9 + valkey STS defaults patch

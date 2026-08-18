@@ -11,5 +11,7 @@ resources:
   - httproute-dgx-spark.yaml
   - backend-desktop.yaml
   - httproute-desktop.yaml
+  - backend-viper-mcp.yaml
+  - httproute-viper-mcp.yaml
   - otel-collector.yaml
   - gateway-parameters-tracing.yaml
