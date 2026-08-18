@@ -103,6 +103,8 @@ site/                         # Hugo handbook → GitHub Pages
 | [docs/headlamp.md](docs/headlamp.md) | Headlamp token login + hostUsers GitOps note |
 | [docs/vault-eso-setup.md](docs/vault-eso-setup.md) | Vault init/unseal, ESO, secret paths |
 | [docs/agentgateway-langfuse.md](docs/agentgateway-langfuse.md) | One gateway / two backends, Langfuse, OTEL |
+| [docs/agentgateway-mcp.md](docs/agentgateway-mcp.md) | One `/mcp` multiplex for SandboxAgent MCP servers |
+| [docs/mcp-servers/README.md](docs/mcp-servers/README.md) | All MCP servers, agentgateway config, Grok Bot access |
 | [docs/kagent-substrate.md](docs/kagent-substrate.md) | OSS kagent + Agent Substrate (UI :30500, hello agent) |
 | [docs/fortigate-agent.md](docs/fortigate-agent.md) | Home FortiGate Go SandboxAgent + FortiOS MCP (fw-maniak-hq) |
 | [docs/arista-ceos-agent.md](docs/arista-ceos-agent.md) | Read-only Arista cEOS Go SandboxAgent + eAPI MCP (Containerlab) |
@@ -334,7 +336,7 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 | Argo UI unreachable | `svc argocd-server-nodeport`; app `platform-argocd-access` |
 | Vault UI unreachable / sealed | Unseal; [docs/vault-eso-setup.md](docs/vault-eso-setup.md) |
 | ClusterSecretStore not Ready | Vault unsealed + k8s auth role `external-secrets` |
-| agentgateway `GET /` → 404 | Expected — use `/v1`, `/spark`, `/desktop/`, or `/desktop-api/health` |
+| agentgateway `GET /` → 404 | Expected — use `/mcp`, `/v1`, `/spark`, `/desktop/`, or `/desktop-api/health` |
 | desktop ImagePullBackOff | Import `viper-desktop:dev` on the node — [docs/desktop-computer-use.md](docs/desktop-computer-use.md) |
 | fortigate-mcp ImagePullBackOff | Import `fortigate-mcp:dev` on the node — [docs/fortigate-agent.md](docs/fortigate-agent.md) |
 | arista-ceos-mcp ImagePullBackOff | Import `arista-ceos-mcp:dev` on the node — [docs/arista-ceos-agent.md](docs/arista-ceos-agent.md) |
