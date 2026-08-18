@@ -29,6 +29,7 @@ Paths used by this platform (KV v2 mount `secret/`):
 | `secret/platform/langfuse` | Langfuse Helm via ExternalSecret | `salt`, `encryption_key`, `nextauth_secret`, `postgres_password`, `redis_password`, `clickhouse_password`, `minio_root_user`, `minio_root_password`, `nextauth_url` |
 | `secret/platform/langfuse-otel` | OTEL collector → Langfuse | `public_key`, `secret_key`, `endpoint` |
 | `secret/platform/fortigate` | FortiOS MCP ExternalSecret `fortigate-mcp` | `token`, `host` |
+| `secret/platform/arista-ceos` | Arista eAPI MCP ExternalSecret `arista-ceos-mcp` | `username`, `password`, `hosts_json` |
 | `secret/demo/whoami` | optional demo | app-specific |
 
 Write OpenAI key (example):
@@ -130,6 +131,7 @@ Examples in-repo:
 - `platform/agentgateway-ai/otel-collector.yaml` → Secret `langfuse-otel-auth`
 - `platform/kagent-ai/dummy-openai-secret.yaml` → dummy Secret `kagent-openai` (not from Vault)
 - `platform/kagent-ai/fortigate-external-secret.yaml` → Secret `fortigate-mcp` (FortiOS token; never commit it)
+- `platform/kagent-ai/arista-ceos-external-secret.yaml` → Secret `arista-ceos-mcp` (eAPI password; never commit it)
 
 Never put secret **values** in git — only paths and `ExternalSecret` manifests.
 

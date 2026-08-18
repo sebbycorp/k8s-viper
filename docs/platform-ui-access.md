@@ -26,7 +26,7 @@ not for exposing these UIs.
 | **Desktop viewer** (noVNC) | `http://172.16.10.135:30100/desktop/` | Lab-open VNC behind the gateway — [desktop-computer-use.md](desktop-computer-use.md) |
 | **Desktop computer-use API** | `http://172.16.10.135:30100/desktop-api/health` | No auth in the process; import `viper-desktop:dev` first |
 | **Langfuse** | `http://172.16.10.135:30300/` | First-user signup in UI |
-| **kagent UI** | `http://172.16.10.135:30500/` | OSS kagent 0.10.0-rc2 + Agent Substrate. Chat with `hello-substrate` or `fortigate` — [kagent-substrate.md](kagent-substrate.md), [fortigate-agent.md](fortigate-agent.md) |
+| **kagent UI** | `http://172.16.10.135:30500/` | OSS kagent 0.10.0-rc2 + Agent Substrate. Chat with `hello-substrate`, `fortigate`, or `arista-ceos` — [kagent-substrate.md](kagent-substrate.md), [fortigate-agent.md](fortigate-agent.md), [arista-ceos-agent.md](arista-ceos-agent.md) |
 
 ### Ingress hosts (Traefik `:80`)
 

@@ -4,7 +4,7 @@
   <div class="eyebrow">Isolated sandboxes, not plain Agents</div>
   <h2>{{ .Title }}</h2>
   <p class="lede">
-    Six gVisor <strong>SandboxAgents</strong> I built on Viper.
+    Seven gVisor <strong>SandboxAgents</strong> I built on Viper.
     Not plain Agent Deployments. The
     <a href="{{ with .Site.GetPage "/handbook" }}{{ .RelPermalink }}{{ end }}">handbook</a> is still
     the full map — this page is the one I send people.
@@ -47,9 +47,9 @@
 <section id="the-five">
   <div class="section-head"><span class="section-num">02</span><h2>The agents</h2></div>
   <p class="lead">
-    All six are gVisor SandboxAgents. Cards with a photo use a real
-    Chromium chat shot. hello-substrate, fortigate, and f5-bigip have no live shot
-    in git — I am not inventing one.
+    All seven are gVisor SandboxAgents. Cards with a photo use a real
+    Chromium chat shot. hello-substrate, fortigate, f5-bigip, and arista-ceos
+    have no live shot in git — I am not inventing one.
   </p>
   {{ partial "agent-cards.html" (dict "Site" .Site "home" false) }}
 
@@ -124,7 +124,7 @@
 {{ end }}
 
 <section id="pins">
-  <div class="section-head"><span class="section-num">09</span><h2>Pins (do not bump)</h2></div>
+  <div class="section-head"><span class="section-num">10</span><h2>Pins (do not bump)</h2></div>
   <p class="lead">
     Official pairing. Substrate <code>0.0.12</code> drops
     <code>valueFrom</code> and breaks rc2. Do not “upgrade to fix”

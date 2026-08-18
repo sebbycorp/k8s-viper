@@ -95,6 +95,16 @@ require_file images/fortigate-mcp/Dockerfile
 require_file images/fortigate-mcp/README.md
 require_file images/fortigate-mcp/requirements.txt
 require_file images/fortigate-mcp/server.py
+require_file platform/kagent-ai/arista-ceos-agent.yaml
+require_file platform/kagent-ai/arista-ceos-mcp.yaml
+require_file platform/kagent-ai/arista-ceos-skills.yaml
+require_file platform/kagent-ai/arista-ceos-external-secret.yaml
+require_file docs/arista-ceos-agent.md
+require_file images/arista-ceos-mcp/Dockerfile
+require_file images/arista-ceos-mcp/README.md
+require_file images/arista-ceos-mcp/requirements.txt
+require_file images/arista-ceos-mcp/server.py
+require_file images/arista-ceos-mcp/test_server.py
 require_file site/hugo.toml
 require_file site/data/cluster.yaml
 require_file site/layouts/index.html
@@ -280,6 +290,10 @@ if command -v kubeconform >/dev/null 2>&1; then
     platform/kagent-ai/fortigate-agent.yaml
     platform/kagent-ai/fortigate-mcp.yaml
     platform/kagent-ai/fortigate-external-secret.yaml
+    platform/kagent-ai/arista-ceos-agent.yaml
+    platform/kagent-ai/arista-ceos-mcp.yaml
+    platform/kagent-ai/arista-ceos-skills.yaml
+    platform/kagent-ai/arista-ceos-external-secret.yaml
     platform/argocd-access/argocd-server-nodeport.yaml
     platform/argocd-access/argocd-cm-kustomize.yaml
     platform/ingress/namespace-apps.yaml
@@ -343,6 +357,21 @@ if command -v python3 >/dev/null 2>&1; then
   else
     fail "fortigate-mcp self-check"
   fi
+  if python3 -m py_compile images/arista-ceos-mcp/server.py images/arista-ceos-mcp/test_server.py; then
+    ok "python3 -m py_compile images/arista-ceos-mcp"
+  else
+    fail "arista-ceos-mcp failed to compile"
+  fi
+  if python3 images/arista-ceos-mcp/server.py --self-check; then
+    ok "arista-ceos-mcp self-check"
+  else
+    fail "arista-ceos-mcp self-check"
+  fi
+  if (cd images/arista-ceos-mcp && python3 -m unittest test_server.py -q); then
+    ok "arista-ceos-mcp unit tests"
+  else
+    fail "arista-ceos-mcp unit tests"
+  fi
 fi
 
 log "Checking FortiGate paths for committed secret values..."
@@ -352,6 +381,15 @@ if git grep -nE '(FORTIGATE_TOKEN|Authorization: Bearer)[[:space:]]*[:=][[:space
   fail "possible FortiGate secret value in git"
 else
   ok "no FortiGate secret values in new manifests"
+fi
+
+log "Checking Arista paths for committed secret values..."
+if git grep -nE '(ARISTA_PASSWORD)[[:space:]]*[:=][[:space:]]*['\''\"][^'\''\"]{8,}' -- images/arista-ceos-mcp/server.py images/arista-ceos-mcp/Dockerfile images/arista-ceos-mcp/README.md platform/kagent-ai docs/arista-ceos-agent.md >/tmp/arista-secret-scan.txt 2>/dev/null \
+   && [[ -s /tmp/arista-secret-scan.txt ]]; then
+  cat /tmp/arista-secret-scan.txt >&2
+  fail "possible Arista secret value in git"
+else
+  ok "no Arista secret values in new manifests"
 fi
 
 if ((errors > 0)); then

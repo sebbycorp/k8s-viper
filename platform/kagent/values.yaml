@@ -52,7 +52,7 @@ grafana-mcp:
 # Default Helm Agent subcharts. Chart 0.10.0-rc2 values + Chart.yaml
 # conditions are TOP-LEVEL `<name>.enabled` (not agents.*). Defaults true.
 # After merge, platform-kagent must not emit these Agent CRs. Lab agents
-# are SandboxAgent/hello-substrate and SandboxAgent/fortigate in
+# are SandboxAgent/hello-substrate, fortigate, f5-bigip, and arista-ceos in
 # platform-kagent-ai.
 # querydoc is a tool Deployment — leave the chart default (enabled).
 k8s-agent:
