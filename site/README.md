@@ -63,3 +63,5 @@ Canonical markdown runbooks live under `../docs/` (not only this site):
 - `mcp-servers/README.md` — multiplex MCP front door on :30100/mcp
 - `why-traefik.md` — Traefik vs kgateway
 - `headlamp.md` — dashboard tokens
+
+Custom domain: `https://viper.maniak.ai/` (GitHub Pages + Let's Encrypt).
