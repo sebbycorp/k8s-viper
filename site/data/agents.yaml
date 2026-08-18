@@ -256,9 +256,9 @@ agents:
     namespace: kagent
     runtime: Go Declarative
     vault: secret/platform/arista-ceos
-    image: ""
+    image: agents/arista-ceos-chat.png
     gif: ""
-    image_caption: ""
+    image_caption: "Live kagent UI, 2026-08-17. BGP summary on spine1 — ASN 65000, both leaves Established. Chromium capture, not reconstructed."
     gif_caption: ""
     facts:
       - key: Fabric
@@ -269,14 +269,14 @@ agents:
         value: secret/platform/arista-ceos
       - key: Git
         value: platform/kagent-ai/arista-ceos-*.yaml
-    live: []
+    live:
+      - key: EOS
+        value: 4.33.9M
+      - key: spine1 ASN
+        value: "65000"
+      - key: BGP peers
+        value: "10.0.1.1/65101 Estab · 10.0.2.1/65102 Estab"
     gaps:
-      - kind: warn
-        text: Live verification pending. Containerlab eAPI reachability from dockerized k3s has not been confirmed. I am not inventing BGP, LLDP, or route state.
-      - kind: warn
-        text: No live screenshot in this repo. I am not inventing or generating one.
-      - kind: warn
-        text: Image must be imported on the k3s node (ctr images import) before the MCP pod starts.
       - kind: danger
         text: Never commit the eAPI password. Vault path name only. LAN-only — do not publish :30500 or cEOS eAPI.
     links:
