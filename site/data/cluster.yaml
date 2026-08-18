@@ -575,6 +575,8 @@ troubleshooting:
 docs:
   - name: Agents showcase (this site)
     url: https://viper.maniak.ai/agents/
+  - name: MCP servers (this site)
+    url: https://viper.maniak.ai/mcp-servers/
   - name: Repository
     url: https://github.com/sebbycorp/k8s-viper
   - name: README

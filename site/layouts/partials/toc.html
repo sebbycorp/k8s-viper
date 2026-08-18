@@ -5,6 +5,8 @@
       <h1>{{ .Site.Title }}</h1>
       {{ if eq .Section "agents" }}
       <p>SandboxAgents</p>
+      {{ else if eq .Section "mcp-servers" }}
+      <p>one MCP front door</p>
       {{ else if eq .Section "handbook" }}
       <p>full lab map</p>
       {{ else }}
@@ -16,7 +18,18 @@
   {{ partial "site-nav.html" . }}
   <p class="toc-label">Contents</p>
   <nav>
-    {{ if eq .Section "agents" }}
+    {{ if eq .Section "mcp-servers" }}
+    <ul class="toc" id="toc-list">
+      <li><a href="#front-door"><span class="num">01</span> Front door</a></li>
+      <li><a href="#inventory"><span class="num">02</span> Seven servers</a></li>
+      <li><a href="#tools"><span class="num">03</span> tools/list</a></li>
+      <li><a href="#traffic"><span class="num">04</span> Traffic flow</a></li>
+      <li><a href="#shots"><span class="num">05</span> Live CRs</a></li>
+      <li><a href="#clients"><span class="num">06</span> Grok Bot</a></li>
+      <li><a href="#gateway"><span class="num">07</span> Gateway CRD</a></li>
+      <li><a href="#source"><span class="num">08</span> Source</a></li>
+    </ul>
+    {{ else if eq .Section "agents" }}
     <ul class="toc" id="toc-list">
       <li><a href="#why-sandboxes"><span class="num">01</span> Why sandboxes</a></li>
       <li><a href="#the-five"><span class="num">02</span> The agents</a></li>
@@ -65,6 +78,8 @@
     <a href="{{ .Site.Params.github }}/blob/main/README.md">→ README</a>
     {{ if eq .Section "agents" }}
     <span>Static showcase · not live status</span>
+    {{ else if eq .Section "mcp-servers" }}
+    <span>LAN catalog · not a public MCP</span>
     {{ else if eq .Section "handbook" }}
     <span>Static handbook · not live status</span>
     {{ else }}

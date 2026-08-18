@@ -1,10 +1,13 @@
 {{ $home := .Site.Home.RelPermalink }}
 {{ $agents := $home }}
+{{ $mcp := $home }}
 {{ $handbook := $home }}
 {{ with .Site.GetPage "/agents" }}{{ $agents = .RelPermalink }}{{ end }}
+{{ with .Site.GetPage "/mcp-servers" }}{{ $mcp = .RelPermalink }}{{ end }}
 {{ with .Site.GetPage "/handbook" }}{{ $handbook = .RelPermalink }}{{ end }}
 <nav class="site-nav" aria-label="Site">
   <a href="{{ $home }}"{{ if .IsHome }} class="is-active" aria-current="page"{{ end }}>Home</a>
   <a href="{{ $agents }}"{{ if eq .Section "agents" }} class="is-active" aria-current="page"{{ end }}>Agents</a>
+  <a href="{{ $mcp }}"{{ if eq .Section "mcp-servers" }} class="is-active" aria-current="page"{{ end }}>MCP</a>
   <a href="{{ $handbook }}"{{ if eq .Section "handbook" }} class="is-active" aria-current="page"{{ end }}>Handbook</a>
 </nav>
