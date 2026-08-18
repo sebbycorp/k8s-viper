@@ -1,0 +1,353 @@
+<header class="hero" id="top">
+  <div class="eyebrow">One multiplex MCP · Streamable HTTP</div>
+  <h2>{{ .Title }}</h2>
+  <p class="lede">
+    One agentgateway path for every Viper <strong>SandboxAgent</strong>.
+    Clients hit <code>http://172.16.10.135:30100/mcp</code> on the LAN.
+    The gateway multiplexes <code>tools/list</code> and <code>tools/call</code>
+    onto seven ClusterIP MCP pods. Vault stays on the pod, not the gateway.
+  </p>
+  <div class="pills">
+    <span class="pill ok">Streamable HTTP</span>
+    <span class="pill ok">:30100/mcp</span>
+    <span class="pill">LAN only</span>
+    <span class="pill">185 tools</span>
+    <span class="pill">FailOpen</span>
+    <span class="pill">prefixMode Conditional</span>
+  </div>
+</header>
+
+<section id="front-door">
+  <div class="section-head"><span class="section-num">01</span><h2>Front door</h2></div>
+  <p class="lead">
+    Same <code>agentgateway-proxy</code> already used for OpenAI and Spark.
+    MCP is one more path on that Gateway — not a second proxy.
+  </p>
+  <div class="grid-2">
+    <div class="stat"><div class="k">Gateway</div><div class="v">agentgateway-proxy</div></div>
+    <div class="stat"><div class="k">Namespace</div><div class="v">agentgateway-system</div></div>
+    <div class="stat"><div class="k">NodePort</div><div class="v">30100</div></div>
+    <div class="stat live"><div class="k">MCP URL</div><div class="v">http://172.16.10.135:30100/mcp</div></div>
+    <div class="stat"><div class="k">Transport</div><div class="v">Streamable HTTP</div></div>
+    <div class="stat"><div class="k">Client auth</div><div class="v">none (same as /spark)</div></div>
+  </div>
+  <div class="callout danger">
+    <div>
+      <strong>LAN only.</strong>
+      Do <em>not</em> publish kagent <code>:30500</code> or the gateway admin UI
+      as a public URL. <code>:30100/mcp</code> is the home subnet, no bearer.
+      Never put Vault values in git or on this site — path names only.
+    </div>
+  </div>
+</section>
+
+<section id="inventory">
+  <div class="section-head"><span class="section-num">02</span><h2>Seven MCP servers</h2></div>
+  <p class="lead">
+    Every server is a Deployment + ClusterIP in <code>kagent</code>,
+    <code>STREAMABLE_HTTP</code> on <code>:8084/mcp</code>.
+    Images are imported on the node (<code>IfNotPresent</code>).
+    Creds come from Vault via ExternalSecret.
+  </p>
+  <div class="card table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Prefix</th>
+          <th>Service</th>
+          <th>SandboxAgent</th>
+          <th>Target</th>
+          <th>Vault path</th>
+          <th>Git</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono"><strong>fortigate_</strong></td>
+          <td class="mono">fortigate-mcp</td>
+          <td>fortigate</td>
+          <td>FortiGate 80F <code>172.16.10.1</code></td>
+          <td class="mono">secret/platform/fortigate</td>
+          <td>k8s-viper <code>platform/kagent-ai/fortigate-*.yaml</code></td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>f5-bigip_</strong></td>
+          <td class="mono">f5-bigip-mcp</td>
+          <td>f5-bigip</td>
+          <td>BIG-IP <code>172.16.10.10</code></td>
+          <td class="mono">secret/platform/f5-bigip</td>
+          <td>k8s-viper <code>platform/kagent-ai/f5-bigip-*.yaml</code></td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>arista-ceos_</strong></td>
+          <td class="mono">arista-ceos-mcp</td>
+          <td>arista-ceos</td>
+          <td>Containerlab cEOS eAPI</td>
+          <td class="mono">secret/platform/arista-ceos</td>
+          <td>k8s-viper <code>platform/kagent-ai/arista-ceos-*.yaml</code></td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>aws-budget_</strong></td>
+          <td class="mono">aws-budget-mcp</td>
+          <td>aws-budget</td>
+          <td>AWS us-east-2 billing / capacity</td>
+          <td class="mono">secret/platform/aws-budget</td>
+          <td>demos <code>aws-sandbox-agent</code></td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>servicenow_</strong></td>
+          <td class="mono">servicenow-mcp</td>
+          <td>servicenow</td>
+          <td>ServiceNow IT tickets</td>
+          <td class="mono">secret/platform/servicenow</td>
+          <td>demos <code>service-now-sandbox-agent</code></td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>gcp-budget_</strong></td>
+          <td class="mono">gcp-budget-mcp</td>
+          <td>gcp-budget</td>
+          <td>GCP us-east1 billing / capacity</td>
+          <td class="mono">secret/platform/gcp-budget</td>
+          <td>demos <code>gcp-sandbox-agent</code></td>
+        </tr>
+        <tr>
+          <td class="mono"><strong>kagent-tools_</strong></td>
+          <td class="mono">kagent-tools</td>
+          <td>hello-substrate</td>
+          <td>in-cluster k8s reads</td>
+          <td class="mono">(kagent SA)</td>
+          <td>RemoteMCPServer · kagent Helm + hello-substrate</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="lead" style="margin-top:1rem">
+    Demos repo:
+    <a href="https://github.com/sebbycorp/kagent-agent-substrate-demos">sebbycorp/kagent-agent-substrate-demos</a>.
+    kagent SandboxAgents still talk to the ClusterIP Services directly
+    (<code>RemoteMCPServer</code> in <code>kagent</code>).
+    The gateway is the extra front door for Grok Bot and other MCP clients.
+  </p>
+</section>
+
+<section id="tools">
+  <div class="section-head"><span class="section-num">03</span><h2>Live tools/list</h2></div>
+  <p class="lead">
+    A live <code>tools/list</code> through the gateway (2026-08-18) returned
+    <strong>185</strong> tools. Prefixes keep names from colliding.
+  </p>
+  <div class="grid-2">
+    <div class="stat live"><div class="k">Total</div><div class="v">185 tools</div></div>
+    <div class="stat"><div class="k">fortigate_</div><div class="v">22</div></div>
+    <div class="stat"><div class="k">f5-bigip_</div><div class="v">6</div></div>
+    <div class="stat"><div class="k">arista-ceos_</div><div class="v">6</div></div>
+    <div class="stat"><div class="k">aws-budget_</div><div class="v">11</div></div>
+    <div class="stat"><div class="k">servicenow_</div><div class="v">8</div></div>
+    <div class="stat"><div class="k">gcp-budget_</div><div class="v">8</div></div>
+    <div class="stat"><div class="k">kagent-tools_</div><div class="v">124</div></div>
+  </div>
+</section>
+
+<section id="traffic">
+  <div class="section-head"><span class="section-num">04</span><h2>Traffic flow</h2></div>
+  <p class="lead">
+    A client hits <strong>one</strong> URL. The gateway multiplexes onto the
+    right ClusterIP MCP. Those pods hold the Vault creds and talk to the real
+    boxes and APIs. The client never sees FortiOS / iControl / eAPI / cloud keys.
+  </p>
+  <div class="mermaid">
+flowchart LR
+  subgraph clients["LAN clients"]
+    GB["Grok Bot"]
+    CUR["Cursor"]
+    KA["kagent UI"]
+  end
+
+  subgraph gw["agentgateway-proxy :30100"]
+    direction TB
+    MCP["/mcp  viper-mcp"]
+    LLM["/v1  gpt-5.5"]
+    SP["/spark  Qwen"]
+    DESK["/desktop"]
+  end
+
+  subgraph pods["kagent ClusterIP :8084"]
+    direction TB
+    FG["fortigate-mcp"]
+    F5["f5-bigip-mcp"]
+    AR["arista-ceos-mcp"]
+    CL["aws / servicenow / gcp"]
+    KT["kagent-tools"]
+  end
+
+  subgraph edge["Outside the cluster"]
+    T1["FortiGate 80F"]
+    T2["BIG-IP"]
+    T3["cEOS lab"]
+    T4["AWS GCP ServiceNow"]
+    T5["k8s API"]
+    V["Vault ESO"]
+  end
+
+  GB --> MCP
+  CUR --> MCP
+  KA --> LLM
+  KA -.->|"tools skip the gateway"| pods
+  MCP --> FG
+  MCP --> F5
+  MCP --> AR
+  MCP --> CL
+  MCP --> KT
+  FG --> T1
+  F5 --> T2
+  AR --> T3
+  CL --> T4
+  KT --> T5
+  V -.-> FG
+  V -.-> F5
+  V -.-> AR
+  V -.-> CL
+
+  classDef gwn fill:#111111,stroke:#111111,color:#f6f6f4
+  classDef mcp fill:#e8f3ee,stroke:#0b6b4f,color:#111111
+  class MCP,LLM,SP,DESK gwn
+  class FG,F5,AR,CL,KT mcp
+  </div>
+  <p class="lead">
+    One tool call after connect. Prefix on the way in, Vault only on the pod,
+    FailOpen on <code>tools/list</code>.
+  </p>
+  <div class="mermaid">
+sequenceDiagram
+  autonumber
+  participant C as Grok Bot / Cursor
+  participant G as agentgateway :30100/mcp
+  participant P as fortigate-mcp
+  participant V as Vault via ESO
+  participant T as FortiGate 172.16.10.1
+
+  C->>G: initialize Streamable HTTP
+  G-->>C: serverInfo agentgateway 1.4.1
+  C->>G: tools/list
+  G->>P: list (and the other six, FailOpen)
+  P-->>G: fg_list_policies …
+  G-->>C: fortigate_fg_list_policies …
+  C->>G: tools/call fortigate_fg_list_policies
+  G->>P: fg_list_policies
+  P->>V: token already in the pod
+  P->>T: FortiOS REST
+  T-->>P: policies
+  P-->>G: result
+  G-->>C: result
+  </div>
+  <p class="lead">
+    kagent UI skips the gateway for <strong>tools</strong>. It still uses this
+    same Gateway for the <strong>model</strong> (<code>/v1</code> → gpt-5.5).
+  </p>
+</section>
+
+<section id="shots">
+  <div class="section-head"><span class="section-num">05</span><h2>Live CRs</h2></div>
+  <p class="lead">
+    Live <code>kubectl</code> captures on k3s-viper, 2026-08-18 (status
+    <strong>Accepted</strong>). The agentgateway admin port (15000) is not
+    published on this lab, so these are the live CRs — not a reconstructed
+    admin UI.
+  </p>
+  <figure class="shot">
+    <img src="{{ "mcp-servers/backends-list.png" | relURL }}" alt="kubectl list of AgentgatewayBackends and HTTPRoutes on agentgateway-system" />
+    <figcaption>Backends and HTTPRoutes — live kubectl on k3s-viper, 2026-08-18. viper-mcp is Accepted.</figcaption>
+  </figure>
+  <figure class="shot">
+    <img src="{{ "mcp-servers/backend-viper-mcp.png" | relURL }}" alt="kubectl describe AgentgatewayBackend/viper-mcp showing StreamableHTTP targets" />
+    <figcaption>AgentgatewayBackend/viper-mcp — StreamableHTTP targets on :8084/mcp, failureMode FailOpen, prefixMode Conditional. Status Accepted.</figcaption>
+  </figure>
+  <figure class="shot">
+    <img src="{{ "mcp-servers/httproute-viper-mcp.png" | relURL }}" alt="kubectl describe HTTPRoute/viper-mcp attaching /mcp to agentgateway-proxy" />
+    <figcaption>HTTPRoute/viper-mcp — path prefix /mcp on agentgateway-proxy. Status Accepted.</figcaption>
+  </figure>
+</section>
+
+<section id="clients">
+  <div class="section-head"><span class="section-num">06</span><h2>How Grok Bot reaches it</h2></div>
+  <p class="lead">
+    Grok Bot (the k8s-viper agent) is the intended agentic front door.
+    You ask it to do infra work. It jumps onto Viper. You do not paste tokens,
+    and you do not publish <code>/mcp</code>.
+  </p>
+  <ul class="clean">
+    <li><strong>LAN via the Viper host.</strong> The agent already has a jump onto Viper and can call <code>http://127.0.0.1:30100/mcp</code> from that host. Common case: no Grok Bot Plugins marketplace add.</li>
+    <li><strong>This box cannot hit 172.16.10.135:30100 directly.</strong> The Grok Bot computer is not on the 172.16.10.0/24 LAN. A raw connector add of that URL times out unless a tunnel exists.</li>
+    <li><strong>Until a tunnel exists</strong>, prefer the k8s-viper chat (jump onto Viper, then <code>/mcp</code> on localhost).</li>
+    <li><strong>Cursor on the home LAN</strong> can point at the same URL. Still do not put this on a public machine.</li>
+  </ul>
+  <pre><code>{
+  "mcpServers": {
+    "viper": {
+      "url": "http://172.16.10.135:30100/mcp"
+    }
+  }
+}</code></pre>
+  <div class="callout">
+    <div>
+      <strong>Do not paste a Vault token into chat.</strong>
+      If the route later grows a bearer header, use Grok Bot’s secret-request
+      card — not a paste. MCP Inspector on the LAN:
+      <code>npx @modelcontextprotocol/inspector@0.21.2</code>,
+      transport Streamable HTTP, URL <code>http://172.16.10.135:30100/mcp</code>.
+    </div>
+  </div>
+</section>
+
+<section id="gateway">
+  <div class="section-head"><span class="section-num">07</span><h2>Gateway CRD</h2></div>
+  <p class="lead">
+    Chart <strong>1.4.1</strong>. Same Gateway as <code>/v1</code>,
+    <code>/openai</code>, <code>/spark</code>, <code>/desktop/</code>.
+    Git: <code>platform/agentgateway-ai/backend-viper-mcp.yaml</code>,
+    <code>httproute-viper-mcp.yaml</code>.
+  </p>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Field</th><th>Value on Viper</th></tr></thead>
+      <tbody>
+        <tr><td>protocol</td><td class="mono">StreamableHTTP</td></tr>
+        <tr><td>failureMode</td><td class="mono">FailOpen</td></tr>
+        <tr><td>prefixMode</td><td class="mono">Conditional</td></tr>
+        <tr><td>target</td><td class="mono">static.host + port 8084 + path /mcp</td></tr>
+        <tr><td>backendRef</td><td class="mono">*.kagent.svc.cluster.local:8084/mcp</td></tr>
+        <tr><td>HTTPRoute</td><td class="mono">viper-mcp · path prefix /mcp</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul class="clean">
+    <li><code>spec.mcp.failureMode: FailOpen</code> — one down MCP does not kill the session or hide Fortigate tools.</li>
+    <li><code>spec.mcp.prefixMode: Conditional</code> — tool names become <code>target_tool</code> because there are many targets.</li>
+    <li><code>backendRef</code> is namespace-local only, so these use cluster DNS (<code>*.kagent.svc.cluster.local</code>).</li>
+    <li>Gateway does not inject Fortigate / F5 / cloud keys. The MCP pods already have ExternalSecrets.</li>
+  </ul>
+  <pre><code>docker exec k3s-viper kubectl -n agentgateway-system get agentgatewaybackend viper-mcp
+docker exec k3s-viper kubectl -n agentgateway-system get httproute viper-mcp</code></pre>
+  <div class="callout ok">
+    <div>
+      <strong>Not on this lab yet</strong> (do not pretend they are): client auth
+      on <code>/mcp</code>, tool-level allow lists, public internet exposure.
+      <code>GET /</code> on <code>:30100</code> is 404 <code>route not found</code>.
+      That is expected. Use <code>/mcp</code>, <code>/v1</code>, or <code>/spark</code>.
+    </div>
+  </div>
+</section>
+
+<section id="source">
+  <div class="section-head"><span class="section-num">08</span><h2>Source</h2></div>
+  <p class="lead">
+    Canonical runbook (this page is the public send-link):
+    <a href="https://github.com/sebbycorp/k8s-viper/blob/main/docs/mcp-servers/README.md">docs/mcp-servers/README.md</a>.
+  </p>
+  <p class="agent-links">
+    <a href="https://github.com/sebbycorp/k8s-viper/blob/main/docs/mcp-servers/README.md">GitHub README →</a>
+    <a href="{{ with .Site.GetPage "/agents" }}{{ .RelPermalink }}{{ end }}">SandboxAgents →</a>
+    <a href="{{ with .Site.GetPage "/handbook" }}{{ .RelPermalink }}{{ end }}">Handbook →</a>
+    <a href="{{ .Site.Params.github }}">Repository →</a>
+  </p>
+</section>

@@ -1112,3 +1112,16 @@ main > .site-nav, .site-footer .site-nav { display: none; }
 @media (max-width: 520px) {
   .actor-grid { grid-template-columns: 1fr; }
 }
+
+
+.mermaid {
+  margin: 1.25rem 0;
+  padding: 1rem;
+  background: #fafaf7;
+  border: 1px solid var(--border);
+  overflow-x: auto;
+}
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
