@@ -199,7 +199,7 @@ curl -H 'Host: whoami.viper.local' http://172.16.10.135/
 **AI** — one gateway, two providers: [docs/agentgateway-langfuse.md](docs/agentgateway-langfuse.md).  
 **Agents** — OSS kagent + Agent Substrate: [docs/kagent-substrate.md](docs/kagent-substrate.md).  
 **Home FortiGate** — Go SandboxAgent `fortigate`: [docs/fortigate-agent.md](docs/fortigate-agent.md).  
-**Arista cEOS** — Go SandboxAgent `arista-ceos` (live verification pending): [docs/arista-ceos-agent.md](docs/arista-ceos-agent.md).
+**Arista cEOS** — Go SandboxAgent `arista-ceos` (Ready on Viper 2026-08-17): [docs/arista-ceos-agent.md](docs/arista-ceos-agent.md).
 
 ```bash
 export GW=http://172.16.10.135:30100
@@ -263,7 +263,7 @@ before that pod can start — [docs/fortigate-agent.md](docs/fortigate-agent.md)
 
 `platform-kagent-ai` also ships SandboxAgent `arista-ceos` + `arista-ceos-mcp`.
 Import `arista-ceos-mcp:dev` and write Vault `secret/platform/arista-ceos`
-before that pod can start. Live Containerlab verification is pending —
+before that pod can start. Live on Viper 2026-08-17 (eBGP Established) —
 [docs/arista-ceos-agent.md](docs/arista-ceos-agent.md).
 
 Known cosmetic: `svclb-agentgateway-proxy` **Pending** because Traefik already owns host `:80`/`:443`. AI data plane is NodePort **30100**. Do not try to steal port 80.
