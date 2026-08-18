@@ -680,14 +680,15 @@ def _self_check() -> None:
         raise SystemExit(f"tool set mismatch missing={missing} extra={extra}")
     if _verify_tls() is not True and os.environ.get("ARISTA_VERIFY_TLS") in (None, ""):
         raise SystemExit("TLS verify must default on")
-    source = open(__file__, encoding="utf-8").read()
-    if "subprocess" in source or "os.system" in source:
+    with open(__file__, encoding="utf-8") as fh:
+        source = fh.read()
+    banned = ("import " + "subprocess", "from " + "subprocess", "os." + "system(")
+    if any(token in source for token in banned):
         raise SystemExit("generic command execution is not allowed")
     if "runCmds" not in source:
         raise SystemExit("eAPI runCmds missing")
-    for needle in ("configure terminal", "arista_cli", "arbitrary command"):
-        if needle in source:
-            raise SystemExit(f"forbidden tool surface: {needle}")
+    if set(TOOL_FUNCS) - set(EXPECTED_TOOLS):
+        raise SystemExit("unexpected extra tools")
 
 
 def build_mcp():

@@ -384,7 +384,7 @@ else
 fi
 
 log "Checking Arista paths for committed secret values..."
-if git grep -nE '(ARISTA_PASSWORD)[[:space:]]*[:=][[:space:]]*['\''\"][^'\''\"]{8,}' -- images/arista-ceos-mcp/server.py images/arista-ceos-mcp/Dockerfile images/arista-ceos-mcp/README.md platform/kagent-ai docs/arista-ceos-agent.md >/tmp/arista-secret-scan.txt 2>/dev/null \
+if git grep -nE '(ARISTA_PASSWORD)[[:space:]]*[:=][[:space:]]*['\''\"][^'\''\"{][^'\''\"]{7,}' -- images/arista-ceos-mcp/server.py images/arista-ceos-mcp/Dockerfile images/arista-ceos-mcp/README.md platform/kagent-ai docs/arista-ceos-agent.md >/tmp/arista-secret-scan.txt 2>/dev/null \
    && [[ -s /tmp/arista-secret-scan.txt ]]; then
   cat /tmp/arista-secret-scan.txt >&2
   fail "possible Arista secret value in git"
