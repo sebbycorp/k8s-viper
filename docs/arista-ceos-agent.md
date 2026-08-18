@@ -34,9 +34,15 @@ flowchart LR
   ui --> sa --> actor --> mcp --> lab
 ```
 
-Expected demo ASNs (confirm with tools; do not assume Established):
-spine1 **65000**, leaf1 **65101**, leaf2 **65102**. eAPI is on the
-management network. A parallel repo owns the Containerlab topology.
+**Planned fabric** (Containerlab verification still pending — do not
+treat this as live): `spine1` / `leaf1` / `leaf2`, eBGP AS **65000** /
+**65101** / **65102**, management network **172.20.20.0/24**. eAPI is
+on that management network. A parallel repo owns the Containerlab
+topology.
+
+Backend switch image on Viper will be local **`ceos:4.33.9M`**, imported
+from the official **`cEOS64-lab-4.33.9M.tar.xz`** (amd64). Do **not**
+use Hub `sebbycorp/ceosimage` — that tag is arm64.
 
 ## Vault (key names only)
 
@@ -129,7 +135,7 @@ A2A path: `POST /api/a2a-sandboxes/kagent/arista-ceos` (classic
 - Which nodes are up, and what EOS version are they running?
 - Are the eBGP sessions from spine1 to the leaves Established?
 - Who does leaf1 see on LLDP?
-- What IPv4 routes does spine1 have for `10.1.1.0/24`?
+- What IPv4 routes does spine1 have? (optional prefix filter — do not invent a prefix)
 
 ## GitOps
 

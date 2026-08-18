@@ -21,7 +21,7 @@ Sebastian Maniak's lab. Single-node **dockerized k3s** on **Viper**, managed wit
 
 Design: [`docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md`](docs/superpowers/specs/2026-08-11-k3s-gitops-platform-design.md)
 
-**Environment handbook (GitHub Pages):** [sebbycorp.github.io/k8s-viper](https://sebbycorp.github.io/k8s-viper/) — Hugo TOC + full lab docs. Source: [`site/`](site/) (`cd site && hugo server`).
+**Environment handbook (GitHub Pages):** [viper.maniak.ai](https://viper.maniak.ai/) — Hugo TOC + full lab docs. Source: [`site/`](site/) (`cd site && hugo server`).
 
 ## Architecture
 

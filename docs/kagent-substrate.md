@@ -128,10 +128,11 @@ an Agent). `kmcp` stays on. Lab agents in `platform/kagent-ai` are
 
 1. Publish Docker NodePort **30500** on the k3s container (with the other UIs).
 2. Open `http://172.16.10.135:30500/`.
-3. Pick **kagent/hello-substrate** for cluster questions,
+3. Pick **kagent/hello-substrate** for cluster questions, or
    **kagent/fortigate** for the home FortiGate
-   ([fortigate-agent.md](fortigate-agent.md)), or **kagent/arista-ceos**
-   for the cEOS lab ([arista-ceos-agent.md](arista-ceos-agent.md)).
+   ([fortigate-agent.md](fortigate-agent.md)). `arista-ceos` is **not** a
+   live chat target yet — pending Containerlab + Vault + MCP import
+   ([arista-ceos-agent.md](arista-ceos-agent.md)).
 4. Ask hello-substrate something like: `What Kubernetes version is this cluster, and where are you running?`
 
 ```bash
