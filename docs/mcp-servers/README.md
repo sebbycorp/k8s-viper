@@ -25,95 +25,122 @@ kagent SandboxAgents still talk to the ClusterIP Services directly (`RemoteMCPSe
 
 A client hits **one** URL. The gateway multiplexes `tools/list` and `tools/call` onto the right ClusterIP MCP. Those pods hold the Vault creds and talk to the real boxes and APIs. The client never sees FortiOS / iControl / eAPI / cloud keys.
 
+Same listener also carries the models and the desktop. MCP is one path on that Gateway, not a second proxy.
+
 ```mermaid
-flowchart TB
-  subgraph clients["Clients on the LAN"]
-    GB["Grok Bot / k8s-viper"]
-    CUR["Cursor / Inspector"]
-    KA["kagent UI :30500"]
+flowchart LR
+  subgraph clients["LAN clients"]
+    GB["Grok Bot"]
+    CUR["Cursor"]
+    KA["kagent UI"]
   end
 
   subgraph gw["agentgateway-proxy :30100"]
-    R1["/v1 /openai → OpenAI"]
-    R2["/spark → DGX Spark vLLM"]
-    R3["/mcp → viper-mcp backend"]
-    R4["/desktop → noVNC + computer-use"]
+    direction TB
+    MCP["/mcp  viper-mcp"]
+    LLM["/v1  gpt-5.5"]
+    SP["/spark  Qwen"]
+    DESK["/desktop"]
   end
 
-  subgraph mcp["kagent namespace · ClusterIP :8084/mcp"]
+  subgraph pods["kagent ClusterIP :8084"]
+    direction TB
     FG["fortigate-mcp"]
     F5["f5-bigip-mcp"]
     AR["arista-ceos-mcp"]
-    AWS["aws-budget-mcp"]
-    SN["servicenow-mcp"]
-    GCP["gcp-budget-mcp"]
+    CL["aws / servicenow / gcp"]
     KT["kagent-tools"]
   end
 
-  subgraph targets["Targets · not in the cluster"]
-    T1["FortiGate 172.16.10.1"]
-    T2["BIG-IP 172.16.10.10"]
-    T3["cEOS lab eAPI"]
-    T4["AWS / GCP / ServiceNow APIs"]
-    T5["k8s API on k3s-viper"]
+  subgraph edge["Outside the cluster"]
+    T1["FortiGate 80F"]
+    T2["BIG-IP"]
+    T3["cEOS lab"]
+    T4["AWS GCP ServiceNow"]
+    T5["k8s API"]
+    V["Vault ESO"]
   end
 
-  GB -->|Streamable HTTP| R3
-  CUR -->|Streamable HTTP| R3
-  KA -->|RemoteMCPServer ClusterIP| mcp
-  R3 --> FG & F5 & AR & AWS & SN & GCP & KT
+  GB --> MCP
+  CUR --> MCP
+  KA --> LLM
+  KA -.->|"tools skip the gateway"| pods
+  MCP --> FG
+  MCP --> F5
+  MCP --> AR
+  MCP --> CL
+  MCP --> KT
   FG --> T1
   F5 --> T2
   AR --> T3
-  AWS --> T4
-  SN --> T4
-  GCP --> T4
+  CL --> T4
   KT --> T5
+  V -.-> FG
+  V -.-> F5
+  V -.-> AR
+  V -.-> CL
+
+  classDef gwn fill:#111111,stroke:#111111,color:#f6f6f4
+  classDef mcp fill:#e8f3ee,stroke:#0b6b4f,color:#111111
+  class MCP,LLM,SP,DESK gwn
+  class FG,F5,AR,CL,KT mcp
 ```
 
-One tool call, after the client is connected:
+One tool call after connect. Prefix on the way in, Vault only on the pod, FailOpen on `tools/list`.
 
 ```mermaid
 sequenceDiagram
-  participant C as Grok Bot or Cursor
+  autonumber
+  participant C as Grok Bot / Cursor
   participant G as agentgateway :30100/mcp
-  participant P as MCP pod in kagent
-  participant T as FortiGate / F5 / cEOS / cloud / k8s
+  participant P as fortigate-mcp
+  participant V as Vault via ESO
+  participant T as FortiGate 172.16.10.1
 
-  C->>G: initialize (Streamable HTTP)
+  C->>G: initialize Streamable HTTP
   G-->>C: serverInfo agentgateway 1.4.1
   C->>G: tools/list
-  G->>P: list each target (FailOpen)
-  P-->>G: native tool names
-  G-->>C: prefixed names (fortigate_…, arista-ceos_…)
+  G->>P: list (and the other six, FailOpen)
+  P-->>G: fg_list_policies …
+  G-->>C: fortigate_fg_list_policies …
   C->>G: tools/call fortigate_fg_list_policies
-  G->>P: call fg_list_policies
-  P->>T: REST / eAPI with Vault creds
-  T-->>P: result
+  G->>P: fg_list_policies
+  P->>V: token already in the pod
+  P->>T: FortiOS REST
+  T-->>P: policies
   P-->>G: result
   G-->>C: result
 ```
 
-kagent UI skips the gateway for tools. It still uses this same Gateway for the **model** (`/v1` → gpt-5.5).
+kagent UI skips the gateway for **tools**. It still uses this same Gateway for the **model** (`/v1` → gpt-5.5).
 
 ## What agentgateway helps with
 
 This is what the 1.4.1 Gateway is doing on Viper today. Not a product brochure. Not features we have not wired.
 
+Without it you would give every IDE seven ClusterIP URLs. With it, one path on the same listener that already fronts OpenAI and Spark.
+
 ```mermaid
-flowchart LR
-  subgraph one["One data plane"]
-    L["LLM: /v1 OpenAI · /spark Qwen"]
-    M["MCP: /mcp multiplex"]
-    D["Desktop: /desktop"]
+flowchart TB
+  IN["tools/call fortigate_fg_list_policies<br/>http://172.16.10.135:30100/mcp"] --> GW
+
+  subgraph GW["agentgateway does these jobs"]
+    direction TB
+    J1["1. One URL for seven MCP servers"]
+    J2["2. Prefix so fg_list_policies does not collide"]
+    J3["3. FailOpen: a down aws-budget does not hide Fortigate"]
+    J4["4. ClusterIP stays off the node IP"]
+    J5["5. Same Gateway as /v1 /spark /desktop"]
   end
-  subgraph help["On the MCP path"]
-    A["One URL instead of seven ClusterIPs"]
-    B["Prefix tools so names do not collide"]
-    C["FailOpen if one MCP is down"]
-    E["Keep MCP pods off the node IP"]
-  end
-  one --> help
+
+  GW -->|"strip fortigate_ · send to :8084/mcp"| FG["fortigate-mcp"]
+  GW -.->|"other targets stay listed"| OTH["f5-bigip · arista-ceos · aws · sn · gcp · kagent-tools"]
+  FG --> BOX["FortiGate · Vault token never left the pod"]
+
+  classDef gwn fill:#111111,stroke:#111111,color:#f6f6f4
+  classDef mcp fill:#e8f3ee,stroke:#0b6b4f,color:#111111
+  class GW,J1,J2,J3,J4,J5 gwn
+  class FG,OTH mcp
 ```
 
 | Job | How it shows up here |
