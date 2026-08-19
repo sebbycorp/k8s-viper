@@ -13,14 +13,14 @@ gateways.
 | **Gateway** | `agentgateway-proxy` · NodePort **30100** · `http://172.16.10.135:30100/` |
 | **OpenAI backend** | Vault `secret/platform/openai` → ExternalSecret `openai-secret` → gateway auth |
 | **OpenAI models** | Client-selected: **`gpt-5.5`** (full), **`gpt-5-mini`** (small) on `/v1` and `/openai` |
-| **DGX Spark** | vLLM at `172.16.10.173:8000` — **`Qwen/Qwen3.6-35B-A3B-FP8`** on `/spark` (no auth) |
+| **DGX Spark** | vLLM at `172.16.10.173:8000` — **`unsloth/Qwen3.8-27B-NVFP4`** on `/spark` (no auth) |
 | **Langfuse** | Helm **1.5.41** (app ~3.224) + Postgres, Redis, **ClickHouse**, MinIO |
 | **OTEL collector** | `langfuse-otel-collector` in `agentgateway-system` — OTLP HTTP to Langfuse. Path is wired; keys in Vault `secret/platform/langfuse-otel`. Configured — do not treat traces as proven in production. |
 
 ```text
 agentgateway-proxy :30100
      ├─ /v1 · /openai  → OpenAI (Vault key)      gpt-5.5 / gpt-5-mini
-     ├─ /spark         → DGX Spark vLLM :8000    Qwen/Qwen3.6-35B-A3B-FP8
+     ├─ /spark         → DGX Spark vLLM :8000    unsloth/Qwen3.8-27B-NVFP4
      ├─ /mcp           → multiplexed SandboxAgent MCP servers (see agentgateway-mcp.md)
      ├─ /desktop/      → noVNC desktop viewer    (see desktop-computer-use.md)
      └─ /desktop-api/  → computer-use HTTP API
@@ -115,7 +115,7 @@ export GW=http://172.16.10.135:30100   # or your node-ip
 curl -sS "$GW/spark/v1/chat/completions" \
   -H 'content-type: application/json' \
   -d '{
-    "model": "Qwen/Qwen3.6-35B-A3B-FP8",
+    "model": "unsloth/Qwen3.8-27B-NVFP4",
     "messages": [{"role":"user","content":"Say hello from k8s-viper Spark"}],
     "max_tokens": 64
   }' | jq .
@@ -124,7 +124,7 @@ curl -sS "$GW/spark/v1/chat/completions" \
 | Path | Backend | Model |
 |------|---------|-------|
 | `/v1`, `/openai` | OpenAI (`api.openai.com`) | `gpt-5.5`, `gpt-5-mini` |
-| `/spark` | DGX Spark `172.16.10.173:8000` | `Qwen/Qwen3.6-35B-A3B-FP8` |
+| `/spark` | DGX Spark `172.16.10.173:8000` | `unsloth/Qwen3.8-27B-NVFP4` |
 
 Git paths:
 

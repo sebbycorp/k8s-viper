@@ -48,7 +48,7 @@ facts:
   - key: AI Gateway
     value: "agentgateway-proxy NodePort 30100 (OpenAI + Spark + desktop)"
   - key: AI models
-    value: "gpt-5.5 · gpt-5-mini · Qwen/Qwen3.6-35B-A3B-FP8 (Spark)"
+    value: "gpt-5.5 · gpt-5-mini · unsloth/Qwen3.8-27B-NVFP4 (Spark)"
   - key: Spark host
     value: "172.16.10.173:8000 (vLLM)"
   - key: SSH
@@ -560,7 +560,7 @@ troubleshooting:
   - symptom: agentgateway OpenAI 401/404 model
     check: Vault openai key; use gpt-5.5 or gpt-5-mini
   - symptom: Spark 502 / no route
-    check: "Backend 172.16.10.173:8000; model Qwen/Qwen3.6-35B-A3B-FP8"
+    check: "Backend 172.16.10.173:8000; model unsloth/Qwen3.8-27B-NVFP4"
   - symptom: svclb-agentgateway-proxy Pending
     check: Cosmetic — Traefik owns :80/:443. Use NodePort 30100
   - symptom: Langfuse ImagePullBackOff

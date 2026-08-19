@@ -101,7 +101,7 @@
                       ↓
    agentgateway-proxy :30100
         ├─ /v1 · /openai  → OpenAI (Vault)     gpt-5.5 / gpt-5-mini
-        ├─ /spark         → Spark vLLM :8000   Qwen/Qwen3.6-35B-A3B-FP8
+        ├─ /spark         → Spark vLLM :8000   unsloth/Qwen3.8-27B-NVFP4
         ├─ /mcp           → SandboxAgent MCPs (LAN Streamable HTTP)
         ├─ /desktop/      → noVNC desktop viewer
         └─ /desktop-api/  → computer-use HTTP API
@@ -274,7 +274,7 @@ docker exec k3s-viper kubectl -n headlamp create token headlamp --duration=12h</
     with credentials from Vault, and DGX Spark Qwen (<code>/spark</code>) at
     <code>172.16.10.173:8000</code> with no auth.
     Models: <code>gpt-5.5</code>, <code>gpt-5-mini</code>,
-    <code>Qwen/Qwen3.6-35B-A3B-FP8</code>.
+    <code>unsloth/Qwen3.8-27B-NVFP4</code>.
     <strong>Langfuse</strong> (+ ClickHouse) receives OTEL traces.
     Full runbook:
     <a href="{{ .Site.Params.github }}/blob/main/docs/agentgateway-langfuse.md">docs/agentgateway-langfuse.md</a>.
@@ -290,7 +290,7 @@ curl -sS "$GW/v1/chat/completions" -H 'content-type: application/json' \
 
 # DGX Spark (vLLM)
 curl -sS "$GW/spark/v1/chat/completions" -H 'content-type: application/json' \
-  -d '{"model":"Qwen/Qwen3.6-35B-A3B-FP8","messages":[{"role":"user","content":"hi"}],"max_tokens":64}'</code></pre>
+  -d '{"model":"unsloth/Qwen3.8-27B-NVFP4","messages":[{"role":"user","content":"hi"}],"max_tokens":64}'</code></pre>
   <div class="callout ok">
     <div>
       <strong>No client OpenAI key</strong> — gateway injects

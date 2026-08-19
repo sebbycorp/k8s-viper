@@ -38,7 +38,7 @@ bootstrap.sh  →  dockerized k3s (k3s-viper) + Argo CD + root Application
                       ↓
    agentgateway-proxy :30100
         ├─ /v1 · /openai  → OpenAI (Vault key)      gpt-5.5 / gpt-5-mini
-        ├─ /spark         → DGX Spark vLLM :8000    Qwen/Qwen3.6-35B-A3B-FP8
+        ├─ /spark         → DGX Spark vLLM :8000    unsloth/Qwen3.8-27B-NVFP4
         ├─ /mcp           → multiplexed SandboxAgent MCP servers
         ├─ /desktop/      → noVNC desktop viewer
         └─ /desktop-api/  → computer-use HTTP API
@@ -57,7 +57,7 @@ bootstrap.sh  →  dockerized k3s (k3s-viper) + Argo CD + root Application
 | Path | Backend | Model | Auth |
 |------|---------|-------|------|
 | `/v1`, `/openai` | OpenAI (`api.openai.com`) | `gpt-5.5`, `gpt-5-mini` | Vault `secret/platform/openai` → ExternalSecret `openai-secret` |
-| `/spark` | DGX Spark `172.16.10.173:8000` (vLLM) | `Qwen/Qwen3.6-35B-A3B-FP8` | none (config inspired by [sebbycorp/k8s-goose](https://github.com/sebbycorp/k8s-goose)) |
+| `/spark` | DGX Spark `172.16.10.173:8000` (vLLM) | `unsloth/Qwen3.8-27B-NVFP4` | none (config inspired by [sebbycorp/k8s-goose](https://github.com/sebbycorp/k8s-goose)) |
 | `/mcp` | Multiplexed MCP (Fortigate, F5, Arista, AWS, ServiceNow, GCP, kagent-tools) | Streamable HTTP | none (LAN). See [docs/agentgateway-mcp.md](docs/agentgateway-mcp.md) |
 
 Desktop viewer (noVNC) and computer-use API share the same Gateway: `/desktop/` and `/desktop-api/` — [docs/desktop-computer-use.md](docs/desktop-computer-use.md).
@@ -214,7 +214,7 @@ curl -sS "$GW/v1/chat/completions" -H 'content-type: application/json' \
 
 # DGX Spark (vLLM)
 curl -sS "$GW/spark/v1/chat/completions" -H 'content-type: application/json' \
-  -d '{"model":"Qwen/Qwen3.6-35B-A3B-FP8","messages":[{"role":"user","content":"hi"}],"max_tokens":64}'
+  -d '{"model":"unsloth/Qwen3.8-27B-NVFP4","messages":[{"role":"user","content":"hi"}],"max_tokens":64}'
 ```
 
 ## Headlamp GitOps
@@ -341,7 +341,7 @@ Do **not** put secret values in git. Store them in Vault; reference via `Externa
 | fortigate-mcp ImagePullBackOff | Import `fortigate-mcp:dev` on the node — [docs/fortigate-agent.md](docs/fortigate-agent.md) |
 | arista-ceos-mcp ImagePullBackOff | Import `arista-ceos-mcp:dev` on the node — [docs/arista-ceos-agent.md](docs/arista-ceos-agent.md) |
 | agentgateway OpenAI 401/404 | Vault openai key; model id (`gpt-5.5` / `gpt-5-mini`) |
-| Spark 502 / no route | Backend `172.16.10.173:8000`; model `Qwen/Qwen3.6-35B-A3B-FP8` |
+| Spark 502 / no route | Backend `172.16.10.173:8000`; model `unsloth/Qwen3.8-27B-NVFP4` |
 | `svclb-agentgateway-proxy` Pending | Cosmetic — Traefik owns `:80`/`:443`. Use NodePort **30100** |
 | Langfuse ImagePullBackOff | Cluster egress/DNS to Docker Hub |
 | kagent UI unreachable | `http://172.16.10.135:30500/`; Docker must publish **30500**; app `platform-kagent-ai` |

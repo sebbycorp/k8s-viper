@@ -9,7 +9,7 @@ spec:
   ai:
     provider:
       openai:
-        model: Qwen/Qwen3.6-35B-A3B-FP8
+        model: unsloth/Qwen3.8-27B-NVFP4
       host: 172.16.10.173
       port: 8000
       pathPrefix: /v1
